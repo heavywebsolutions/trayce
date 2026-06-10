@@ -38,6 +38,19 @@ export async function GET(
     ? createHash("sha256").update(ip).digest("hex").slice(0, 32)
     : null;
 
+  // Vercel injects geo headers (URL-encoded). Decode them defensively.
+  const decode = (v: string | null) => {
+    if (!v) return null;
+    try {
+      return decodeURIComponent(v);
+    } catch {
+      return v;
+    }
+  };
+  const country = request.headers.get("x-vercel-ip-country");
+  const region = decode(request.headers.get("x-vercel-ip-country-region"));
+  const city = decode(request.headers.get("x-vercel-ip-city"));
+
   // Log the scan + bump the counter. Awaited so serverless doesn't kill it mid-flight.
   try {
     const { data: scan } = await admin
@@ -49,7 +62,9 @@ export async function GET(
         referrer: request.headers.get("referer"),
         ip_hash: ipHash,
         device_type: /mobile/i.test(ua) ? "mobile" : "desktop",
-        country: request.headers.get("x-vercel-ip-country"),
+        country,
+        region,
+        city,
       })
       .select("id")
       .single();

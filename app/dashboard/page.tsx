@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, Button, Badge } from "@/components/ui";
 import { formatNumber, timeAgo } from "@/lib/utils";
+import { formatLocation, deviceLabel } from "@/lib/geo";
 
 export const dynamic = "force-dynamic";
 
@@ -49,7 +50,9 @@ export default async function OverviewPage() {
 
   const { data: recent } = await supabase
     .from("scans")
-    .select("id, scanned_at, device_type, code_id, codes(title, slug)")
+    .select(
+      "id, scanned_at, device_type, user_agent, city, region, country, code_id, codes(title, slug, destination_url)"
+    )
     .order("scanned_at", { ascending: false })
     .limit(8);
 
@@ -99,20 +102,29 @@ export default async function OverviewPage() {
               return (
                 <li
                   key={s.id}
-                  className="flex items-center justify-between px-6 py-3.5"
+                  className="flex items-center justify-between gap-4 px-6 py-3.5"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-ink-800">
                       {code?.title ?? "Code"}
                     </p>
-                    <p className="text-xs text-ink-400">/{code?.slug}</p>
+                    <p className="truncate text-xs text-ink-400">
+                      /{code?.slug} → {code?.destination_url}
+                    </p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Badge tone={s.device_type === "mobile" ? "indigo" : "gray"}>
-                      {s.device_type ?? "scan"}
-                    </Badge>
-                    <span className="tabular text-xs text-ink-400">
-                      {timeAgo(s.scanned_at)}
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        tone={s.device_type === "mobile" ? "indigo" : "gray"}
+                      >
+                        {deviceLabel(s.user_agent)}
+                      </Badge>
+                      <span className="tabular text-xs text-ink-400">
+                        {timeAgo(s.scanned_at)}
+                      </span>
+                    </div>
+                    <span className="text-xs text-ink-400">
+                      {formatLocation(s)}
                     </span>
                   </div>
                 </li>

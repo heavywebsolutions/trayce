@@ -28,4 +28,7 @@ export interface Scan {
   device_type: string | null;
   referrer: string | null;
   country: string | null;
+  region: string | null;
+  city: string | null;
+  user_agent: string | null;
 }

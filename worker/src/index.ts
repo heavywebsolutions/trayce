@@ -61,7 +61,10 @@ export default {
           request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
           "";
         const ipHash = ip ? await sha256Hex(ip) : null;
-        const country = (request as any).cf?.country ?? null;
+        const cf = (request as any).cf ?? {};
+        const country = cf.country ?? null;
+        const region = cf.region ?? null;
+        const city = cf.city ?? null;
 
         const scanRes = await fetch(`${env.SUPABASE_URL}/rest/v1/scans`, {
           method: "POST",
@@ -74,6 +77,8 @@ export default {
             ip_hash: ipHash,
             device_type: /mobile/i.test(ua) ? "mobile" : "desktop",
             country,
+            region,
+            city,
           }),
         });
 

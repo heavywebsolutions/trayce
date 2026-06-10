@@ -26,3 +26,4 @@ npm-debug.log*
 # worker
 /worker/node_modules
 /worker/.wrangler
+.next-build/

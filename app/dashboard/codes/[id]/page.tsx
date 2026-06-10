@@ -7,6 +7,7 @@ import { EditDestinationForm } from "@/components/EditDestinationForm";
 import { setStatus } from "@/app/dashboard/codes/actions";
 import { qrSvg, redirectUrlFor } from "@/lib/qr";
 import { formatNumber, timeAgo } from "@/lib/utils";
+import { formatLocation, deviceLabel } from "@/lib/geo";
 import type { Code } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +40,7 @@ export default async function CodeDetailPage({
 
   const { data: scans } = await supabase
     .from("scans")
-    .select("id, scanned_at, device_type, referrer")
+    .select("id, scanned_at, device_type, referrer, city, region, country, user_agent")
     .eq("code_id", c.id)
     .order("scanned_at", { ascending: false })
     .limit(10);
@@ -154,12 +155,24 @@ export default async function CodeDetailPage({
                 {scans.map((s) => (
                   <li
                     key={s.id}
-                    className="flex items-center justify-between px-6 py-3"
+                    className="flex items-center justify-between gap-3 px-6 py-3.5"
                   >
-                    <Badge tone={s.device_type === "mobile" ? "indigo" : "gray"}>
-                      {s.device_type ?? "scan"}
-                    </Badge>
-                    <span className="tabular text-xs text-ink-400">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          tone={s.device_type === "mobile" ? "indigo" : "gray"}
+                        >
+                          {deviceLabel(s.user_agent)}
+                        </Badge>
+                        <span className="text-xs text-ink-400">
+                          {s.device_type ?? "scan"}
+                        </span>
+                      </div>
+                      <p className="mt-1 truncate text-xs text-ink-500">
+                        {formatLocation(s)}
+                      </p>
+                    </div>
+                    <span className="tabular shrink-0 text-xs text-ink-400">
                       {timeAgo(s.scanned_at)}
                     </span>
                   </li>
