@@ -153,28 +153,27 @@ export default async function CodeDetailPage({
             {scans && scans.length > 0 ? (
               <ul className="divide-y divide-ink-100">
                 {scans.map((s) => (
-                  <li
-                    key={s.id}
-                    className="flex items-center justify-between gap-3 px-6 py-3.5"
-                  >
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          tone={s.device_type === "mobile" ? "indigo" : "gray"}
-                        >
-                          {deviceLabel(s.user_agent)}
-                        </Badge>
-                        <span className="text-xs text-ink-400">
-                          {s.device_type ?? "scan"}
-                        </span>
-                      </div>
-                      <p className="mt-1 truncate text-xs text-ink-500">
-                        {formatLocation(s)}
+                  <li key={s.id} className="px-6 py-3.5">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="truncate text-sm font-semibold text-ink-900">
+                        {c.title}
                       </p>
+                      <span className="tabular shrink-0 text-xs text-ink-400">
+                        {timeAgo(s.scanned_at)}
+                      </span>
                     </div>
-                    <span className="tabular shrink-0 text-xs text-ink-400">
-                      {timeAgo(s.scanned_at)}
-                    </span>
+                    <p className="mt-0.5 truncate text-xs text-ink-400">
+                      /{c.slug} → {c.destination_url}
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-ink-500">
+                      <Badge
+                        tone={s.device_type === "mobile" ? "indigo" : "gray"}
+                      >
+                        {deviceLabel(s.user_agent)}
+                      </Badge>
+                      <span className="text-ink-300">·</span>
+                      <span>{formatLocation(s)}</span>
+                    </div>
                   </li>
                 ))}
               </ul>
