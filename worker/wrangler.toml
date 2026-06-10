@@ -1,0 +1,14 @@
+name = "trayce-redirect-engine"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+# Non-secret var. Set the secrets with:
+#   npx wrangler secret put SUPABASE_URL
+#   npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+[vars]
+FALLBACK_URL = "https://example.com"
+
+# After deploy, point your short domain at this worker:
+#   [[routes]]
+#   pattern = "your-short-domain.com/*"
+#   custom_domain = true
