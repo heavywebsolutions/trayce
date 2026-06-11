@@ -1,5 +1,6 @@
 import { createHash } from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { decryptSecret } from "@/lib/crypto";
 
 export interface Contact {
   email: string;
@@ -215,7 +216,12 @@ export async function syncContact(
     .eq("workspace_id", workspaceId)
     .eq("enabled", true);
   if (!integs?.length) return;
+  // Decrypt secrets only here, in server memory, right before the outbound call.
   await Promise.allSettled(
-    (integs as Integration[]).map((i) => dispatch(i, contact).catch(() => {}))
+    (integs as Integration[]).map((i) =>
+      dispatch({ ...i, api_key: decryptSecret(i.api_key) }, contact).catch(
+        () => {}
+      )
+    )
   );
 }

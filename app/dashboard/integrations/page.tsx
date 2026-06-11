@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Card, Badge, Button, Input, Label } from "@/components/ui";
 import { PROVIDERS } from "@/lib/integrations";
+import { encryptionConfigured } from "@/lib/crypto";
 import { saveIntegration, deleteIntegration } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -13,10 +14,14 @@ export default async function IntegrationsPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: rows } = await supabase.from("integrations").select("*");
+  // Never fetch the secret into the page — only what we need to render status.
+  const { data: rows } = await supabase
+    .from("integrations")
+    .select("provider, enabled, list_id, endpoint");
   const byProvider = new Map(
     (rows ?? []).map((r: Record<string, unknown>) => [r.provider as string, r])
   );
+  const encrypted = encryptionConfigured();
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -28,6 +33,28 @@ export default async function IntegrationsPage() {
           Auto-sync every captured contact — code leads, bio forms, and
           subscribers — into your email tools in real time.
         </p>
+      </div>
+
+      <div
+        className={`mb-4 rounded-xl border px-4 py-3 text-sm ${
+          encrypted
+            ? "border-emerald-100 bg-emerald-50 text-emerald-800"
+            : "border-amber-200 bg-amber-50 text-amber-800"
+        }`}
+      >
+        {encrypted ? (
+          <>
+            🔒 Keys are encrypted at rest (AES-256-GCM) with a server-only key.
+            They&apos;re never shown in this page, sent to the browser, or
+            written to logs.
+          </>
+        ) : (
+          <>
+            ⚠️ <code>ENCRYPTION_KEY</code> isn&apos;t set in your environment, so
+            saved keys would be stored unencrypted. Add it (see README) before
+            connecting anything sensitive.
+          </>
+        )}
       </div>
 
       <div className="space-y-4">

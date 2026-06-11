@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PROVIDERS } from "@/lib/integrations";
+import { encryptSecret } from "@/lib/crypto";
 
 async function currentWorkspace() {
   const supabase = await createClient();
@@ -37,7 +38,10 @@ export async function saveIntegration(formData: FormData): Promise<void> {
     .maybeSingle();
 
   const apiKeyInput = String(formData.get("api_key") || "").trim();
-  const api_key = apiKeyInput || existing?.api_key || null;
+  // Encrypt new keys; keep the (already-encrypted) existing one if left blank.
+  const api_key = apiKeyInput
+    ? encryptSecret(apiKeyInput)
+    : (existing?.api_key ?? null);
   const list_id = String(formData.get("list_id") || "").trim() || null;
   const endpoint = String(formData.get("endpoint") || "").trim() || null;
   const enabled = formData.get("enabled") === "on";
