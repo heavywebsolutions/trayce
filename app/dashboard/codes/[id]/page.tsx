@@ -53,6 +53,19 @@ export default async function CodeDetailPage({
     .order("created_at", { ascending: false })
     .limit(5);
 
+  const { data: templates } = await supabase
+    .from("design_templates")
+    .select("*")
+    .eq("workspace_id", c.workspace_id)
+    .order("created_at", { ascending: false });
+
+  const { data: logos } = await supabase
+    .from("logo_assets")
+    .select("*")
+    .eq("workspace_id", c.workspace_id)
+    .order("created_at", { ascending: false })
+    .limit(12);
+
   return (
     <div className="mx-auto max-w-5xl">
       <Link
@@ -102,7 +115,12 @@ export default async function CodeDetailPage({
               dot: c.dot_style,
               corner: c.corner_style,
               logo: c.logo_url,
+              frame: c.frame_style,
+              frameColor: c.frame_color,
+              frameText: c.frame_text,
             }}
+            templates={templates ?? []}
+            logos={logos ?? []}
           />
           <p className="mt-5 text-xs font-medium uppercase tracking-wide text-ink-400">
             {isStatic ? "Encodes directly" : "Scan link"}

@@ -144,6 +144,13 @@ export async function updateDesign(formData: FormData): Promise<void> {
       ? logoRaw
       : null;
 
+  const frameAllowed = ["none", "bottom", "top", "border"];
+  const frameRaw = String(formData.get("frame_style") || "");
+  const frame = frameAllowed.includes(frameRaw) ? frameRaw : "none";
+  const frameColor = hex(formData.get("frame_color"), "#0A2540");
+  const frameText =
+    String(formData.get("frame_text") || "SCAN ME").slice(0, 24) || "SCAN ME";
+
   const { supabase } = await currentWorkspaceId();
   await supabase
     .from("codes")
@@ -153,11 +160,53 @@ export async function updateDesign(formData: FormData): Promise<void> {
       dot_style: dot,
       corner_style: corner,
       logo_url: logo,
+      frame_style: frame,
+      frame_color: frameColor,
+      frame_text: frameText,
     })
     .eq("id", codeId);
 
   revalidatePath(`/dashboard/codes/${codeId}`);
   revalidatePath("/dashboard/codes");
+}
+
+// Save the current design as a reusable workspace template.
+export async function saveDesignTemplate(formData: FormData): Promise<void> {
+  const name = String(formData.get("name") || "").trim().slice(0, 60) || "Untitled";
+  const { supabase, workspaceId } = await currentWorkspaceId();
+  const settings = {
+    fg_color: String(formData.get("fg_color") || "#0A2540"),
+    bg_color: String(formData.get("bg_color") || "#FFFFFF"),
+    dot_style: String(formData.get("dot_style") || "square"),
+    corner_style: String(formData.get("corner_style") || "square"),
+    frame_style: String(formData.get("frame_style") || "none"),
+    frame_color: String(formData.get("frame_color") || "#0A2540"),
+    frame_text: String(formData.get("frame_text") || "SCAN ME"),
+  };
+  await supabase
+    .from("design_templates")
+    .insert({ workspace_id: workspaceId, name, settings });
+  revalidatePath("/dashboard/codes", "layout");
+}
+
+// Save an uploaded logo to the workspace library for reuse.
+export async function saveLogoAsset(formData: FormData): Promise<void> {
+  const dataUrl = String(formData.get("data_url") || "");
+  if (!dataUrl.startsWith("data:image/") || dataUrl.length > 400_000) return;
+  const name = String(formData.get("name") || "Logo").slice(0, 60) || "Logo";
+  const { supabase, workspaceId } = await currentWorkspaceId();
+  await supabase
+    .from("logo_assets")
+    .insert({ workspace_id: workspaceId, name, data_url: dataUrl });
+  revalidatePath("/dashboard/codes", "layout");
+}
+
+export async function deleteLogoAsset(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") || "");
+  if (!id) return;
+  const { supabase } = await currentWorkspaceId();
+  await supabase.from("logo_assets").delete().eq("id", id);
+  revalidatePath("/dashboard/codes", "layout");
 }
 
 // Upgrade a static code to dynamic (editable + tracked). Note: this changes what
