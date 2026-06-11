@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { syncContact } from "@/lib/integrations";
 
 export type SubscribeState = { ok?: boolean; error?: string } | undefined;
 export type BioFormState = { ok?: boolean; error?: string } | undefined;
@@ -46,6 +47,12 @@ export async function submitBioForm(
   };
   const h = await headers();
 
+  const geo = {
+    country: h.get("x-vercel-ip-country"),
+    region: decode(h.get("x-vercel-ip-country-region")),
+    city: decode(h.get("x-vercel-ip-city")),
+  };
+
   const { error } = await admin.from("leads").insert({
     code_id: null,
     page_id: link.page_id,
@@ -55,11 +62,17 @@ export async function submitBioForm(
     email,
     name,
     phone,
-    country: h.get("x-vercel-ip-country"),
-    region: decode(h.get("x-vercel-ip-country-region")),
-    city: decode(h.get("x-vercel-ip-city")),
+    ...geo,
   });
   if (error) return { error: "Couldn't submit that — please try again." };
+
+  await syncContact(link.workspace_id, {
+    email,
+    name,
+    phone,
+    source: link.title || "Bio form",
+    ...geo,
+  });
   return { ok: true };
 }
 
@@ -96,14 +109,24 @@ export async function submitBioSubscribe(
   };
   const h = await headers();
 
+  const geo = {
+    country: h.get("x-vercel-ip-country"),
+    region: decode(h.get("x-vercel-ip-country-region")),
+    city: decode(h.get("x-vercel-ip-city")),
+  };
+
   const { error } = await admin.from("bio_subscribers").insert({
     page_id: page.id,
     workspace_id: page.workspace_id,
     email,
-    country: h.get("x-vercel-ip-country"),
-    region: decode(h.get("x-vercel-ip-country-region")),
-    city: decode(h.get("x-vercel-ip-city")),
+    ...geo,
   });
   if (error) return { error: "Couldn't save that — please try again." };
+
+  await syncContact(page.workspace_id, {
+    email,
+    source: "Bio subscribe",
+    ...geo,
+  });
   return { ok: true };
 }

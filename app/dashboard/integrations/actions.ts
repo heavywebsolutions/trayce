@@ -1,0 +1,70 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { PROVIDERS } from "@/lib/integrations";
+
+async function currentWorkspace() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const { data: ws } = await supabase
+    .from("workspaces")
+    .select("id")
+    .eq("owner_id", user.id)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .single();
+  if (!ws) throw new Error("No workspace");
+  return { supabase, workspaceId: ws.id };
+}
+
+export async function saveIntegration(formData: FormData): Promise<void> {
+  const provider = String(formData.get("provider") || "");
+  if (!PROVIDERS.some((p) => p.key === provider)) return;
+
+  const { supabase, workspaceId } = await currentWorkspace();
+
+  // Keep the existing secret if the field was left blank.
+  const { data: existing } = await supabase
+    .from("integrations")
+    .select("api_key")
+    .eq("workspace_id", workspaceId)
+    .eq("provider", provider)
+    .maybeSingle();
+
+  const apiKeyInput = String(formData.get("api_key") || "").trim();
+  const api_key = apiKeyInput || existing?.api_key || null;
+  const list_id = String(formData.get("list_id") || "").trim() || null;
+  const endpoint = String(formData.get("endpoint") || "").trim() || null;
+  const enabled = formData.get("enabled") === "on";
+
+  await supabase.from("integrations").upsert(
+    {
+      workspace_id: workspaceId,
+      provider,
+      api_key,
+      list_id,
+      endpoint,
+      enabled,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "workspace_id,provider" }
+  );
+  revalidatePath("/dashboard/integrations");
+}
+
+export async function deleteIntegration(formData: FormData): Promise<void> {
+  const provider = String(formData.get("provider") || "");
+  if (!provider) return;
+  const { supabase, workspaceId } = await currentWorkspace();
+  await supabase
+    .from("integrations")
+    .delete()
+    .eq("workspace_id", workspaceId)
+    .eq("provider", provider);
+  revalidatePath("/dashboard/integrations");
+}

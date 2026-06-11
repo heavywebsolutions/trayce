@@ -36,7 +36,7 @@ const groups: { label: string; items: NavItem[] }[] = [
   {
     label: "Connect",
     items: [
-      { href: "/dashboard/integrations", label: "Integrations", icon: "⚡", soon: true },
+      { href: "/dashboard/integrations", label: "Integrations", icon: "⚡" },
     ],
   },
 ];

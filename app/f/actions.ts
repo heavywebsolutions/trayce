@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { syncContact } from "@/lib/integrations";
 
 export type LeadState = { ok?: boolean; error?: string } | undefined;
 
@@ -46,17 +47,29 @@ export async function submitLead(
   };
   const h = await headers();
 
+  const geo = {
+    country: h.get("x-vercel-ip-country"),
+    region: decode(h.get("x-vercel-ip-country-region")),
+    city: decode(h.get("x-vercel-ip-city")),
+  };
+
   const { error } = await admin.from("leads").insert({
     code_id: code.id,
     workspace_id: code.workspace_id,
     email,
     name,
     phone,
-    country: h.get("x-vercel-ip-country"),
-    region: decode(h.get("x-vercel-ip-country-region")),
-    city: decode(h.get("x-vercel-ip-city")),
+    ...geo,
   });
 
   if (error) return { error: "Couldn't save that — please try again." };
+
+  await syncContact(code.workspace_id, {
+    email,
+    name,
+    phone,
+    source: "QR code",
+    ...geo,
+  });
   return { ok: true };
 }
