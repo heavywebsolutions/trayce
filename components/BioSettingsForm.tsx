@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Button, Input, Label } from "@/components/ui";
 import { updateBioPage } from "@/app/dashboard/bio/actions";
-import { SOCIAL_PLATFORMS } from "@/lib/bio";
+import { SOCIAL_PLATFORMS, FONTS } from "@/lib/bio";
 import type { BioPage } from "@/lib/types";
 
 function Save() {
@@ -133,6 +133,23 @@ export function BioSettingsForm({ page }: { page: BioPage }) {
           Button text
           <input type="color" name="button_text_color" defaultValue={page.button_text_color} className="mt-1 h-9 w-full cursor-pointer rounded-lg border border-ink-200 bg-white" />
         </label>
+      </div>
+
+      {/* Font */}
+      <div>
+        <Label htmlFor="font_family">Font</Label>
+        <select
+          id="font_family"
+          name="font_family"
+          defaultValue={page.font_family}
+          className="min-h-[44px] w-full rounded-xl border border-ink-200 bg-white px-3 text-sm text-ink-900"
+        >
+          {FONTS.map((f) => (
+            <option key={f.key} value={f.key}>
+              {f.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Background image */}

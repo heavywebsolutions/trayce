@@ -1,3 +1,15 @@
+export const FONTS = [
+  { key: "sans", label: "Sans", stack: "var(--font-geist-sans), system-ui, sans-serif" },
+  { key: "serif", label: "Serif", stack: "Georgia, 'Times New Roman', serif" },
+  { key: "mono", label: "Mono", stack: "ui-monospace, SFMono-Regular, Menlo, monospace" },
+  { key: "rounded", label: "Rounded", stack: "ui-rounded, 'Hiragino Maru Gothic ProN', Quicksand, system-ui, sans-serif" },
+  { key: "condensed", label: "Condensed", stack: "'Arial Narrow', 'Roboto Condensed', system-ui, sans-serif" },
+] as const;
+
+export function fontStack(key: string): string {
+  return FONTS.find((f) => f.key === key)?.stack ?? FONTS[0].stack;
+}
+
 export const SOCIAL_PLATFORMS = [
   { key: "instagram", label: "Instagram", short: "IG" },
   { key: "facebook", label: "Facebook", short: "FB" },

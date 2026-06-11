@@ -1,25 +1,14 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Card, CardHeader, Badge, Button, Input } from "@/components/ui";
+import { Card, CardHeader, Button, Input } from "@/components/ui";
 import { BioSettingsForm } from "@/components/BioSettingsForm";
-import { LinkThumb } from "@/components/LinkThumb";
-import {
-  addBioLink,
-  updateBioLink,
-  deleteBioLink,
-  moveBioLink,
-} from "@/app/dashboard/bio/actions";
+import { BioLinksList } from "@/components/BioLinksList";
+import { addBioLink } from "@/app/dashboard/bio/actions";
 import { formatNumber } from "@/lib/utils";
 import type { BioPage, BioLink } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
-
-const kindTone: Record<string, string> = {
-  link: "indigo",
-  header: "gray",
-  video: "violet",
-};
 
 export default async function BioEditorPage({
   params,
@@ -138,8 +127,10 @@ export default async function BioEditorPage({
                 <option value="header">Section header</option>
                 <option value="video">YouTube video</option>
                 <option value="subscribe">Email subscribe</option>
+                <option value="text">Text</option>
+                <option value="image">Image</option>
               </select>
-              <Input name="title" placeholder="Title (e.g. Arctic Cat Wraps)" />
+              <Input name="title" placeholder="Title / text" />
               <Input name="url" placeholder="https://… (URL or YouTube link)" />
               <Button type="submit" variant="secondary">
                 Add block
@@ -148,86 +139,15 @@ export default async function BioEditorPage({
           </Card>
 
           <Card>
-            <CardHeader title="Blocks" subtitle={`${links.length} on the page`} />
-            {links.length > 0 ? (
-              <ul className="divide-y divide-ink-100">
-                {links.map((l, i) => (
-                  <li key={l.id} className="px-6 py-4">
-                    <div className="mb-2 flex items-center justify-between gap-2">
-                      <Badge tone={kindTone[l.kind] ?? "gray"}>{l.kind}</Badge>
-                      <div className="flex items-center gap-1">
-                        {l.kind === "link" && (
-                          <span className="mr-1 text-xs text-ink-400">
-                            {formatNumber(l.clicks)} clicks
-                          </span>
-                        )}
-                        <form action={moveBioLink}>
-                          <input type="hidden" name="id" value={l.id} />
-                          <input type="hidden" name="page_id" value={page.id} />
-                          <input type="hidden" name="dir" value="up" />
-                          <button
-                            disabled={i === 0}
-                            className="rounded px-1.5 text-ink-500 hover:bg-ink-100 disabled:opacity-30"
-                          >
-                            ↑
-                          </button>
-                        </form>
-                        <form action={moveBioLink}>
-                          <input type="hidden" name="id" value={l.id} />
-                          <input type="hidden" name="page_id" value={page.id} />
-                          <input type="hidden" name="dir" value="down" />
-                          <button
-                            disabled={i === links.length - 1}
-                            className="rounded px-1.5 text-ink-500 hover:bg-ink-100 disabled:opacity-30"
-                          >
-                            ↓
-                          </button>
-                        </form>
-                        <form action={deleteBioLink}>
-                          <input type="hidden" name="id" value={l.id} />
-                          <input type="hidden" name="page_id" value={page.id} />
-                          <button className="rounded px-1.5 text-rose-500 hover:bg-rose-50">
-                            ✕
-                          </button>
-                        </form>
-                      </div>
-                    </div>
-                    <form action={updateBioLink} className="flex flex-col gap-2 sm:flex-row">
-                      <input type="hidden" name="id" value={l.id} />
-                      <input type="hidden" name="page_id" value={page.id} />
-                      <Input
-                        name="title"
-                        defaultValue={l.title}
-                        placeholder="Title"
-                        className="flex-1"
-                      />
-                      {l.kind !== "header" && (
-                        <Input
-                          name="url"
-                          defaultValue={l.url}
-                          placeholder="URL"
-                          className="flex-1"
-                        />
-                      )}
-                      <Button type="submit" variant="secondary">
-                        Save
-                      </Button>
-                    </form>
-                    {l.kind === "link" && (
-                      <LinkThumb
-                        linkId={l.id}
-                        pageId={page.id}
-                        initial={l.thumbnail_url}
-                      />
-                    )}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="px-6 py-8 text-center text-sm text-ink-500">
-                No blocks yet. Add your first link above.
-              </p>
-            )}
+            <CardHeader
+              title="Blocks"
+              subtitle={`${links.length} on the page · drag to reorder`}
+            />
+            <BioLinksList
+              key={links.map((l) => l.id).sort().join("|")}
+              links={links}
+              pageId={page.id}
+            />
           </Card>
         </div>
       </div>

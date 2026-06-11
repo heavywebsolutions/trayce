@@ -98,6 +98,11 @@ export async function updateBioPage(formData: FormData): Promise<void> {
     bg_color: hex(formData.get("bg_color"), "#0A2540"),
     accent_color: hex(formData.get("accent_color"), "#4F46E5"),
     button_text_color: hex(formData.get("button_text_color"), "#FFFFFF"),
+    font_family: ["sans", "serif", "mono", "rounded", "condensed"].includes(
+      String(formData.get("font_family"))
+    )
+      ? String(formData.get("font_family"))
+      : "sans",
     socials,
     updated_at: new Date().toISOString(),
   };
@@ -110,9 +115,14 @@ export async function updateBioPage(formData: FormData): Promise<void> {
 
 export async function addBioLink(formData: FormData): Promise<void> {
   const pageId = String(formData.get("page_id") || "");
-  const kind = ["link", "header", "video", "subscribe"].includes(
-    String(formData.get("kind"))
-  )
+  const kind = [
+    "link",
+    "header",
+    "video",
+    "subscribe",
+    "text",
+    "image",
+  ].includes(String(formData.get("kind")))
     ? String(formData.get("kind"))
     : "link";
   if (!pageId) return;
@@ -178,6 +188,26 @@ export async function deleteBioLink(formData: FormData): Promise<void> {
   if (!id) return;
   const { supabase } = await currentWorkspace();
   await supabase.from("bio_links").delete().eq("id", id);
+  revalidatePath(`/dashboard/bio/${pageId}`);
+}
+
+export async function reorderBioLinks(formData: FormData): Promise<void> {
+  const pageId = String(formData.get("page_id") || "");
+  if (!pageId) return;
+  let ids: string[] = [];
+  try {
+    const parsed = JSON.parse(String(formData.get("ids") || "[]"));
+    if (Array.isArray(parsed))
+      ids = parsed.filter((x) => typeof x === "string");
+  } catch {
+    return;
+  }
+  const { supabase } = await currentWorkspace();
+  await Promise.all(
+    ids.map((id, i) =>
+      supabase.from("bio_links").update({ position: i }).eq("id", id)
+    )
+  );
   revalidatePath(`/dashboard/bio/${pageId}`);
 }
 

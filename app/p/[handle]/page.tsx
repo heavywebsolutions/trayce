@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { SOCIAL_PLATFORMS, youtubeId, readableOn } from "@/lib/bio";
+import { SOCIAL_PLATFORMS, youtubeId, readableOn, fontStack } from "@/lib/bio";
 import { ShareButton } from "@/components/ShareButton";
 import { BioSubscribeBlock } from "@/components/BioSubscribeBlock";
 import type { BioPage, BioLink } from "@/lib/types";
@@ -58,7 +58,10 @@ export default async function BioPublicPage({
     : { backgroundColor: p.bg_color, color: onBg };
 
   return (
-    <main className="min-h-screen w-full px-5 py-6" style={bgStyle}>
+    <main
+      className="min-h-screen w-full px-5 py-6"
+      style={{ ...bgStyle, fontFamily: fontStack(p.font_family) }}
+    >
       <div className="mx-auto mb-2 flex w-full max-w-md items-center justify-end">
         <ShareButton
           url={`/p/${handle}`}
@@ -116,6 +119,28 @@ export default async function BioPublicPage({
                 >
                   {l.title}
                 </p>
+              );
+            }
+            if (l.kind === "text") {
+              return (
+                <p
+                  key={l.id}
+                  className="whitespace-pre-line text-center text-sm opacity-90"
+                >
+                  {l.title}
+                </p>
+              );
+            }
+            if (l.kind === "image") {
+              if (!l.thumbnail_url) return null;
+              return (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={l.id}
+                  src={l.thumbnail_url}
+                  alt={l.title || ""}
+                  className="w-full rounded-2xl"
+                />
               );
             }
             if (l.kind === "subscribe") {

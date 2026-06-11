@@ -50,6 +50,7 @@ export interface BioPage {
   bg_color: string;
   accent_color: string;
   button_text_color: string;
+  font_family: string;
   socials: Record<string, string>;
   views: number;
   published: boolean;
