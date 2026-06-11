@@ -82,6 +82,16 @@ export async function updateBioPage(formData: FormData): Promise<void> {
         ? null
         : undefined; // undefined = leave unchanged
 
+  const bgRaw = formData.get("bg_image_url");
+  const bgImage =
+    typeof bgRaw === "string" &&
+    bgRaw.startsWith("data:image/") &&
+    bgRaw.length < 1_200_000
+      ? bgRaw
+      : typeof bgRaw === "string" && bgRaw === ""
+        ? null
+        : undefined;
+
   const update: Record<string, unknown> = {
     display_name: String(formData.get("display_name") || "").slice(0, 80),
     tagline: String(formData.get("tagline") || "").slice(0, 160),
@@ -92,6 +102,7 @@ export async function updateBioPage(formData: FormData): Promise<void> {
     updated_at: new Date().toISOString(),
   };
   if (avatar !== undefined) update.avatar_url = avatar;
+  if (bgImage !== undefined) update.bg_image_url = bgImage;
 
   await supabase.from("bio_pages").update(update).eq("id", pageId);
   revalidatePath(`/dashboard/bio/${pageId}`);
@@ -99,7 +110,9 @@ export async function updateBioPage(formData: FormData): Promise<void> {
 
 export async function addBioLink(formData: FormData): Promise<void> {
   const pageId = String(formData.get("page_id") || "");
-  const kind = ["link", "header", "video"].includes(String(formData.get("kind")))
+  const kind = ["link", "header", "video", "subscribe"].includes(
+    String(formData.get("kind"))
+  )
     ? String(formData.get("kind"))
     : "link";
   if (!pageId) return;
@@ -140,6 +153,22 @@ export async function updateBioLink(formData: FormData): Promise<void> {
       url: rawUrl ? normalizeUrl(rawUrl) : "",
     })
     .eq("id", id);
+  revalidatePath(`/dashboard/bio/${pageId}`);
+}
+
+export async function setBioLinkThumbnail(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") || "");
+  const pageId = String(formData.get("page_id") || "");
+  if (!id) return;
+  const raw = formData.get("thumbnail_url");
+  const thumb =
+    typeof raw === "string" &&
+    raw.startsWith("data:image/") &&
+    raw.length < 400_000
+      ? raw
+      : null;
+  const { supabase } = await currentWorkspace();
+  await supabase.from("bio_links").update({ thumbnail_url: thumb }).eq("id", id);
   revalidatePath(`/dashboard/bio/${pageId}`);
 }
 

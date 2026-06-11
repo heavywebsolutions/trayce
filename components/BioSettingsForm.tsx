@@ -18,6 +18,29 @@ function Save() {
 
 export function BioSettingsForm({ page }: { page: BioPage }) {
   const [avatar, setAvatar] = useState<string | null>(page.avatar_url);
+  const [bgImage, setBgImage] = useState<string | null>(page.bg_image_url);
+
+  function onBgImage(file: File) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new window.Image();
+      img.onload = () => {
+        const max = 1200;
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.drawImage(img, 0, 0, w, h);
+        setBgImage(canvas.toDataURL("image/jpeg", 0.82));
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  }
 
   function onAvatar(file: File) {
     const reader = new FileReader();
@@ -45,6 +68,7 @@ export function BioSettingsForm({ page }: { page: BioPage }) {
     <form action={updateBioPage} className="space-y-4">
       <input type="hidden" name="page_id" value={page.id} />
       <input type="hidden" name="avatar_url" value={avatar ?? ""} />
+      <input type="hidden" name="bg_image_url" value={bgImage ?? ""} />
 
       {/* Avatar */}
       <div>
@@ -109,6 +133,46 @@ export function BioSettingsForm({ page }: { page: BioPage }) {
           Button text
           <input type="color" name="button_text_color" defaultValue={page.button_text_color} className="mt-1 h-9 w-full cursor-pointer rounded-lg border border-ink-200 bg-white" />
         </label>
+      </div>
+
+      {/* Background image */}
+      <div>
+        <Label>Background image (optional)</Label>
+        <div className="flex items-center gap-3">
+          {bgImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={bgImage}
+              alt=""
+              className="h-12 w-20 rounded-lg object-cover ring-1 ring-ink-200"
+            />
+          ) : (
+            <div className="grid h-12 w-20 place-items-center rounded-lg bg-ink-100 text-[10px] text-ink-400">
+              none
+            </div>
+          )}
+          <label className="cursor-pointer rounded-lg border border-ink-200 px-3 py-1.5 text-xs font-medium text-ink-700 hover:bg-ink-50">
+            {bgImage ? "Replace" : "Upload"}
+            <input
+              type="file"
+              accept="image/png,image/jpeg"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) onBgImage(f);
+              }}
+            />
+          </label>
+          {bgImage && (
+            <button
+              type="button"
+              onClick={() => setBgImage(null)}
+              className="text-xs font-medium text-rose-600 hover:underline"
+            >
+              Remove
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Socials */}

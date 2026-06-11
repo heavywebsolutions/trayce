@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SOCIAL_PLATFORMS, youtubeId, readableOn } from "@/lib/bio";
+import { ShareButton } from "@/components/ShareButton";
+import { BioSubscribeBlock } from "@/components/BioSubscribeBlock";
 import type { BioPage, BioLink } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -45,11 +47,25 @@ export default async function BioPublicPage({
   const onBg = readableOn(p.bg_color);
   const socials = p.socials || {};
 
+  const bgStyle: React.CSSProperties = p.bg_image_url
+    ? {
+        backgroundColor: p.bg_color,
+        backgroundImage: `url(${p.bg_image_url})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        color: onBg,
+      }
+    : { backgroundColor: p.bg_color, color: onBg };
+
   return (
-    <main
-      className="min-h-screen w-full px-5 py-10"
-      style={{ backgroundColor: p.bg_color, color: onBg }}
-    >
+    <main className="min-h-screen w-full px-5 py-6" style={bgStyle}>
+      <div className="mx-auto mb-2 flex w-full max-w-md items-center justify-end">
+        <ShareButton
+          url={`/p/${handle}`}
+          title={p.display_name || handle}
+          color={onBg}
+        />
+      </div>
       <div className="mx-auto w-full max-w-md">
         {/* Header */}
         <div className="flex flex-col items-center text-center">
@@ -100,6 +116,17 @@ export default async function BioPublicPage({
                 >
                   {l.title}
                 </p>
+              );
+            }
+            if (l.kind === "subscribe") {
+              return (
+                <BioSubscribeBlock
+                  key={l.id}
+                  handle={handle.toLowerCase()}
+                  title={l.title}
+                  accent={p.accent_color}
+                  textColor={p.button_text_color}
+                />
               );
             }
             if (l.kind === "video") {

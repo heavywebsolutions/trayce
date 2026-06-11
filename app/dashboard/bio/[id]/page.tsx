@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, Badge, Button, Input } from "@/components/ui";
 import { BioSettingsForm } from "@/components/BioSettingsForm";
+import { LinkThumb } from "@/components/LinkThumb";
 import {
   addBioLink,
   updateBioLink,
@@ -47,6 +48,11 @@ export default async function BioEditorPage({
     .order("position", { ascending: true });
   const links = (linkRows ?? []) as BioLink[];
 
+  const { count: subCount } = await supabase
+    .from("bio_subscribers")
+    .select("*", { count: "exact", head: true })
+    .eq("page_id", id);
+
   return (
     <div className="mx-auto max-w-5xl">
       <Link
@@ -71,13 +77,51 @@ export default async function BioEditorPage({
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
-        {/* Page settings */}
-        <Card className="p-6">
-          <h2 className="mb-4 text-base font-semibold text-ink-900">
-            Page settings
-          </h2>
-          <BioSettingsForm page={page} />
-        </Card>
+        {/* Page settings + QR/subscribers */}
+        <div className="space-y-5">
+          <Card className="p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase tracking-wide text-ink-400">
+                  Page QR
+                </p>
+                <a
+                  href={`/api/bio/qr/${page.handle}?dl=1`}
+                  className="mt-1 inline-block text-xs font-medium text-accent hover:underline"
+                >
+                  Download QR
+                </a>
+                <p className="mt-4 text-xs font-medium uppercase tracking-wide text-ink-400">
+                  Subscribers
+                </p>
+                <p className="tabular mt-1 text-2xl font-semibold text-ink-900">
+                  {formatNumber(subCount ?? 0)}
+                </p>
+                {(subCount ?? 0) > 0 && (
+                  <a
+                    href={`/api/bio/${page.id}/subscribers.csv`}
+                    className="mt-1 inline-block text-xs font-medium text-accent hover:underline"
+                  >
+                    Download CSV
+                  </a>
+                )}
+              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`/api/bio/qr/${page.handle}`}
+                alt="Bio page QR"
+                className="h-24 w-24 shrink-0 rounded-lg border border-ink-100"
+              />
+            </div>
+          </Card>
+
+          <Card className="p-6">
+            <h2 className="mb-4 text-base font-semibold text-ink-900">
+              Page settings
+            </h2>
+            <BioSettingsForm page={page} />
+          </Card>
+        </div>
 
         {/* Links */}
         <div className="space-y-5">
@@ -93,6 +137,7 @@ export default async function BioEditorPage({
                 <option value="link">Link button</option>
                 <option value="header">Section header</option>
                 <option value="video">YouTube video</option>
+                <option value="subscribe">Email subscribe</option>
               </select>
               <Input name="title" placeholder="Title (e.g. Arctic Cat Wraps)" />
               <Input name="url" placeholder="https://… (URL or YouTube link)" />
@@ -168,6 +213,13 @@ export default async function BioEditorPage({
                         Save
                       </Button>
                     </form>
+                    {l.kind === "link" && (
+                      <LinkThumb
+                        linkId={l.id}
+                        pageId={page.id}
+                        initial={l.thumbnail_url}
+                      />
+                    )}
                   </li>
                 ))}
               </ul>
