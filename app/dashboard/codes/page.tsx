@@ -65,12 +65,16 @@ export default async function CodesPage() {
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-4">
-                      <div className="text-right">
-                        <p className="tabular text-sm font-semibold text-ink-900">
-                          {formatNumber(c.scan_count)}
-                        </p>
-                        <p className="text-[11px] text-ink-400">scans</p>
-                      </div>
+                      {c.type === "static" ? (
+                        <Badge tone="gray">Static</Badge>
+                      ) : (
+                        <div className="text-right">
+                          <p className="tabular text-sm font-semibold text-ink-900">
+                            {formatNumber(c.scan_count)}
+                          </p>
+                          <p className="text-[11px] text-ink-400">scans</p>
+                        </div>
+                      )}
                       <Badge tone={statusTone[c.status]}>{c.status}</Badge>
                     </div>
                   </Link>

@@ -1,4 +1,5 @@
 export type CodeStatus = "active" | "paused" | "archived";
+export type CodeType = "dynamic" | "static";
 export type LifecycleStage =
   | "new"
   | "activated"
@@ -12,6 +13,7 @@ export interface Code {
   slug: string;
   title: string;
   destination_url: string;
+  type: CodeType;
   status: CodeStatus;
   lifecycle_stage: LifecycleStage;
   scan_count: number;

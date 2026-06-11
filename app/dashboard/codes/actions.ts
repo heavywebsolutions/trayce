@@ -37,6 +37,9 @@ export async function createCode(
     return { error: "Enter a valid destination URL (e.g. https://example.com)." };
   }
   const destination = normalizeUrl(rawUrl);
+  const type = String(formData.get("type") || "dynamic") === "static"
+    ? "static"
+    : "dynamic";
 
   const { supabase, workspaceId } = await currentWorkspaceId();
 
@@ -59,6 +62,7 @@ export async function createCode(
       slug,
       title,
       destination_url: destination,
+      type,
     })
     .select("id")
     .single();
@@ -112,4 +116,15 @@ export async function setStatus(formData: FormData): Promise<void> {
 
   revalidatePath("/dashboard/codes");
   revalidatePath(`/dashboard/codes/${codeId}`);
+}
+
+// Upgrade a static code to dynamic (editable + tracked). Note: this changes what
+// the QR encodes, so it's only useful before the code has been printed.
+export async function convertToDynamic(formData: FormData): Promise<void> {
+  const codeId = String(formData.get("code_id") || "");
+  if (!codeId) return;
+  const { supabase } = await currentWorkspaceId();
+  await supabase.from("codes").update({ type: "dynamic" }).eq("id", codeId);
+  revalidatePath(`/dashboard/codes/${codeId}`);
+  revalidatePath("/dashboard/codes");
 }

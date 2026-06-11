@@ -4,8 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, Badge, Button } from "@/components/ui";
 import { CopyButton } from "@/components/CopyButton";
 import { EditDestinationForm } from "@/components/EditDestinationForm";
-import { setStatus } from "@/app/dashboard/codes/actions";
-import { qrSvg, redirectUrlFor } from "@/lib/qr";
+import { setStatus, convertToDynamic } from "@/app/dashboard/codes/actions";
+import { qrSvg, qrContentFor } from "@/lib/qr";
 import { formatNumber, timeAgo } from "@/lib/utils";
 import { formatLocation, deviceLabel } from "@/lib/geo";
 import type { Code } from "@/lib/types";
@@ -35,8 +35,9 @@ export default async function CodeDetailPage({
   if (!code) notFound();
   const c = code as Code;
 
-  const redirectUrl = redirectUrlFor(c.slug);
-  const svg = await qrSvg(redirectUrl);
+  const isStatic = c.type === "static";
+  const qrContent = qrContentFor(c);
+  const svg = await qrSvg(qrContent);
 
   const { data: scans } = await supabase
     .from("scans")
@@ -68,6 +69,9 @@ export default async function CodeDetailPage({
               {c.title}
             </h1>
             <Badge tone={statusTone[c.status]}>{c.status}</Badge>
+            <Badge tone={isStatic ? "gray" : "indigo"}>
+              {isStatic ? "Static" : "Dynamic"}
+            </Badge>
           </div>
           <p className="mt-0.5 text-sm text-ink-500">
             Created {timeAgo(c.created_at)} · {formatNumber(c.scan_count)} scans
@@ -95,13 +99,13 @@ export default async function CodeDetailPage({
             dangerouslySetInnerHTML={{ __html: svg }}
           />
           <p className="mt-4 text-xs font-medium uppercase tracking-wide text-ink-400">
-            Scan link
+            {isStatic ? "Encodes directly" : "Scan link"}
           </p>
           <div className="mt-1.5 flex items-center gap-2">
             <code className="min-w-0 flex-1 truncate rounded-lg bg-ink-50 px-2.5 py-2 text-xs text-ink-700">
-              {redirectUrl}
+              {qrContent}
             </code>
-            <CopyButton value={redirectUrl} />
+            <CopyButton value={qrContent} />
           </div>
           <a
             href={`/api/qr/${c.slug}`}
@@ -112,6 +116,39 @@ export default async function CodeDetailPage({
         </Card>
 
         <div className="space-y-5">
+          {isStatic ? (
+            <>
+              {/* Static: read-only destination + upgrade nudge */}
+              <Card className="p-6">
+                <h2 className="text-base font-semibold text-ink-900">
+                  Destination
+                </h2>
+                <p className="mb-3 mt-0.5 text-sm text-ink-500">
+                  This is a static code, so the URL is baked straight into the QR
+                  — it can&apos;t be changed once it&apos;s printed.
+                </p>
+                <code className="block truncate rounded-lg bg-ink-50 px-3 py-2.5 text-sm text-ink-700">
+                  {c.destination_url}
+                </code>
+              </Card>
+
+              <Card className="border-accent-ring/30 bg-accent-soft/40 p-6">
+                <h2 className="text-base font-semibold text-ink-900">
+                  Want to edit this — or see who scans it?
+                </h2>
+                <p className="mt-1 text-sm text-ink-600">
+                  Make it dynamic and you can re-point it anytime and track every
+                  scan, without reprinting. Best done before you print this one,
+                  since converting changes what the QR encodes.
+                </p>
+                <form action={convertToDynamic} className="mt-4">
+                  <input type="hidden" name="code_id" value={c.id} />
+                  <Button>Make it dynamic</Button>
+                </form>
+              </Card>
+            </>
+          ) : (
+            <>
           {/* Edit destination — the core dynamic mechanic */}
           <Card className="p-6">
             <h2 className="text-base font-semibold text-ink-900">
@@ -184,6 +221,8 @@ export default async function CodeDetailPage({
               </p>
             )}
           </Card>
+            </>
+          )}
         </div>
       </div>
     </div>

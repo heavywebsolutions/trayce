@@ -18,3 +18,16 @@ export function redirectUrlFor(slug: string): string {
     "http://localhost:3000";
   return `${base.replace(/\/$/, "")}/r/${slug}`;
 }
+
+// What the QR actually encodes:
+//  - dynamic: the redirect URL (so we can re-point + track scans)
+//  - static:  the destination URL directly (no server, no tracking, not editable)
+export function qrContentFor(code: {
+  type: string;
+  slug: string;
+  destination_url: string;
+}): string {
+  return code.type === "static"
+    ? code.destination_url
+    : redirectUrlFor(code.slug);
+}
