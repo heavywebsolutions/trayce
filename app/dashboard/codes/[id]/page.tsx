@@ -90,17 +90,22 @@ export default async function CodeDetailPage({
             Created {timeAgo(c.created_at)} · {formatNumber(c.scan_count)} scans
           </p>
         </div>
-        <form action={setStatus}>
-          <input type="hidden" name="code_id" value={c.id} />
-          <input
-            type="hidden"
-            name="status"
-            value={c.status === "active" ? "paused" : "active"}
-          />
-          <Button variant="secondary">
-            {c.status === "active" ? "Pause" : "Activate"}
-          </Button>
-        </form>
+        <div className="flex items-center gap-2">
+          <Link href={`/dashboard/codes/${c.id}/analytics`}>
+            <Button variant="secondary">Analytics</Button>
+          </Link>
+          <form action={setStatus}>
+            <input type="hidden" name="code_id" value={c.id} />
+            <input
+              type="hidden"
+              name="status"
+              value={c.status === "active" ? "paused" : "active"}
+            />
+            <Button variant="secondary">
+              {c.status === "active" ? "Pause" : "Activate"}
+            </Button>
+          </form>
+        </div>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[340px_1fr]">
