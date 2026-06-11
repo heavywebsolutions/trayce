@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { SOCIAL_PLATFORMS, youtubeId, readableOn, fontStack } from "@/lib/bio";
 import { ShareButton } from "@/components/ShareButton";
 import { BioSubscribeBlock } from "@/components/BioSubscribeBlock";
+import { SocialIcon } from "@/components/SocialIcon";
 import type { BioPage, BioLink } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -113,14 +114,14 @@ export default async function BioPublicPage({
                   href={socials[s.key]}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="grid h-10 w-10 place-items-center rounded-full text-xs font-bold"
+                  className="grid h-10 w-10 place-items-center rounded-full"
                   style={{
                     backgroundColor: p.accent_color,
                     color: p.button_text_color,
                   }}
                   aria-label={s.label}
                 >
-                  {s.short}
+                  <SocialIcon platform={s.key} className="h-5 w-5" />
                 </a>
               ) : null
             )}
