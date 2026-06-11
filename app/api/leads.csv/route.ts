@@ -10,17 +10,22 @@ export async function GET() {
 
   const { data: leads } = await supabase
     .from("leads")
-    .select("email, name, phone, city, region, country, created_at, codes(title)")
+    .select(
+      "email, name, phone, city, region, country, created_at, codes(title, slug)"
+    )
     .order("created_at", { ascending: false });
 
   const esc = (v: unknown) => {
     const s = v == null ? "" : String(v);
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
-  const header = "email,name,phone,city,region,country,created_at,code";
+  const header =
+    "code,code_slug,email,name,phone,city,region,country,created_at";
   const rows = (leads ?? []).map((l) => {
     const code = Array.isArray(l.codes) ? l.codes[0] : l.codes;
     return [
+      code?.title ?? "",
+      code?.slug ?? "",
       l.email,
       l.name,
       l.phone,
@@ -28,7 +33,6 @@ export async function GET() {
       l.region,
       l.country,
       l.created_at,
-      code?.title ?? "",
     ]
       .map(esc)
       .join(",");
