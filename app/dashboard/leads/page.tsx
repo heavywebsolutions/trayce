@@ -16,7 +16,7 @@ export default async function LeadsPage() {
   const { data: leads, count } = await supabase
     .from("leads")
     .select(
-      "id, email, name, phone, city, region, country, created_at, codes(title, slug)",
+      "id, email, name, phone, city, region, country, source, created_at, codes(title, slug)",
       { count: "exact" }
     )
     .order("created_at", { ascending: false })
@@ -70,7 +70,7 @@ export default async function LeadsPage() {
                   </div>
                   <div className="shrink-0 text-right">
                     <p className="truncate text-xs text-ink-500">
-                      {code?.title ?? "—"}
+                      {code?.title ?? l.source ?? "—"}
                     </p>
                     <p className="tabular text-[11px] text-ink-400">
                       {timeAgo(l.created_at)}

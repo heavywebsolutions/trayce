@@ -7,6 +7,7 @@ import {
   updateBioLink,
   deleteBioLink,
   reorderBioLinks,
+  updateBioLinkConfig,
 } from "@/app/dashboard/bio/actions";
 import { formatNumber } from "@/lib/utils";
 import type { BioLink } from "@/lib/types";
@@ -122,7 +123,9 @@ export function BioLinksList({
                     ? "Text to show"
                     : l.kind === "subscribe"
                       ? "Prompt (e.g. Get wrap drops first)"
-                      : "Title"
+                      : l.kind === "form"
+                        ? "Form heading (e.g. Apply to be a Dealer)"
+                        : "Title"
                 }
                 className="flex-1"
               />
@@ -145,6 +148,51 @@ export function BioLinksList({
                 pageId={pageId}
                 initial={l.thumbnail_url}
               />
+            )}
+
+            {l.kind === "form" && (
+              <form
+                action={updateBioLinkConfig}
+                className="mt-2 space-y-2 rounded-lg bg-ink-50 p-3"
+              >
+                <input type="hidden" name="id" value={l.id} />
+                <input type="hidden" name="page_id" value={pageId} />
+                <div className="flex flex-wrap gap-4">
+                  <label className="flex items-center gap-2 text-sm text-ink-700">
+                    <input
+                      type="checkbox"
+                      name="collect_name"
+                      defaultChecked={l.config?.collect_name ?? true}
+                      className="accent-[#4F46E5]"
+                    />
+                    Collect name
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-ink-700">
+                    <input
+                      type="checkbox"
+                      name="collect_phone"
+                      defaultChecked={l.config?.collect_phone ?? false}
+                      className="accent-[#4F46E5]"
+                    />
+                    Collect phone
+                  </label>
+                </div>
+                <Input
+                  name="button"
+                  defaultValue={l.config?.button ?? "Submit"}
+                  placeholder="Button text"
+                />
+                <Input
+                  name="success"
+                  defaultValue={
+                    l.config?.success ?? "Thanks — we'll be in touch!"
+                  }
+                  placeholder="Success message"
+                />
+                <Button type="submit" variant="secondary">
+                  Save form settings
+                </Button>
+              </form>
             )}
           </li>
         );

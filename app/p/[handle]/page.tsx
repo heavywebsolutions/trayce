@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { SOCIAL_PLATFORMS, youtubeId, readableOn, fontStack } from "@/lib/bio";
 import { ShareButton } from "@/components/ShareButton";
 import { BioSubscribeBlock } from "@/components/BioSubscribeBlock";
+import { BioFormBlock } from "@/components/BioFormBlock";
 import { SocialIcon } from "@/components/SocialIcon";
 import type { BioPage, BioLink } from "@/lib/types";
 
@@ -160,6 +161,18 @@ export default async function BioPublicPage({
                   src={l.thumbnail_url}
                   alt={l.title || ""}
                   className="w-full rounded-2xl"
+                />
+              );
+            }
+            if (l.kind === "form") {
+              return (
+                <BioFormBlock
+                  key={l.id}
+                  linkId={l.id}
+                  title={l.title}
+                  config={l.config || {}}
+                  accent={p.accent_color}
+                  textColor={p.button_text_color}
                 />
               );
             }

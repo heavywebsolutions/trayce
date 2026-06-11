@@ -61,14 +61,22 @@ export interface BioPage {
   updated_at: string;
 }
 
+export interface BioLinkConfig {
+  button?: string;
+  success?: string;
+  collect_name?: boolean;
+  collect_phone?: boolean;
+}
+
 export interface BioLink {
   id: string;
   page_id: string;
   workspace_id: string;
-  kind: string; // 'link' | 'header' | 'video'
+  kind: string; // 'link' | 'header' | 'video' | 'subscribe' | 'text' | 'image' | 'form'
   title: string;
   url: string;
   thumbnail_url: string | null;
+  config: BioLinkConfig;
   position: number;
   clicks: number;
   created_at: string;
@@ -76,7 +84,10 @@ export interface BioLink {
 
 export interface Lead {
   id: string;
-  code_id: string;
+  code_id: string | null;
+  page_id: string | null;
+  bio_link_id: string | null;
+  source: string | null;
   workspace_id: string;
   email: string;
   name: string | null;

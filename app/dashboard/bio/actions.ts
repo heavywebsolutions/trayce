@@ -127,6 +127,7 @@ export async function addBioLink(formData: FormData): Promise<void> {
     "subscribe",
     "text",
     "image",
+    "form",
   ].includes(String(formData.get("kind")))
     ? String(formData.get("kind"))
     : "link";
@@ -168,6 +169,25 @@ export async function updateBioLink(formData: FormData): Promise<void> {
       url: rawUrl ? normalizeUrl(rawUrl) : "",
     })
     .eq("id", id);
+  revalidatePath(`/dashboard/bio/${pageId}`);
+}
+
+export async function updateBioLinkConfig(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") || "");
+  const pageId = String(formData.get("page_id") || "");
+  if (!id) return;
+  const config = {
+    button: String(formData.get("button") || "Submit").slice(0, 40) || "Submit",
+    success:
+      String(formData.get("success") || "Thanks — we'll be in touch!").slice(
+        0,
+        160
+      ) || "Thanks — we'll be in touch!",
+    collect_name: formData.get("collect_name") === "on",
+    collect_phone: formData.get("collect_phone") === "on",
+  };
+  const { supabase } = await currentWorkspace();
+  await supabase.from("bio_links").update({ config }).eq("id", id);
   revalidatePath(`/dashboard/bio/${pageId}`);
 }
 

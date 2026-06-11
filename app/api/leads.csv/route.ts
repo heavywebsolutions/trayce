@@ -11,7 +11,7 @@ export async function GET() {
   const { data: leads } = await supabase
     .from("leads")
     .select(
-      "email, name, phone, city, region, country, created_at, codes(title, slug)"
+      "email, name, phone, city, region, country, source, created_at, codes(title, slug)"
     )
     .order("created_at", { ascending: false });
 
@@ -24,7 +24,7 @@ export async function GET() {
   const rows = (leads ?? []).map((l) => {
     const code = Array.isArray(l.codes) ? l.codes[0] : l.codes;
     return [
-      code?.title ?? "",
+      code?.title ?? l.source ?? "",
       code?.slug ?? "",
       l.email,
       l.name,
