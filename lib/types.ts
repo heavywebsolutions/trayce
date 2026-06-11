@@ -25,9 +25,29 @@ export interface Code {
   frame_style: string;
   frame_color: string;
   frame_text: string;
+  action_type: string;
+  lead_headline: string;
+  lead_subtext: string;
+  lead_button: string;
+  lead_collect_name: boolean;
+  lead_collect_phone: boolean;
+  lead_success_message: string;
   created_at: string;
   updated_at: string;
   archived_at: string | null;
+}
+
+export interface Lead {
+  id: string;
+  code_id: string;
+  workspace_id: string;
+  email: string;
+  name: string | null;
+  phone: string | null;
+  city: string | null;
+  region: string | null;
+  country: string | null;
+  created_at: string;
 }
 
 export interface DesignTemplate {

@@ -6,6 +6,7 @@ export interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   FALLBACK_URL: string; // where to send unknown/archived codes, e.g. your marketing site
+  FORM_BASE_URL: string; // app origin that serves /f/:slug lead forms
 }
 
 interface CodeRow {
@@ -13,6 +14,7 @@ interface CodeRow {
   workspace_id: string;
   destination_url: string;
   status: string;
+  action_type: string;
 }
 
 async function sha256Hex(input: string): Promise<string> {
@@ -42,7 +44,7 @@ export default {
     const lookup = await fetch(
       `${env.SUPABASE_URL}/rest/v1/codes?slug=eq.${encodeURIComponent(
         slug
-      )}&select=id,workspace_id,destination_url,status&limit=1`,
+      )}&select=id,workspace_id,destination_url,status,action_type&limit=1`,
       { headers }
     );
 
@@ -108,6 +110,13 @@ export default {
         }
       })()
     );
+
+    if (code.action_type === "lead" && env.FORM_BASE_URL) {
+      return Response.redirect(
+        `${env.FORM_BASE_URL.replace(/\/$/, "")}/f/${slug}`,
+        302
+      );
+    }
 
     return Response.redirect(code.destination_url, 302);
   },

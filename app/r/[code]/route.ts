@@ -24,7 +24,7 @@ export async function GET(
 
   const { data: code } = await admin
     .from("codes")
-    .select("id, workspace_id, destination_url, status")
+    .select("id, workspace_id, destination_url, status, action_type")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -82,6 +82,16 @@ export async function GET(
     }
   } catch {
     // Never let logging failures block a customer's scan.
+  }
+
+  // Lead-capture codes route to the hosted form instead of an external URL.
+  if (code.action_type === "lead") {
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
+    return NextResponse.redirect(
+      `${appUrl.replace(/\/$/, "")}/f/${slug}`,
+      { status: 302 }
+    );
   }
 
   return NextResponse.redirect(code.destination_url, { status: 302 });

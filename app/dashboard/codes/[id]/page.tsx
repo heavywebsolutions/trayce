@@ -4,11 +4,13 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, Badge, Button } from "@/components/ui";
 import { CopyButton } from "@/components/CopyButton";
 import { EditDestinationForm } from "@/components/EditDestinationForm";
-import { setStatus, convertToDynamic } from "@/app/dashboard/codes/actions";
+import { LeadConfigForm } from "@/components/LeadConfigForm";
+import { setStatus, convertToDynamic, setActionType } from "@/app/dashboard/codes/actions";
 import { qrContentFor } from "@/lib/qr";
 import { QrDesigner } from "@/components/QrDesigner";
 import { formatNumber, timeAgo } from "@/lib/utils";
 import { formatLocation, deviceLabel } from "@/lib/geo";
+import { cn } from "@/lib/utils";
 import type { Code } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -65,6 +67,14 @@ export default async function CodeDetailPage({
     .eq("workspace_id", c.workspace_id)
     .order("created_at", { ascending: false })
     .limit(12);
+
+  const isLead = c.action_type === "lead";
+  const { data: leads, count: leadCount } = await supabase
+    .from("leads")
+    .select("id, email, name, phone, created_at", { count: "exact" })
+    .eq("code_id", c.id)
+    .order("created_at", { ascending: false })
+    .limit(10);
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -172,40 +182,146 @@ export default async function CodeDetailPage({
             </>
           ) : (
             <>
-          {/* Edit destination — the core dynamic mechanic */}
-          <Card className="p-6">
-            <h2 className="text-base font-semibold text-ink-900">
-              Destination
-            </h2>
-            <p className="mb-4 mt-0.5 text-sm text-ink-500">
-              Change where this code sends people. The printed QR never changes —
-              this does.
-            </p>
-            <EditDestinationForm codeId={c.id} current={c.destination_url} />
+              {/* Action: redirect vs lead capture */}
+              <Card className="p-6">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-base font-semibold text-ink-900">
+                      Action
+                    </h2>
+                    <p className="mt-0.5 text-sm text-ink-500">
+                      What happens when someone scans.
+                    </p>
+                  </div>
+                  <div className="flex gap-1.5">
+                    {[
+                      { v: "redirect", label: "Redirect" },
+                      { v: "lead", label: "Capture leads" },
+                    ].map((a) => (
+                      <form key={a.v} action={setActionType}>
+                        <input type="hidden" name="code_id" value={c.id} />
+                        <input type="hidden" name="action_type" value={a.v} />
+                        <button
+                          className={cn(
+                            "rounded-lg border px-3 py-1.5 text-sm font-medium transition",
+                            (a.v === "lead") === isLead
+                              ? "border-accent-ring bg-accent-soft text-accent"
+                              : "border-ink-200 text-ink-600 hover:bg-ink-50"
+                          )}
+                        >
+                          {a.label}
+                        </button>
+                      </form>
+                    ))}
+                  </div>
+                </div>
+              </Card>
 
-            {history && history.length > 1 && (
-              <div className="mt-5 border-t border-ink-100 pt-4">
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-400">
-                  Recent changes
-                </p>
-                <ul className="space-y-1.5">
-                  {history.map((h) => (
-                    <li
-                      key={h.id}
-                      className="flex items-center justify-between gap-3 text-xs"
-                    >
-                      <span className="truncate text-ink-600">
-                        {h.destination_url}
-                      </span>
-                      <span className="shrink-0 text-ink-400">
-                        {timeAgo(h.created_at)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </Card>
+              {isLead ? (
+                <>
+                  <Card className="p-6">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <div>
+                        <h2 className="text-base font-semibold text-ink-900">
+                          Lead form
+                        </h2>
+                        <p className="mt-0.5 text-sm text-ink-500">
+                          Scanning shows this form; submissions become contacts
+                          you own.
+                        </p>
+                      </div>
+                      <Link
+                        href={`/f/${c.slug}`}
+                        target="_blank"
+                        className="shrink-0 text-sm font-medium text-accent hover:underline"
+                      >
+                        Preview ↗
+                      </Link>
+                    </div>
+                    <LeadConfigForm code={c} />
+                  </Card>
+
+                  <Card>
+                    <CardHeader
+                      title="Leads"
+                      subtitle={`${formatNumber(leadCount ?? 0)} captured`}
+                      action={
+                        (leadCount ?? 0) > 0 ? (
+                          <a
+                            href={`/api/codes/${c.id}/leads.csv`}
+                            className="rounded-lg border border-ink-200 px-3 py-1.5 text-xs font-medium text-ink-700 hover:bg-ink-50"
+                          >
+                            Download CSV
+                          </a>
+                        ) : undefined
+                      }
+                    />
+                    {leads && leads.length > 0 ? (
+                      <ul className="divide-y divide-ink-100">
+                        {leads.map((l) => (
+                          <li
+                            key={l.id}
+                            className="flex items-center justify-between gap-3 px-6 py-3"
+                          >
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium text-ink-800">
+                                {l.name || l.email}
+                              </p>
+                              <p className="truncate text-xs text-ink-400">
+                                {l.email}
+                                {l.phone ? ` · ${l.phone}` : ""}
+                              </p>
+                            </div>
+                            <span className="tabular shrink-0 text-xs text-ink-400">
+                              {timeAgo(l.created_at)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="px-6 py-8 text-center text-sm text-ink-500">
+                        No leads yet. Print the code and share it — submissions
+                        show up here.
+                      </p>
+                    )}
+                  </Card>
+                </>
+              ) : (
+                /* Edit destination — the core dynamic mechanic */
+                <Card className="p-6">
+                  <h2 className="text-base font-semibold text-ink-900">
+                    Destination
+                  </h2>
+                  <p className="mb-4 mt-0.5 text-sm text-ink-500">
+                    Change where this code sends people. The printed QR never
+                    changes — this does.
+                  </p>
+                  <EditDestinationForm codeId={c.id} current={c.destination_url} />
+
+                  {history && history.length > 1 && (
+                    <div className="mt-5 border-t border-ink-100 pt-4">
+                      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-400">
+                        Recent changes
+                      </p>
+                      <ul className="space-y-1.5">
+                        {history.map((h) => (
+                          <li
+                            key={h.id}
+                            className="flex items-center justify-between gap-3 text-xs"
+                          >
+                            <span className="truncate text-ink-600">
+                              {h.destination_url}
+                            </span>
+                            <span className="shrink-0 text-ink-400">
+                              {timeAgo(h.created_at)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </Card>
+              )}
 
           {/* Scans */}
           <Card>

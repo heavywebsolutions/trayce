@@ -209,6 +209,41 @@ export async function deleteLogoAsset(formData: FormData): Promise<void> {
   revalidatePath("/dashboard/codes", "layout");
 }
 
+// Switch a code between plain redirect and lead-capture form.
+export async function setActionType(formData: FormData): Promise<void> {
+  const codeId = String(formData.get("code_id") || "");
+  const action = String(formData.get("action_type") || "");
+  if (!codeId || !["redirect", "lead"].includes(action)) return;
+  const { supabase } = await currentWorkspaceId();
+  await supabase.from("codes").update({ action_type: action }).eq("id", codeId);
+  revalidatePath(`/dashboard/codes/${codeId}`);
+}
+
+// Save the lead-capture form configuration (also flips the code to lead mode).
+export async function saveLeadConfig(formData: FormData): Promise<void> {
+  const codeId = String(formData.get("code_id") || "");
+  if (!codeId) return;
+  const str = (k: string, fallback: string, max = 200) =>
+    (String(formData.get(k) || "").trim() || fallback).slice(0, max);
+  const { supabase } = await currentWorkspaceId();
+  await supabase
+    .from("codes")
+    .update({
+      action_type: "lead",
+      lead_headline: str("lead_headline", "Stay in the loop", 80),
+      lead_subtext: str("lead_subtext", "Drop your info and we'll be in touch."),
+      lead_button: str("lead_button", "Submit", 40),
+      lead_collect_name: formData.get("lead_collect_name") === "on",
+      lead_collect_phone: formData.get("lead_collect_phone") === "on",
+      lead_success_message: str(
+        "lead_success_message",
+        "Thanks — you're on the list!"
+      ),
+    })
+    .eq("id", codeId);
+  revalidatePath(`/dashboard/codes/${codeId}`);
+}
+
 // Upgrade a static code to dynamic (editable + tracked). Note: this changes what
 // the QR encodes, so it's only useful before the code has been printed.
 export async function convertToDynamic(formData: FormData): Promise<void> {

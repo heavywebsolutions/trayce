@@ -20,6 +20,10 @@ const groups: { label: string; items: NavItem[] }[] = [
     ],
   },
   {
+    label: "Customers",
+    items: [{ href: "/dashboard/leads", label: "Leads", icon: "✉" }],
+  },
+  {
     label: "Measure",
     items: [
       { href: "/dashboard/analytics", label: "Analytics", icon: "▤" },
