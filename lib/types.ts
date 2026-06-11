@@ -17,6 +17,11 @@ export interface Code {
   status: CodeStatus;
   lifecycle_stage: LifecycleStage;
   scan_count: number;
+  fg_color: string;
+  bg_color: string;
+  dot_style: string;
+  corner_style: string;
+  logo_url: string | null;
   created_at: string;
   updated_at: string;
   archived_at: string | null;

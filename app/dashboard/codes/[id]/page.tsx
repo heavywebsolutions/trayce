@@ -5,7 +5,8 @@ import { Card, CardHeader, Badge, Button } from "@/components/ui";
 import { CopyButton } from "@/components/CopyButton";
 import { EditDestinationForm } from "@/components/EditDestinationForm";
 import { setStatus, convertToDynamic } from "@/app/dashboard/codes/actions";
-import { qrSvg, qrContentFor } from "@/lib/qr";
+import { qrContentFor } from "@/lib/qr";
+import { QrDesigner } from "@/components/QrDesigner";
 import { formatNumber, timeAgo } from "@/lib/utils";
 import { formatLocation, deviceLabel } from "@/lib/geo";
 import type { Code } from "@/lib/types";
@@ -37,7 +38,6 @@ export default async function CodeDetailPage({
 
   const isStatic = c.type === "static";
   const qrContent = qrContentFor(c);
-  const svg = await qrSvg(qrContent);
 
   const { data: scans } = await supabase
     .from("scans")
@@ -90,15 +90,21 @@ export default async function CodeDetailPage({
         </form>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[300px_1fr]">
-        {/* QR + link */}
+      <div className="grid gap-5 lg:grid-cols-[340px_1fr]">
+        {/* QR designer + link */}
         <Card className="p-6">
-          <div
-            className="mx-auto w-[200px] [&>svg]:h-auto [&>svg]:w-full [&>svg]:rounded-xl [&>svg]:border [&>svg]:border-ink-100"
-            // eslint-disable-next-line react/no-danger
-            dangerouslySetInnerHTML={{ __html: svg }}
+          <QrDesigner
+            codeId={c.id}
+            content={qrContent}
+            initial={{
+              fg: c.fg_color,
+              bg: c.bg_color,
+              dot: c.dot_style,
+              corner: c.corner_style,
+              logo: c.logo_url,
+            }}
           />
-          <p className="mt-4 text-xs font-medium uppercase tracking-wide text-ink-400">
+          <p className="mt-5 text-xs font-medium uppercase tracking-wide text-ink-400">
             {isStatic ? "Encodes directly" : "Scan link"}
           </p>
           <div className="mt-1.5 flex items-center gap-2">
@@ -107,12 +113,6 @@ export default async function CodeDetailPage({
             </code>
             <CopyButton value={qrContent} />
           </div>
-          <a
-            href={`/api/qr/${c.slug}`}
-            className="mt-3 block text-center text-xs font-medium text-accent hover:underline"
-          >
-            Download SVG
-          </a>
         </Card>
 
         <div className="space-y-5">
