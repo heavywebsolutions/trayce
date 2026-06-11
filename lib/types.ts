@@ -26,6 +26,8 @@ export interface Code {
   frame_color: string;
   frame_text: string;
   action_type: string;
+  content_type: string;
+  content: Record<string, string>;
   lead_headline: string;
   lead_subtext: string;
   lead_button: string;

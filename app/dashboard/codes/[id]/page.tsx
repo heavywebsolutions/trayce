@@ -10,8 +10,10 @@ import { PendingActionButton } from "@/components/PendingActionButton";
 import { setStatus, convertToDynamic } from "@/app/dashboard/codes/actions";
 import { qrContentFor } from "@/lib/qr";
 import { QrDesigner } from "@/components/QrDesigner";
+import { ContentEditor } from "@/components/ContentEditor";
 import { formatNumber, timeAgo } from "@/lib/utils";
 import { formatLocation, deviceLabel } from "@/lib/geo";
+import { CONTENT_TYPES } from "@/lib/codeContent";
 import type { Code } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -40,6 +42,9 @@ export default async function CodeDetailPage({
   const c = code as Code;
 
   const isStatic = c.type === "static";
+  const contentType = c.content_type || "url";
+  const contentTypeLabel =
+    CONTENT_TYPES.find((t) => t.v === contentType)?.label ?? "Website";
   const qrContent = qrContentFor(c);
 
   const { data: scans } = await supabase
@@ -245,90 +250,107 @@ export default async function CodeDetailPage({
         </Card>
 
         <div className="space-y-5">
-          {isStatic ? (
-            <>
-              {/* Static: read-only destination + upgrade nudge */}
-              <Card className="p-6">
-                <h2 className="text-base font-semibold text-ink-900">
-                  Destination
-                </h2>
-                <p className="mb-3 mt-0.5 text-sm text-ink-500">
-                  This is a static code, so the URL is baked straight into the QR
-                  — it can&apos;t be changed once it&apos;s printed.
-                </p>
-                <code className="block truncate rounded-lg bg-ink-50 px-3 py-2.5 text-sm text-ink-700">
-                  {c.destination_url}
-                </code>
-              </Card>
+          {contentType === "url" ? (
+            isStatic ? (
+              <>
+                <Card className="p-6">
+                  <h2 className="text-base font-semibold text-ink-900">
+                    Destination
+                  </h2>
+                  <p className="mb-3 mt-0.5 text-sm text-ink-500">
+                    This is a static code, so the URL is baked straight into the
+                    QR — it can&apos;t be changed once it&apos;s printed.
+                  </p>
+                  <code className="block truncate rounded-lg bg-ink-50 px-3 py-2.5 text-sm text-ink-700">
+                    {c.destination_url}
+                  </code>
+                </Card>
 
-              <Card className="border-accent-ring/30 bg-accent-soft/40 p-6">
-                <h2 className="text-base font-semibold text-ink-900">
-                  Want to edit this — or see who scans it?
-                </h2>
-                <p className="mt-1 text-sm text-ink-600">
-                  Make it dynamic and you can re-point it anytime and track every
-                  scan, without reprinting. Best done before you print this one,
-                  since converting changes what the QR encodes.
-                </p>
-                <div className="mt-4">
-                  <PendingActionButton
-                    action={convertToDynamic}
-                    fields={{ code_id: c.id }}
-                    variant="primary"
-                    pendingLabel="Converting…"
-                  >
-                    Make it dynamic
-                  </PendingActionButton>
-                </div>
-              </Card>
-            </>
-          ) : (
-            <>
+                <Card className="border-accent-ring/30 bg-accent-soft/40 p-6">
+                  <h2 className="text-base font-semibold text-ink-900">
+                    Want to edit this — or see who scans it?
+                  </h2>
+                  <p className="mt-1 text-sm text-ink-600">
+                    Make it dynamic and you can re-point it anytime and track
+                    every scan, without reprinting. Best done before you print
+                    this one, since converting changes what the QR encodes.
+                  </p>
+                  <div className="mt-4">
+                    <PendingActionButton
+                      action={convertToDynamic}
+                      fields={{ code_id: c.id }}
+                      variant="primary"
+                      pendingLabel="Converting…"
+                    >
+                      Make it dynamic
+                    </PendingActionButton>
+                  </div>
+                </Card>
+              </>
+            ) : (
               <ActionToggle
                 codeId={c.id}
                 initialAction={c.action_type}
                 redirectPanel={redirectPanel}
                 leadPanel={leadPanel}
               />
-
-          {/* Scans */}
-          <Card>
-            <CardHeader title="Recent scans" />
-            {scans && scans.length > 0 ? (
-              <ul className="divide-y divide-ink-100">
-                {scans.map((s) => (
-                  <li key={s.id} className="px-6 py-3.5">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="truncate text-sm font-semibold text-ink-900">
-                        {c.title}
-                      </p>
-                      <span className="tabular shrink-0 text-xs text-ink-400">
-                        {timeAgo(s.scanned_at)}
-                      </span>
-                    </div>
-                    <p className="mt-0.5 truncate text-xs text-ink-400">
-                      /{c.slug} → {c.destination_url}
-                    </p>
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-ink-500">
-                      <Badge
-                        tone={s.device_type === "mobile" ? "indigo" : "gray"}
-                      >
-                        {deviceLabel(s.user_agent)}
-                      </Badge>
-                      <span className="text-ink-300">·</span>
-                      <span>{formatLocation(s)}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="px-6 py-8 text-center text-sm text-ink-500">
-                No scans yet. Print it, stick it on something, and watch this
-                fill up.
+            )
+          ) : (
+            <Card className="p-6">
+              <div className="mb-1 flex items-center gap-2">
+                <h2 className="text-base font-semibold text-ink-900">Content</h2>
+                <Badge tone="indigo">{contentTypeLabel}</Badge>
+              </div>
+              <p className="mb-4 text-sm text-ink-500">
+                {isStatic
+                  ? "This is encoded straight into the QR — editing it changes the QR, so update before you print."
+                  : "Edit where each device is sent. Scans are still tracked."}
               </p>
-            )}
-          </Card>
-            </>
+              <ContentEditor
+                codeId={c.id}
+                contentType={contentType}
+                initial={c.content || {}}
+              />
+            </Card>
+          )}
+
+          {!isStatic && (
+            <Card>
+              <CardHeader title="Recent scans" />
+              {scans && scans.length > 0 ? (
+                <ul className="divide-y divide-ink-100">
+                  {scans.map((s) => (
+                    <li key={s.id} className="px-6 py-3.5">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="truncate text-sm font-semibold text-ink-900">
+                          {c.title}
+                        </p>
+                        <span className="tabular shrink-0 text-xs text-ink-400">
+                          {timeAgo(s.scanned_at)}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 truncate text-xs text-ink-400">
+                        /{c.slug} → {c.destination_url}
+                      </p>
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-ink-500">
+                        <Badge
+                          tone={s.device_type === "mobile" ? "indigo" : "gray"}
+                        >
+                          {deviceLabel(s.user_agent)}
+                        </Badge>
+                        <span className="text-ink-300">·</span>
+                        <span>{formatLocation(s)}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="px-6 py-8 text-center text-sm text-ink-500">
+                  No scans yet. Print it, stick it on something, and watch this
+                  fill up.
+                </p>
+              )}
+            </Card>
           )}
         </div>
       </div>

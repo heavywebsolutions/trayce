@@ -5,102 +5,116 @@ import { useFormState, useFormStatus } from "react-dom";
 import { Button, Input, Label } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { createCode, type CodeFormState } from "@/app/dashboard/codes/actions";
+import { CONTENT_TYPES, modeFor } from "@/lib/codeContent";
+import { ContentFields } from "@/components/ContentFields";
 
 function Submit() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending} className="w-full sm:w-auto">
+    <Button type="submit" disabled={pending} className="w-full">
       {pending ? "Creating…" : "Create code"}
     </Button>
   );
 }
-
-const options = [
-  {
-    value: "dynamic",
-    label: "Dynamic",
-    tag: "Editable + tracked",
-    blurb: "Re-point it anytime and see every scan. The QR never has to change.",
-  },
-  {
-    value: "static",
-    label: "Static",
-    tag: "Free · fixed",
-    blurb: "Points straight at your URL. Can't be edited or tracked once printed.",
-  },
-] as const;
 
 export function CreateCodeForm() {
   const [state, action] = useFormState<CodeFormState, FormData>(
     createCode,
     undefined
   );
-  const [type, setType] = useState<"dynamic" | "static">("dynamic");
+  const [contentType, setContentType] = useState("url");
+  const [content, setContent] = useState<Record<string, string>>({
+    encryption: "WPA",
+  });
+  const [codeKind, setCodeKind] = useState<"dynamic" | "static">("dynamic");
+
+  const mode = modeFor(contentType);
+  // url codes follow the dynamic/static toggle; app is always dynamic; direct types are static.
+  const typeValue =
+    mode === "url" ? codeKind : mode === "app" ? "dynamic" : "static";
+
+  function set(name: string, val: string) {
+    setContent((c) => ({ ...c, [name]: val }));
+  }
 
   return (
     <form action={action} className="space-y-4">
+      <input type="hidden" name="content_type" value={contentType} />
+      <input type="hidden" name="content" value={JSON.stringify(content)} />
+      <input type="hidden" name="type" value={typeValue} />
+
+      {/* Type picker */}
       <div>
-        <Label>Code type</Label>
-        <div className="grid grid-cols-1 gap-2">
-          {options.map((o) => (
-            <label
-              key={o.value}
+        <Label>Type</Label>
+        <div className="grid grid-cols-4 gap-1.5">
+          {CONTENT_TYPES.map((t) => (
+            <button
+              key={t.v}
+              type="button"
+              onClick={() => setContentType(t.v)}
+              title={t.hint}
               className={cn(
-                "flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition",
-                type === o.value
-                  ? "border-accent-ring bg-accent-soft"
-                  : "border-ink-200 hover:border-ink-300"
+                "rounded-lg border px-1 py-2 text-xs font-medium transition",
+                contentType === t.v
+                  ? "border-accent-ring bg-accent-soft text-accent"
+                  : "border-ink-200 text-ink-600 hover:bg-ink-50"
               )}
             >
-              <input
-                type="radio"
-                name="type"
-                value={o.value}
-                checked={type === o.value}
-                onChange={() => setType(o.value)}
-                className="mt-1 accent-[#4F46E5]"
-              />
-              <span className="min-w-0">
-                <span className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-ink-900">
-                    {o.label}
-                  </span>
-                  <span className="rounded-full bg-white/70 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-500">
-                    {o.tag}
-                  </span>
-                </span>
-                <span className="mt-0.5 block text-xs text-ink-500">
-                  {o.blurb}
-                </span>
-              </span>
-            </label>
+              {t.label}
+            </button>
           ))}
         </div>
       </div>
 
+      {/* Type-specific fields */}
+      <ContentFields contentType={contentType} value={content} onChange={set} />
+
       <div>
-        <Label htmlFor="title">Name it (so you&apos;ll recognize it later)</Label>
+        <Label htmlFor="title">Name it (for your own reference)</Label>
         <Input
           id="title"
           name="title"
           placeholder="e.g. Booth banner — Sand Hollow"
         />
       </div>
-      <div>
-        <Label htmlFor="destination_url">Where should it send people?</Label>
-        <Input
-          id="destination_url"
-          name="destination_url"
-          inputMode="url"
-          placeholder="https://your-landing-page.com"
-          required
-        />
-        <p className="mt-1.5 text-xs text-ink-400">
-          {type === "dynamic"
-            ? "You can change this anytime — even after the code is printed."
-            : "This gets baked into the QR permanently. Choose carefully."}
+
+      {/* Dynamic vs static — only meaningful for Website codes */}
+      {mode === "url" && (
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { v: "dynamic", label: "Dynamic", hint: "Editable + tracked" },
+            { v: "static", label: "Static", hint: "Free · fixed" },
+          ].map((k) => (
+            <button
+              key={k.v}
+              type="button"
+              onClick={() => setCodeKind(k.v as "dynamic" | "static")}
+              className={cn(
+                "rounded-xl border p-2.5 text-left transition",
+                codeKind === k.v
+                  ? "border-accent-ring bg-accent-soft"
+                  : "border-ink-200 hover:border-ink-300"
+              )}
+            >
+              <span className="block text-sm font-semibold text-ink-900">
+                {k.label}
+              </span>
+              <span className="block text-xs text-ink-500">{k.hint}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      {mode === "direct" && (
+        <p className="text-xs text-ink-400">
+          This type is encoded straight into the QR — it works offline and
+          can&apos;t be edited or scan-tracked once printed.
         </p>
-      </div>
+      )}
+      {mode === "app" && (
+        <p className="text-xs text-ink-400">
+          Dynamic: scans are tracked and you can edit the store links anytime.
+        </p>
+      )}
 
       {state?.error && (
         <p className="rounded-xl border border-rose-100 bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700">

@@ -24,7 +24,9 @@ export async function GET(
 
   const { data: code } = await admin
     .from("codes")
-    .select("id, workspace_id, destination_url, status, action_type")
+    .select(
+      "id, workspace_id, destination_url, status, action_type, content_type, content"
+    )
     .eq("slug", slug)
     .maybeSingle();
 
@@ -92,6 +94,17 @@ export async function GET(
       `${appUrl.replace(/\/$/, "")}/f/${slug}`,
       { status: 302 }
     );
+  }
+
+  // App codes: send each device to the right store.
+  if (code.content_type === "app") {
+    const norm = (u: string) =>
+      /^https?:\/\//i.test(u) ? u : `https://${u}`;
+    const c = (code.content || {}) as Record<string, string>;
+    let target = c.fallback || code.destination_url;
+    if (/iphone|ipad|ipod/i.test(ua) && c.ios) target = c.ios;
+    else if (/android/i.test(ua) && c.android) target = c.android;
+    return NextResponse.redirect(norm(target), { status: 302 });
   }
 
   return NextResponse.redirect(code.destination_url, { status: 302 });

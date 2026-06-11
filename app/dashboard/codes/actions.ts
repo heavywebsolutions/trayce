@@ -5,6 +5,12 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { generateSlug } from "@/lib/slug";
 import { normalizeUrl, isValidUrl } from "@/lib/utils";
+import {
+  CONTENT_TYPES,
+  modeFor,
+  buildPayload,
+  hasRequired,
+} from "@/lib/codeContent";
 
 async function currentWorkspaceId() {
   const supabase = await createClient();
@@ -32,14 +38,37 @@ export async function createCode(
   formData: FormData
 ): Promise<CodeFormState> {
   const title = String(formData.get("title") || "").trim() || "Untitled code";
-  const rawUrl = String(formData.get("destination_url") || "");
-  if (!isValidUrl(rawUrl)) {
-    return { error: "Enter a valid destination URL (e.g. https://example.com)." };
+
+  const ctRaw = String(formData.get("content_type") || "url");
+  const contentType = CONTENT_TYPES.some((t) => t.v === ctRaw) ? ctRaw : "url";
+
+  let content: Record<string, string> = {};
+  try {
+    const parsed = JSON.parse(String(formData.get("content") || "{}"));
+    if (parsed && typeof parsed === "object") content = parsed;
+  } catch {
+    /* ignore */
   }
-  const destination = normalizeUrl(rawUrl);
-  const type = String(formData.get("type") || "dynamic") === "static"
-    ? "static"
-    : "dynamic";
+
+  if (!hasRequired(contentType, content)) {
+    return { error: "Fill in the required field for this type." };
+  }
+  if (contentType === "url" && !isValidUrl(content.url || "")) {
+    return { error: "Enter a valid website URL (e.g. https://example.com)." };
+  }
+
+  const mode = modeFor(contentType);
+  const type =
+    mode === "url"
+      ? String(formData.get("type")) === "static"
+        ? "static"
+        : "dynamic"
+      : mode === "app"
+        ? "dynamic"
+        : "static";
+
+  const destination = buildPayload(contentType, content);
+  if (!destination) return { error: "Couldn't build this code's content." };
 
   const { supabase, workspaceId } = await currentWorkspaceId();
 
@@ -63,19 +92,57 @@ export async function createCode(
       title,
       destination_url: destination,
       type,
+      content_type: contentType,
+      content,
     })
     .select("id")
     .single();
 
   if (error) return { error: error.message };
 
-  await supabase
-    .from("code_destinations")
-    .insert({ code_id: code.id, destination_url: destination });
+  if (contentType === "url" && type === "dynamic") {
+    await supabase
+      .from("code_destinations")
+      .insert({ code_id: code.id, destination_url: destination });
+  }
 
   revalidatePath("/dashboard/codes");
   revalidatePath("/dashboard");
   redirect(`/dashboard/codes/${code.id}`);
+}
+
+// Edit the structured content of a non-URL code (vCard, Wi-Fi, App, etc.) and
+// rebuild what the code encodes/points to.
+export async function updateContent(formData: FormData): Promise<void> {
+  const codeId = String(formData.get("code_id") || "");
+  const ctRaw = String(formData.get("content_type") || "url");
+  const contentType = CONTENT_TYPES.some((t) => t.v === ctRaw) ? ctRaw : "url";
+  if (!codeId) return;
+
+  let content: Record<string, string> = {};
+  try {
+    const parsed = JSON.parse(String(formData.get("content") || "{}"));
+    if (parsed && typeof parsed === "object") content = parsed;
+  } catch {
+    return;
+  }
+
+  if (!hasRequired(contentType, content)) return;
+  const destination = buildPayload(contentType, content);
+  if (!destination) return;
+
+  const { supabase } = await currentWorkspaceId();
+  await supabase
+    .from("codes")
+    .update({
+      destination_url: destination,
+      content,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", codeId);
+
+  revalidatePath(`/dashboard/codes/${codeId}`);
+  revalidatePath("/dashboard/codes");
 }
 
 export async function updateDestination(formData: FormData): Promise<void> {

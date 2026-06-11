@@ -15,6 +15,8 @@ interface CodeRow {
   destination_url: string;
   status: string;
   action_type: string;
+  content_type: string;
+  content: Record<string, string> | null;
 }
 
 async function sha256Hex(input: string): Promise<string> {
@@ -44,7 +46,7 @@ export default {
     const lookup = await fetch(
       `${env.SUPABASE_URL}/rest/v1/codes?slug=eq.${encodeURIComponent(
         slug
-      )}&select=id,workspace_id,destination_url,status,action_type&limit=1`,
+      )}&select=id,workspace_id,destination_url,status,action_type,content_type,content&limit=1`,
       { headers }
     );
 
@@ -116,6 +118,16 @@ export default {
         `${env.FORM_BASE_URL.replace(/\/$/, "")}/f/${slug}`,
         302
       );
+    }
+
+    if (code.content_type === "app") {
+      const ua = request.headers.get("user-agent") || "";
+      const c = code.content || {};
+      const norm = (u: string) => (/^https?:\/\//i.test(u) ? u : `https://${u}`);
+      let target = c.fallback || code.destination_url;
+      if (/iphone|ipad|ipod/i.test(ua) && c.ios) target = c.ios;
+      else if (/android/i.test(ua) && c.android) target = c.android;
+      return Response.redirect(norm(target), 302);
     }
 
     return Response.redirect(code.destination_url, 302);
