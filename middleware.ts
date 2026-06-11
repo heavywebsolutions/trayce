@@ -8,6 +8,6 @@ export async function middleware(request: NextRequest) {
 export const config = {
   // Run on everything except static assets and the public redirect route (/r/*).
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|r/|f/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|r/|f/|p/|l/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

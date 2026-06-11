@@ -1,0 +1,179 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { normalizeUrl } from "@/lib/utils";
+import { SOCIAL_PLATFORMS } from "@/lib/bio";
+
+async function currentWorkspace() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const { data: ws } = await supabase
+    .from("workspaces")
+    .select("id")
+    .eq("owner_id", user.id)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .single();
+  if (!ws) throw new Error("No workspace");
+  return { supabase, workspaceId: ws.id };
+}
+
+const hex = (v: unknown, fallback: string) =>
+  typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v) ? v : fallback;
+
+export type BioFormState = { error?: string } | undefined;
+
+export async function createBioPage(
+  _prev: BioFormState,
+  formData: FormData
+): Promise<BioFormState> {
+  const handle = String(formData.get("handle") || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "");
+  if (!/^[a-z0-9](?:[a-z0-9-]{1,28}[a-z0-9])?$/.test(handle)) {
+    return { error: "Handle must be 3–30 letters, numbers, or hyphens." };
+  }
+  const display_name = String(formData.get("display_name") || "").trim() || handle;
+
+  const { supabase, workspaceId } = await currentWorkspace();
+
+  const { data: existing } = await supabase
+    .from("bio_pages")
+    .select("id")
+    .eq("handle", handle)
+    .maybeSingle();
+  if (existing) return { error: "That handle is taken — try another." };
+
+  const { data: page, error } = await supabase
+    .from("bio_pages")
+    .insert({ workspace_id: workspaceId, handle, display_name })
+    .select("id")
+    .single();
+  if (error) return { error: error.message };
+
+  revalidatePath("/dashboard/bio");
+  redirect(`/dashboard/bio/${page.id}`);
+}
+
+export async function updateBioPage(formData: FormData): Promise<void> {
+  const pageId = String(formData.get("page_id") || "");
+  if (!pageId) return;
+  const { supabase } = await currentWorkspace();
+
+  const socials: Record<string, string> = {};
+  for (const s of SOCIAL_PLATFORMS) {
+    const v = String(formData.get(`social_${s.key}`) || "").trim();
+    if (v) socials[s.key] = normalizeUrl(v);
+  }
+
+  const avatarRaw = formData.get("avatar_url");
+  const avatar =
+    typeof avatarRaw === "string" &&
+    avatarRaw.startsWith("data:image/") &&
+    avatarRaw.length < 400_000
+      ? avatarRaw
+      : typeof avatarRaw === "string" && avatarRaw === ""
+        ? null
+        : undefined; // undefined = leave unchanged
+
+  const update: Record<string, unknown> = {
+    display_name: String(formData.get("display_name") || "").slice(0, 80),
+    tagline: String(formData.get("tagline") || "").slice(0, 160),
+    bg_color: hex(formData.get("bg_color"), "#0A2540"),
+    accent_color: hex(formData.get("accent_color"), "#4F46E5"),
+    button_text_color: hex(formData.get("button_text_color"), "#FFFFFF"),
+    socials,
+    updated_at: new Date().toISOString(),
+  };
+  if (avatar !== undefined) update.avatar_url = avatar;
+
+  await supabase.from("bio_pages").update(update).eq("id", pageId);
+  revalidatePath(`/dashboard/bio/${pageId}`);
+}
+
+export async function addBioLink(formData: FormData): Promise<void> {
+  const pageId = String(formData.get("page_id") || "");
+  const kind = ["link", "header", "video"].includes(String(formData.get("kind")))
+    ? String(formData.get("kind"))
+    : "link";
+  if (!pageId) return;
+
+  const { supabase, workspaceId } = await currentWorkspace();
+
+  const { data: last } = await supabase
+    .from("bio_links")
+    .select("position")
+    .eq("page_id", pageId)
+    .order("position", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const position = (last?.position ?? -1) + 1;
+
+  const rawUrl = String(formData.get("url") || "").trim();
+  await supabase.from("bio_links").insert({
+    page_id: pageId,
+    workspace_id: workspaceId,
+    kind,
+    title: String(formData.get("title") || "").slice(0, 120),
+    url: kind === "header" ? "" : rawUrl ? normalizeUrl(rawUrl) : "",
+    position,
+  });
+  revalidatePath(`/dashboard/bio/${pageId}`);
+}
+
+export async function updateBioLink(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") || "");
+  const pageId = String(formData.get("page_id") || "");
+  if (!id) return;
+  const { supabase } = await currentWorkspace();
+  const rawUrl = String(formData.get("url") || "").trim();
+  await supabase
+    .from("bio_links")
+    .update({
+      title: String(formData.get("title") || "").slice(0, 120),
+      url: rawUrl ? normalizeUrl(rawUrl) : "",
+    })
+    .eq("id", id);
+  revalidatePath(`/dashboard/bio/${pageId}`);
+}
+
+export async function deleteBioLink(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") || "");
+  const pageId = String(formData.get("page_id") || "");
+  if (!id) return;
+  const { supabase } = await currentWorkspace();
+  await supabase.from("bio_links").delete().eq("id", id);
+  revalidatePath(`/dashboard/bio/${pageId}`);
+}
+
+export async function moveBioLink(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") || "");
+  const pageId = String(formData.get("page_id") || "");
+  const dir = String(formData.get("dir") || "");
+  if (!id || !pageId) return;
+  const { supabase } = await currentWorkspace();
+
+  const { data: rows } = await supabase
+    .from("bio_links")
+    .select("id, position")
+    .eq("page_id", pageId)
+    .order("position", { ascending: true });
+  if (!rows) return;
+
+  const idx = rows.findIndex((r) => r.id === id);
+  if (idx === -1) return;
+  const swapIdx = dir === "up" ? idx - 1 : idx + 1;
+  if (swapIdx < 0 || swapIdx >= rows.length) return;
+
+  const a = rows[idx];
+  const b = rows[swapIdx];
+  await supabase.from("bio_links").update({ position: b.position }).eq("id", a.id);
+  await supabase.from("bio_links").update({ position: a.position }).eq("id", b.id);
+  revalidatePath(`/dashboard/bio/${pageId}`);
+}

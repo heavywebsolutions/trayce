@@ -39,6 +39,36 @@ export interface Code {
   archived_at: string | null;
 }
 
+export interface BioPage {
+  id: string;
+  workspace_id: string;
+  handle: string;
+  display_name: string;
+  tagline: string;
+  avatar_url: string | null;
+  bg_color: string;
+  accent_color: string;
+  button_text_color: string;
+  socials: Record<string, string>;
+  views: number;
+  published: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BioLink {
+  id: string;
+  page_id: string;
+  workspace_id: string;
+  kind: string; // 'link' | 'header' | 'video'
+  title: string;
+  url: string;
+  thumbnail_url: string | null;
+  position: number;
+  clicks: number;
+  created_at: string;
+}
+
 export interface Lead {
   id: string;
   code_id: string;
