@@ -47,6 +47,9 @@ export interface BioPage {
   tagline: string;
   avatar_url: string | null;
   bg_image_url: string | null;
+  bg_fit: string;
+  framed: boolean;
+  panel_color: string;
   bg_color: string;
   accent_color: string;
   button_text_color: string;

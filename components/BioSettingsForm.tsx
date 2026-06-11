@@ -192,6 +192,41 @@ export function BioSettingsForm({ page }: { page: BioPage }) {
         </div>
       </div>
 
+      {/* Layout: background fit + content panel */}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label htmlFor="bg_fit">Background fit</Label>
+          <select
+            id="bg_fit"
+            name="bg_fit"
+            defaultValue={page.bg_fit}
+            className="min-h-[44px] w-full rounded-xl border border-ink-200 bg-white px-3 text-sm text-ink-900"
+          >
+            <option value="cover">Cover (fill)</option>
+            <option value="tile">Tile (repeat)</option>
+            <option value="solid">Solid color only</option>
+          </select>
+        </div>
+        <label className="text-xs font-medium text-ink-600">
+          Panel color
+          <input
+            type="color"
+            name="panel_color"
+            defaultValue={page.panel_color}
+            className="mt-1 h-9 w-full cursor-pointer rounded-lg border border-ink-200 bg-white"
+          />
+        </label>
+      </div>
+      <label className="flex items-center gap-2 text-sm text-ink-700">
+        <input
+          type="checkbox"
+          name="framed"
+          defaultChecked={page.framed}
+          className="accent-[#4F46E5]"
+        />
+        Contain content in a panel (great over busy backgrounds)
+      </label>
+
       {/* Socials */}
       <div>
         <Label>Social links</Label>

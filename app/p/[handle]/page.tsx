@@ -47,15 +47,21 @@ export default async function BioPublicPage({
   const onBg = readableOn(p.bg_color);
   const socials = p.socials || {};
 
-  const bgStyle: React.CSSProperties = p.bg_image_url
-    ? {
-        backgroundColor: p.bg_color,
-        backgroundImage: `url(${p.bg_image_url})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        color: onBg,
-      }
-    : { backgroundColor: p.bg_color, color: onBg };
+  const bgStyle: React.CSSProperties = {
+    backgroundColor: p.bg_color,
+    color: onBg,
+  };
+  if (p.bg_image_url && p.bg_fit !== "solid") {
+    bgStyle.backgroundImage = `url(${p.bg_image_url})`;
+    if (p.bg_fit === "tile") {
+      bgStyle.backgroundRepeat = "repeat";
+      bgStyle.backgroundSize = "300px auto";
+    } else {
+      bgStyle.backgroundSize = "cover";
+      bgStyle.backgroundPosition = "center";
+    }
+  }
+  const contentColor = p.framed ? readableOn(p.panel_color) : onBg;
 
   return (
     <main
@@ -69,7 +75,20 @@ export default async function BioPublicPage({
           color={onBg}
         />
       </div>
-      <div className="mx-auto w-full max-w-md">
+      <div
+        className="mx-auto w-full max-w-md"
+        style={
+          p.framed
+            ? {
+                backgroundColor: p.panel_color,
+                color: contentColor,
+                borderRadius: 24,
+                padding: "28px 20px",
+                marginBottom: 24,
+              }
+            : { color: contentColor }
+        }
+      >
         {/* Header */}
         <div className="flex flex-col items-center text-center">
           {p.avatar_url && (

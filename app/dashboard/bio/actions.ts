@@ -103,6 +103,11 @@ export async function updateBioPage(formData: FormData): Promise<void> {
     )
       ? String(formData.get("font_family"))
       : "sans",
+    bg_fit: ["cover", "tile", "solid"].includes(String(formData.get("bg_fit")))
+      ? String(formData.get("bg_fit"))
+      : "cover",
+    framed: formData.get("framed") === "on",
+    panel_color: hex(formData.get("panel_color"), "#000000"),
     socials,
     updated_at: new Date().toISOString(),
   };
