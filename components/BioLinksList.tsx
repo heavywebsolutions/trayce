@@ -91,7 +91,7 @@ export function BioLinksList({
   }
 
   return (
-    <ul ref={listRef} className="divide-y divide-ink-100">
+    <ul ref={listRef} className="space-y-3 p-4">
       {order.map((l) => {
         const hasUrl = l.kind === "link" || l.kind === "video";
         const hasImage = l.kind === "link" || l.kind === "image";
@@ -100,9 +100,9 @@ export function BioLinksList({
             key={l.id}
             data-id={l.id}
             className={cn(
-              "px-4 py-4 transition-shadow sm:px-6",
+              "rounded-xl border border-ink-200 bg-white p-4 shadow-sm transition",
               dragId === l.id &&
-                "relative z-10 rounded-xl bg-accent-soft shadow-lg ring-1 ring-accent-ring"
+                "relative z-10 border-accent-ring bg-accent-soft shadow-lg ring-1 ring-accent-ring"
             )}
           >
             <div className="mb-2 flex items-center justify-between gap-2">
