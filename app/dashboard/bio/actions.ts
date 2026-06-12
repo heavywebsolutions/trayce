@@ -7,6 +7,7 @@ import { normalizeUrl } from "@/lib/utils";
 import { SOCIAL_PLATFORMS } from "@/lib/bio";
 import { productHandleFromInput, fetchShopifyProduct } from "@/lib/shopify";
 import { decryptSecret } from "@/lib/crypto";
+import { RESERVED_HANDLES } from "@/lib/reserved";
 
 async function currentWorkspace() {
   const supabase = await createClient();
@@ -40,6 +41,9 @@ export async function createBioPage(
     .replace(/[^a-z0-9-]/g, "");
   if (!/^[a-z0-9](?:[a-z0-9-]{1,28}[a-z0-9])?$/.test(handle)) {
     return { error: "Handle must be 3–30 letters, numbers, or hyphens." };
+  }
+  if (RESERVED_HANDLES.has(handle)) {
+    return { error: "That handle is reserved — try another." };
   }
   const display_name = String(formData.get("display_name") || "").trim() || handle;
 
@@ -94,9 +98,18 @@ export async function updateBioPage(formData: FormData): Promise<void> {
         ? null
         : undefined;
 
+  // Custom domain: normalize to a bare host (lowercase, no protocol/path).
+  const domRaw = String(formData.get("custom_domain") || "")
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/.*$/, "");
+  const custom_domain = /^[a-z0-9.-]+\.[a-z]{2,}$/.test(domRaw) ? domRaw : null;
+
   const update: Record<string, unknown> = {
     display_name: String(formData.get("display_name") || "").slice(0, 80),
     tagline: String(formData.get("tagline") || "").slice(0, 160),
+    custom_domain,
     bg_color: hex(formData.get("bg_color"), "#0A2540"),
     accent_color: hex(formData.get("accent_color"), "#4F46E5"),
     button_text_color: hex(formData.get("button_text_color"), "#FFFFFF"),

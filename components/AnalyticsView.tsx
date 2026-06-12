@@ -65,14 +65,25 @@ export function AnalyticsView({
   os,
   locations,
   topCodes,
+  labels,
 }: {
   stats: { label: string; value: string; hint?: string }[];
   buckets: Bucket[];
   os: [string, number][];
   locations: [string, number][];
   topCodes?: [string, number][];
+  labels?: {
+    chartTitle?: string;
+    noun?: string;
+    topTitle?: string;
+    topSubtitle?: string;
+    locationsSubtitle?: string;
+  };
 }) {
   const maxTotal = Math.max(1, ...buckets.map((b) => b.total));
+  const L = labels ?? {};
+  const noun = L.noun ?? "scan";
+  const empty = `No ${noun}s in this range yet.`;
 
   return (
     <>
@@ -86,7 +97,7 @@ export function AnalyticsView({
       <Card className="mb-5 p-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-base font-semibold text-ink-900">
-            Scans over time
+            {L.chartTitle ?? "Scans over time"}
           </h2>
           <div className="flex items-center gap-3 text-xs text-ink-500">
             <span className="flex items-center gap-1.5">
@@ -101,7 +112,7 @@ export function AnalyticsView({
           {buckets.map((b) => (
             <div
               key={b.key}
-              title={`${b.label}: ${b.total} scan${b.total === 1 ? "" : "s"} · ${b.unique} unique`}
+              title={`${b.label}: ${b.total} ${noun}${b.total === 1 ? "" : "s"} · ${b.unique} unique`}
               className="relative h-full flex-1"
             >
               <div
@@ -129,14 +140,14 @@ export function AnalyticsView({
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Card>
-          <CardHeader title="Operating system" subtitle="Of all scans" />
-          <BarList rows={os} emptyText="No scans in this range yet." />
+          <CardHeader title="Operating system" subtitle={`Of all ${noun}s`} />
+          <BarList rows={os} emptyText={empty} />
         </Card>
 
         <Card>
           <CardHeader
             title="Top locations"
-            subtitle="Where scans happen (IP-based)"
+            subtitle={L.locationsSubtitle ?? "Where scans happen (IP-based)"}
           />
           <BarList rows={locations} emptyText="No location data yet." />
         </Card>
@@ -144,8 +155,11 @@ export function AnalyticsView({
 
       {topCodes && (
         <Card className="mt-5">
-          <CardHeader title="Top codes" subtitle="Most scanned in range" />
-          <BarList rows={topCodes} emptyText="No scans in this range yet." />
+          <CardHeader
+            title={L.topTitle ?? "Top codes"}
+            subtitle={L.topSubtitle ?? "Most scanned in range"}
+          />
+          <BarList rows={topCodes} emptyText={empty} />
         </Card>
       )}
     </>

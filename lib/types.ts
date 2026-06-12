@@ -43,6 +43,7 @@ export interface BioPage {
   id: string;
   workspace_id: string;
   handle: string;
+  custom_domain: string | null;
   display_name: string;
   tagline: string;
   avatar_url: string | null;

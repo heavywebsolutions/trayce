@@ -53,7 +53,7 @@ export default async function BioListPage() {
                     <p className="truncate text-sm font-semibold text-ink-900">
                       {p.display_name || p.handle}
                     </p>
-                    <p className="truncate text-xs text-ink-400">/p/{p.handle}</p>
+                    <p className="truncate text-xs text-ink-400">@{p.handle}</p>
                   </Link>
                   <div className="flex shrink-0 items-center gap-4">
                     <div className="text-right">
@@ -63,7 +63,7 @@ export default async function BioListPage() {
                       <p className="text-[11px] text-ink-400">views</p>
                     </div>
                     <a
-                      href={`/p/${p.handle}`}
+                      href={`/@${p.handle}`}
                       target="_blank"
                       className="text-xs font-medium text-accent hover:underline"
                     >

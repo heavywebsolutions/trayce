@@ -8,8 +8,10 @@ export async function GET(
 ) {
   const { handle } = await ctx.params;
   const origin =
-    process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
-  const url = `${origin.replace(/\/$/, "")}/p/${handle}`;
+    process.env.NEXT_PUBLIC_BIO_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    new URL(request.url).origin;
+  const url = `${origin.replace(/\/$/, "")}/@${handle}`;
   const svg = await qrSvg(url);
   const download = new URL(request.url).searchParams.has("dl");
   const headers: Record<string, string> = {

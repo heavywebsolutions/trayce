@@ -57,12 +57,17 @@ export default async function BioEditorPage({
             {page.display_name || page.handle}
           </h1>
           <p className="mt-0.5 text-sm text-ink-500">
-            /p/{page.handle} · {formatNumber(page.views)} views
+            trayce.app/@{page.handle} · {formatNumber(page.views)} views
           </p>
         </div>
-        <a href={`/p/${page.handle}`} target="_blank">
-          <Button variant="secondary">View page ↗</Button>
-        </a>
+        <div className="flex items-center gap-2">
+          <Link href={`/dashboard/bio/${page.id}/analytics`}>
+            <Button variant="secondary">Analytics</Button>
+          </Link>
+          <a href={`/@${page.handle}`} target="_blank">
+            <Button variant="secondary">View page ↗</Button>
+          </a>
+        </div>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
@@ -153,6 +158,7 @@ export default async function BioEditorPage({
           </Card>
         </div>
       </div>
+
     </div>
   );
 }
