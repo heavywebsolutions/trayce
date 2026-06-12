@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeUrl } from "@/lib/utils";
 import { SOCIAL_PLATFORMS } from "@/lib/bio";
+import { productHandleFromInput, fetchShopifyProduct } from "@/lib/shopify";
+import { decryptSecret } from "@/lib/crypto";
 
 async function currentWorkspace() {
   const supabase = await createClient();
@@ -128,6 +130,7 @@ export async function addBioLink(formData: FormData): Promise<void> {
     "text",
     "image",
     "form",
+    "product",
   ].includes(String(formData.get("kind")))
     ? String(formData.get("kind"))
     : "link";
@@ -188,6 +191,39 @@ export async function updateBioLinkConfig(formData: FormData): Promise<void> {
   };
   const { supabase } = await currentWorkspace();
   await supabase.from("bio_links").update({ config }).eq("id", id);
+  revalidatePath(`/dashboard/bio/${pageId}`);
+}
+
+// Resolve a Shopify product (live) and cache it on the block.
+export async function fetchBioProduct(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") || "");
+  const pageId = String(formData.get("page_id") || "");
+  const handle = productHandleFromInput(String(formData.get("product_input") || ""));
+  if (!id || !handle) return;
+
+  const { supabase, workspaceId } = await currentWorkspace();
+  const { data: integ } = await supabase
+    .from("integrations")
+    .select("endpoint, api_key, enabled")
+    .eq("workspace_id", workspaceId)
+    .eq("provider", "shopify")
+    .maybeSingle();
+  if (!integ?.endpoint || !integ.api_key) return;
+
+  const token = decryptSecret(integ.api_key as string);
+  if (!token) return;
+
+  const product = await fetchShopifyProduct(
+    integ.endpoint as string,
+    token,
+    handle
+  );
+  if (!product) return;
+
+  await supabase
+    .from("bio_links")
+    .update({ title: product.title, url: product.url, config: { product } })
+    .eq("id", id);
   revalidatePath(`/dashboard/bio/${pageId}`);
 }
 

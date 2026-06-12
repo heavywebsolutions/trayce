@@ -5,6 +5,7 @@ import { ShareButton } from "@/components/ShareButton";
 import { BioSubscribeBlock } from "@/components/BioSubscribeBlock";
 import { BioFormBlock } from "@/components/BioFormBlock";
 import { SocialIcon } from "@/components/SocialIcon";
+import { formatPrice } from "@/lib/shopify";
 import type { BioPage, BioLink } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -162,6 +163,45 @@ export default async function BioPublicPage({
                   alt={l.title || ""}
                   className="w-full rounded-2xl"
                 />
+              );
+            }
+            if (l.kind === "product") {
+              const pr = l.config?.product;
+              if (!pr) return null;
+              return (
+                <a
+                  key={l.id}
+                  href={pr.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 rounded-2xl bg-white/10 p-3 transition hover:opacity-90"
+                >
+                  {pr.image && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={pr.image}
+                      alt=""
+                      className="h-16 w-16 shrink-0 rounded-lg object-cover"
+                    />
+                  )}
+                  <div className="min-w-0 flex-1 text-left">
+                    <p className="truncate text-sm font-semibold">{pr.title}</p>
+                    {pr.price && (
+                      <p className="text-sm opacity-80">
+                        {formatPrice(pr.price, pr.currency)}
+                      </p>
+                    )}
+                  </div>
+                  <span
+                    className="shrink-0 rounded-xl px-3 py-2 text-xs font-semibold"
+                    style={{
+                      backgroundColor: p.accent_color,
+                      color: p.button_text_color,
+                    }}
+                  >
+                    Shop
+                  </span>
+                </a>
               );
             }
             if (l.kind === "form") {

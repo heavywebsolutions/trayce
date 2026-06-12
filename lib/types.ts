@@ -61,11 +61,21 @@ export interface BioPage {
   updated_at: string;
 }
 
+export interface BioProduct {
+  handle: string;
+  title: string;
+  image: string | null;
+  price: string | null;
+  currency: string | null;
+  url: string;
+}
+
 export interface BioLinkConfig {
   button?: string;
   success?: string;
   collect_name?: boolean;
   collect_phone?: boolean;
+  product?: BioProduct;
 }
 
 export interface BioLink {

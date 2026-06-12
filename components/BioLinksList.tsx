@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { Button, Input, Badge } from "@/components/ui";
 import { LinkThumb } from "@/components/LinkThumb";
 import {
@@ -8,8 +8,10 @@ import {
   deleteBioLink,
   reorderBioLinks,
   updateBioLinkConfig,
+  fetchBioProduct,
 } from "@/app/dashboard/bio/actions";
 import { formatNumber } from "@/lib/utils";
+import { formatPrice } from "@/lib/shopify";
 import type { BioLink } from "@/lib/types";
 
 const kindTone: Record<string, string> = {
@@ -31,6 +33,7 @@ export function BioLinksList({
   const [order, setOrder] = useState<BioLink[]>(links);
   const [dragId, setDragId] = useState<string | null>(null);
   const [, start] = useTransition();
+  const listRef = useRef<HTMLUListElement>(null);
 
   function persist(next: BioLink[]) {
     const fd = new FormData();
@@ -41,13 +44,32 @@ export function BioLinksList({
     });
   }
 
-  function onDragOver(e: React.DragEvent, overId: string) {
-    e.preventDefault();
-    if (!dragId || dragId === overId) return;
+  // Pointer-based drag — works with both mouse and touch.
+  function targetIndex(clientY: number): number {
+    const ul = listRef.current;
+    if (!ul) return -1;
+    const items = Array.from(
+      ul.querySelectorAll<HTMLLIElement>("li[data-id]")
+    );
+    for (let i = 0; i < items.length; i++) {
+      const r = items[i].getBoundingClientRect();
+      if (clientY < r.top + r.height / 2) return i;
+    }
+    return items.length - 1;
+  }
+
+  function onPointerDown(e: React.PointerEvent, id: string) {
+    setDragId(id);
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  }
+
+  function onPointerMove(e: React.PointerEvent) {
+    if (!dragId) return;
+    const to = targetIndex(e.clientY);
+    if (to < 0) return;
     setOrder((cur) => {
       const from = cur.findIndex((l) => l.id === dragId);
-      const to = cur.findIndex((l) => l.id === overId);
-      if (from < 0 || to < 0) return cur;
+      if (from < 0 || from === to) return cur;
       const copy = [...cur];
       const [moved] = copy.splice(from, 1);
       copy.splice(to, 0, moved);
@@ -55,7 +77,7 @@ export function BioLinksList({
     });
   }
 
-  function onDrop() {
+  function onPointerUp() {
     if (dragId) persist(order);
     setDragId(null);
   }
@@ -69,24 +91,24 @@ export function BioLinksList({
   }
 
   return (
-    <ul className="divide-y divide-ink-100">
+    <ul ref={listRef} className="divide-y divide-ink-100">
       {order.map((l) => {
         const hasUrl = l.kind === "link" || l.kind === "video";
         const hasImage = l.kind === "link" || l.kind === "image";
         return (
           <li
             key={l.id}
-            onDragOver={(e) => onDragOver(e, l.id)}
-            onDrop={onDrop}
+            data-id={l.id}
             className={dragId === l.id ? "px-6 py-4 opacity-50" : "px-6 py-4"}
           >
             <div className="mb-2 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <span
-                  draggable
-                  onDragStart={() => setDragId(l.id)}
-                  onDragEnd={() => setDragId(null)}
-                  className="cursor-grab select-none text-ink-300 hover:text-ink-500"
+                  onPointerDown={(e) => onPointerDown(e, l.id)}
+                  onPointerMove={onPointerMove}
+                  onPointerUp={onPointerUp}
+                  style={{ touchAction: "none" }}
+                  className="cursor-grab select-none text-lg text-ink-300 hover:text-ink-500"
                   title="Drag to reorder"
                 >
                   ⠿
@@ -192,6 +214,48 @@ export function BioLinksList({
                 <Button type="submit" variant="secondary">
                   Save form settings
                 </Button>
+              </form>
+            )}
+
+            {l.kind === "product" && (
+              <form
+                action={fetchBioProduct}
+                className="mt-2 space-y-2 rounded-lg bg-ink-50 p-3"
+              >
+                <input type="hidden" name="id" value={l.id} />
+                <input type="hidden" name="page_id" value={pageId} />
+                <Input
+                  name="product_input"
+                  defaultValue={l.config?.product?.handle ?? ""}
+                  placeholder="Shopify product URL or handle"
+                />
+                <Button type="submit" variant="secondary">
+                  Fetch product
+                </Button>
+                {l.config?.product ? (
+                  <div className="flex items-center gap-2 text-xs text-ink-600">
+                    {l.config.product.image && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={l.config.product.image}
+                        alt=""
+                        className="h-8 w-8 rounded object-cover"
+                      />
+                    )}
+                    <span className="truncate">
+                      {l.config.product.title} ·{" "}
+                      {formatPrice(
+                        l.config.product.price,
+                        l.config.product.currency
+                      )}
+                    </span>
+                  </div>
+                ) : (
+                  <p className="text-xs text-ink-400">
+                    Connect Shopify under Integrations, then paste a product
+                    link.
+                  </p>
+                )}
               </form>
             )}
           </li>

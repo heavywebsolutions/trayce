@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Card, Badge, Button, Input, Label } from "@/components/ui";
@@ -58,14 +59,22 @@ export default async function IntegrationsPage() {
       </div>
 
       <div className="space-y-4">
-        {PROVIDERS.map((p) => {
+        {PROVIDERS.map((p, i) => {
+          const showHeading =
+            i === 0 || PROVIDERS[i - 1].category !== p.category;
           const current = byProvider.get(p.key) as
             | Record<string, unknown>
             | undefined;
           const connected = Boolean(current);
           const enabled = (current?.enabled as boolean) ?? false;
           return (
-            <Card key={p.key} className="p-6">
+            <Fragment key={p.key}>
+              {showHeading && (
+                <p className="pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-ink-400">
+                  {p.category === "commerce" ? "Commerce" : "Email & CRM"}
+                </p>
+              )}
+              <Card className="p-6">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <h2 className="text-base font-semibold text-ink-900">
                   {p.label}
@@ -126,7 +135,8 @@ export default async function IntegrationsPage() {
                   )}
                 </div>
               </form>
-            </Card>
+              </Card>
+            </Fragment>
           );
         })}
       </div>

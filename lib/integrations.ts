@@ -25,6 +25,7 @@ export const PROVIDERS = [
   {
     key: "klaviyo",
     label: "Klaviyo",
+    category: "email",
     fields: [
       { name: "api_key", label: "Private API key (pk_…)", secret: true },
       { name: "list_id", label: "List ID", secret: false },
@@ -33,6 +34,7 @@ export const PROVIDERS = [
   {
     key: "mailchimp",
     label: "Mailchimp",
+    category: "email",
     fields: [
       { name: "api_key", label: "API key (ends in -usX)", secret: true },
       { name: "list_id", label: "Audience ID", secret: false },
@@ -41,6 +43,7 @@ export const PROVIDERS = [
   {
     key: "convertkit",
     label: "ConvertKit / Kit",
+    category: "email",
     fields: [
       { name: "api_key", label: "API key", secret: true },
       { name: "list_id", label: "Form ID", secret: false },
@@ -49,6 +52,7 @@ export const PROVIDERS = [
   {
     key: "brevo",
     label: "Brevo",
+    category: "email",
     fields: [
       { name: "api_key", label: "API key", secret: true },
       { name: "list_id", label: "List ID (optional)", secret: false },
@@ -57,7 +61,17 @@ export const PROVIDERS = [
   {
     key: "webhook",
     label: "Webhook (Zapier / Make / custom)",
+    category: "email",
     fields: [{ name: "endpoint", label: "POST URL", secret: false }],
+  },
+  {
+    key: "shopify",
+    label: "Shopify",
+    category: "commerce",
+    fields: [
+      { name: "endpoint", label: "Shop domain (xxx.myshopify.com)", secret: false },
+      { name: "api_key", label: "Storefront API access token", secret: true },
+    ],
   },
 ] as const;
 

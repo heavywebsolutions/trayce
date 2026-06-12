@@ -130,6 +130,7 @@ export default async function BioEditorPage({
                 <option value="text">Text</option>
                 <option value="image">Image</option>
                 <option value="form">Lead form</option>
+                <option value="product">Shopify product</option>
               </select>
               <Input name="title" placeholder="Title / text" />
               <Input name="url" placeholder="https://… (URL or YouTube link)" />
