@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 type NavItem = {
   href: string;
   label: string;
+  short?: string;
   icon: string;
   soon?: boolean;
 };
@@ -15,7 +16,7 @@ const groups: { label: string; items: NavItem[] }[] = [
   {
     label: "Grow",
     items: [
-      { href: "/dashboard", label: "Overview", icon: "▦" },
+      { href: "/dashboard", label: "Overview", short: "Home", icon: "▦" },
       { href: "/dashboard/codes", label: "Codes", icon: "▢" },
     ],
   },
@@ -23,20 +24,20 @@ const groups: { label: string; items: NavItem[] }[] = [
     label: "Customers",
     items: [
       { href: "/dashboard/leads", label: "Leads", icon: "✉" },
-      { href: "/dashboard/bio", label: "Bio pages", icon: "❖" },
+      { href: "/dashboard/bio", label: "Bio pages", short: "Bio", icon: "❖" },
     ],
   },
   {
     label: "Measure",
     items: [
-      { href: "/dashboard/analytics", label: "Analytics", icon: "▤" },
-      { href: "/dashboard/attribution", label: "Attribution", icon: "$", soon: true },
+      { href: "/dashboard/analytics", label: "Analytics", short: "Stats", icon: "▤" },
+      { href: "/dashboard/attribution", label: "Attribution", short: "Rev", icon: "$", soon: true },
     ],
   },
   {
     label: "Connect",
     items: [
-      { href: "/dashboard/integrations", label: "Integrations", icon: "⚡" },
+      { href: "/dashboard/integrations", label: "Integrations", short: "Apps", icon: "⚡" },
     ],
   },
 ];
@@ -103,20 +104,22 @@ export function DashboardNav() {
       </nav>
 
       {/* Mobile bottom tab bar */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-ink-200 bg-white md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-ink-200 bg-white pb-[env(safe-area-inset-bottom)] md:hidden">
         {flat.map((item) => (
           <Link
             key={item.href}
             href={item.soon ? "#" : item.href}
             aria-disabled={item.soon}
             className={cn(
-              "flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium",
+              "flex min-w-0 flex-1 flex-col items-center gap-0.5 px-0.5 py-2.5 text-[10px] font-medium",
               isActive(pathname, item.href) ? "text-accent" : "text-ink-500",
               item.soon && "opacity-50"
             )}
           >
-            <span className="text-base">{item.icon}</span>
-            {item.label}
+            <span className="text-base leading-none">{item.icon}</span>
+            <span className="w-full truncate text-center">
+              {item.short ?? item.label}
+            </span>
           </Link>
         ))}
       </nav>

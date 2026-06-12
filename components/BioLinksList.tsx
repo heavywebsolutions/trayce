@@ -10,7 +10,7 @@ import {
   updateBioLinkConfig,
   fetchBioProduct,
 } from "@/app/dashboard/bio/actions";
-import { formatNumber } from "@/lib/utils";
+import { formatNumber, cn } from "@/lib/utils";
 import { formatPrice } from "@/lib/shopify";
 import type { BioLink } from "@/lib/types";
 
@@ -99,20 +99,30 @@ export function BioLinksList({
           <li
             key={l.id}
             data-id={l.id}
-            className={dragId === l.id ? "px-6 py-4 opacity-50" : "px-6 py-4"}
+            className={cn(
+              "px-4 py-4 transition-shadow sm:px-6",
+              dragId === l.id &&
+                "relative z-10 rounded-xl bg-accent-soft shadow-lg ring-1 ring-accent-ring"
+            )}
           >
             <div className="mb-2 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
                   onPointerDown={(e) => onPointerDown(e, l.id)}
                   onPointerMove={onPointerMove}
                   onPointerUp={onPointerUp}
                   style={{ touchAction: "none" }}
-                  className="cursor-grab select-none text-lg text-ink-300 hover:text-ink-500"
-                  title="Drag to reorder"
+                  className={cn(
+                    "grid h-9 w-8 shrink-0 cursor-grab touch-none select-none place-items-center rounded-lg text-lg leading-none active:cursor-grabbing",
+                    dragId === l.id
+                      ? "bg-accent text-white"
+                      : "text-ink-400 hover:bg-ink-100"
+                  )}
+                  aria-label="Drag to reorder"
                 >
-                  ⠿
-                </span>
+                  ⣿
+                </button>
                 <Badge tone={kindTone[l.kind] ?? "gray"}>{l.kind}</Badge>
               </div>
               <div className="flex items-center gap-2">
