@@ -47,6 +47,14 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         />
       </div>
 
+      {isLogin && (
+        <div className="-mt-1 text-right">
+          <Link href="/forgot" className="text-sm font-medium text-accent">
+            Forgot password?
+          </Link>
+        </div>
+      )}
+
       {state?.error && (
         <p className="rounded-xl border border-rose-100 bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700">
           {state.error}

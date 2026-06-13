@@ -47,6 +47,7 @@ export default async function OverviewPage() {
 
   const totalScans = (codes ?? []).reduce((s, c) => s + (c.scan_count ?? 0), 0);
   const activeCodes = (codes ?? []).filter((c) => c.status === "active").length;
+  const hasCodes = (codes ?? []).length > 0;
 
   const { data: recent } = await supabase
     .from("scans")
@@ -71,6 +72,25 @@ export default async function OverviewPage() {
           <Button>Create a code</Button>
         </Link>
       </div>
+
+      {!hasCodes && (
+        <div className="mb-5 rounded-2xl border-2 border-accent-ring bg-accent-soft p-6">
+          <h2 className="text-base font-semibold text-ink-900">
+            Welcome to Traxxr.
+          </h2>
+          <p className="mt-1 text-sm text-ink-600">
+            Three steps to your first tracked scan:
+          </p>
+          <ol className="mt-3 space-y-1.5 text-sm text-ink-600">
+            <li>1. Create a code, or build a link-in-bio page.</li>
+            <li>2. Print it on something, or drop it in your social bio.</li>
+            <li>3. Watch scans, clicks, and leads land here in real time.</li>
+          </ol>
+          <Link href="/dashboard/codes" className="mt-4 inline-block">
+            <Button>Create your first code</Button>
+          </Link>
+        </div>
+      )}
 
       {/* Revenue leads (reserved) — Rahil: lead with the dollar, even before it's wired. */}
       <div className="mb-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
