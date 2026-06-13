@@ -6,6 +6,7 @@ import { SOCIAL_PLATFORMS, youtubeId, readableOn, fontStack } from "@/lib/bio";
 import { ShareButton } from "@/components/ShareButton";
 import { BioSubscribeBlock } from "@/components/BioSubscribeBlock";
 import { BioFormBlock } from "@/components/BioFormBlock";
+import { BioVideo } from "@/components/BioVideo";
 import { SocialIcon } from "@/components/SocialIcon";
 import { formatPrice } from "@/lib/shopify";
 import type { BioPage, BioLink } from "@/lib/types";
@@ -255,21 +256,22 @@ export async function BioPageView({
             }
             if (l.kind === "video") {
               const vid = youtubeId(l.url);
-              if (!vid) return null;
+              if (!vid) {
+                return (
+                  <div
+                    key={l.id}
+                    className="flex items-center gap-3 rounded-2xl border border-dashed px-4 py-4 text-sm opacity-60"
+                    style={{ borderColor: "currentColor" }}
+                  >
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-black/10 text-base">
+                      ▶
+                    </span>
+                    <span>{l.title || "Video"} · add a YouTube link</span>
+                  </div>
+                );
+              }
               return (
-                <div
-                  key={l.id}
-                  className="overflow-hidden rounded-2xl bg-black/20"
-                  style={{ aspectRatio: "16 / 9" }}
-                >
-                  <iframe
-                    src={`https://www.youtube.com/embed/${vid}`}
-                    title={l.title || "Video"}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="h-full w-full"
-                  />
-                </div>
+                <BioVideo key={l.id} videoId={vid} title={l.title ?? undefined} />
               );
             }
             // standard link (click-tracked via /l/[id])
