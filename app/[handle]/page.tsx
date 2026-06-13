@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { BioPageView } from "@/components/BioPageView";
 import { RESERVED_HANDLES } from "@/lib/reserved";
+import { normalizeHandle } from "@/lib/handle";
 
 export const dynamic = "force-dynamic";
 
@@ -15,19 +16,9 @@ export default async function HandlePage({
   const { handle: rawParam } = await params;
   const { preview } = await searchParams;
 
-  // The leading "@" can reach us literally ("@name") or percent-encoded
-  // ("%40name") depending on how the browser/runtime encodes the path.
-  // Decode FIRST so the "@" check is reliable — otherwise an encoded "@"
-  // fails startsWith("@"), and we redirect forever, stacking %40s.
-  let decoded = rawParam;
-  try {
-    decoded = decodeURIComponent(rawParam);
-  } catch {
-    /* malformed encoding — fall back to the raw value */
-  }
-
-  const hadAt = decoded.startsWith("@");
-  const real = decoded.replace(/^@+/, "").toLowerCase();
+  // Normalize once. Pure + unit-tested in tests/handle.test.ts so the
+  // redirect-loop bug can never come back.
+  const { hadAt, handle: real } = normalizeHandle(rawParam);
 
   if (!real || RESERVED_HANDLES.has(real)) notFound();
 
