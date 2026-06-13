@@ -16,7 +16,7 @@ type NavItem = {
 const groups: { label: string; items: NavItem[] }[] = [
   {
     label: "",
-    items: [{ href: "/dashboard", label: "Home", short: "Home", icon: "▦" }],
+    items: [{ href: "/dashboard", label: "Dashboard", short: "Home", icon: "▦" }],
   },
   {
     label: "Create",
