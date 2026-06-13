@@ -32,5 +32,5 @@ export const RESERVED_HANDLES = new Set<string>([
   "static",
   "public",
   "assets",
-  "trayce",
+  "traxxr",
 ]);

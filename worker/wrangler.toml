@@ -1,4 +1,4 @@
-name = "trayce-redirect-engine"
+name = "traxxr-redirect-engine"
 main = "src/index.ts"
 compatibility_date = "2025-01-01"
 
@@ -8,7 +8,7 @@ compatibility_date = "2025-01-01"
 [vars]
 FALLBACK_URL = "https://example.com"
 # App origin that serves the hosted lead-capture forms (/f/:slug), e.g. your Vercel URL.
-FORM_BASE_URL = "https://trayce.vercel.app"
+FORM_BASE_URL = "https://traxxr.com"
 
 # After deploy, point your short domain at this worker:
 #   [[routes]]

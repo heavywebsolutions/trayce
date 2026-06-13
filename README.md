@@ -1,4 +1,4 @@
-# Trayce — V1
+# Traxxr — V1
 
 Dynamic QR codes you can re-point after they're printed, with scan tracking. This is the
 **V1 irreducible loop**: sign up → create a dynamic code → it redirects → edit the destination
@@ -10,7 +10,7 @@ anytime → see scans on a dashboard. Built on the locked stack and Stripe-light
 
 The Supabase backend is **already provisioned** (Supabase project name `qr-platform`,
 region `us-west-1`). The schema in `supabase/migrations/0001_v1_init.sql` is already applied.
-(The app is branded **Trayce**; the underlying Supabase project keeps its original name — you can
+(The app is branded **Traxxr**; the underlying Supabase project keeps its original name — you can
 rename it in the Supabase dashboard anytime, it doesn't affect the code.)
 
 ---
@@ -62,8 +62,8 @@ Without it, redirects still work — they just won't log scans.
 
 1. **GitHub** — create a private repo, then from this folder:
    ```bash
-   git init && git add . && git commit -m "Trayce V1"
-   git remote add origin git@github.com:YOUR_ORG/trayce.git
+   git init && git add . && git commit -m "Traxxr V1"
+   git remote add origin git@github.com:YOUR_ORG/traxxr.git
    git push -u origin main
    ```
 2. **Vercel** — Import the repo. Add env vars from `.env.example`
@@ -102,4 +102,4 @@ worker/               Cloudflare redirect engine
 
 - All tables have Row Level Security; users only ever see their own workspace's rows.
 - Scan writes happen server-side with the service-role key (bypasses RLS by design).
-- Branded as **Trayce**. (The Supabase project is still named `qr-platform` internally — harmless; rename in the dashboard if you like.)
+- Branded as **Traxxr**. (The Supabase project is still named `qr-platform` internally — harmless; rename in the dashboard if you like.)

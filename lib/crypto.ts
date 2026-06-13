@@ -27,6 +27,9 @@ function getKey(): Buffer | null {
       /* fall through */
     }
   }
+  // NOTE: fixed salt — do NOT rename (kept through the Traxxr rebrand on purpose).
+  // Changing it re-derives the key and makes every previously-encrypted
+  // integration secret undecryptable.
   return scryptSync(raw, "trayce-integration-secrets-v1", 32);
 }
 

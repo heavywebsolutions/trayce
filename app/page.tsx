@@ -8,10 +8,10 @@ function Logo() {
   return (
     <span className="flex items-center gap-2">
       <span className="grid h-8 w-8 place-items-center rounded-lg bg-ink-900 text-sm font-bold text-white">
-        T
+        X
       </span>
       <span className="text-lg font-semibold tracking-tight text-ink-900">
-        Trayce
+        Traxxr
       </span>
     </span>
   );
@@ -24,7 +24,7 @@ const features = [
   },
   {
     title: "Link-in-bio pages",
-    body: "A branded page at trayce.app/@you with links, video, products, and email capture. Replace Linktree, keep the data.",
+    body: "A branded page at traxxr.com/@you with links, video, products, and email capture. Replace Linktree, keep the data.",
   },
   {
     title: "Lead capture",
@@ -158,7 +158,7 @@ export default async function Home() {
             Your offline marketing should earn its keep.
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-lg text-ink-500">
-            Trayce turns every wrap, sticker, banner, and bio link into a
+            Traxxr turns every wrap, sticker, banner, and bio link into a
             trackable, editable, lead-generating asset — with the data flowing
             straight to your tools.
           </p>
@@ -225,7 +225,7 @@ export default async function Home() {
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-ink-500">
             You spend real money on physical marketing — wraps, prints, packaging,
-            events — and then have no idea what it did. Trayce closes that loop:
+            events — and then have no idea what it did. Traxxr closes that loop:
             every physical touchpoint becomes measurable, editable, and connected
             to the rest of your stack.
           </p>
@@ -332,7 +332,7 @@ export default async function Home() {
       <section className="border-t border-ink-100 bg-ink-900 text-white">
         <div className="mx-auto max-w-3xl px-6 py-20 text-center">
           <p className="text-xl font-medium leading-relaxed sm:text-2xl">
-            “We put a Trayce code on every sled wrap. For the first time we can
+            “We put a Traxxr code on every sled wrap. For the first time we can
             see which designs actually drive people back to the site — and the
             leads land in our email tool automatically.”
           </p>
@@ -363,7 +363,7 @@ export default async function Home() {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-8 sm:flex-row">
           <Logo />
           <p className="text-xs text-ink-400">
-            © {new Date().getFullYear()} Trayce. Turn scans into revenue.
+            © {new Date().getFullYear()} Traxxr. Turn scans into revenue.
           </p>
         </div>
       </footer>

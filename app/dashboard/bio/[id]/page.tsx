@@ -57,7 +57,7 @@ export default async function BioEditorPage({
             {page.display_name || page.handle}
           </h1>
           <p className="mt-0.5 text-sm text-ink-500">
-            trayce.app/@{page.handle} · {formatNumber(page.views)} views
+            traxxr.com/@{page.handle} · {formatNumber(page.views)} views
           </p>
         </div>
         <div className="flex items-center gap-2">

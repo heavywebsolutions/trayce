@@ -23,7 +23,7 @@ export function CreateBioForm() {
       <div>
         <Label htmlFor="handle">Handle</Label>
         <div className="flex items-center gap-1.5">
-          <span className="text-sm text-ink-400">trayce.app/@</span>
+          <span className="text-sm text-ink-400">traxxr.com/@</span>
           <Input id="handle" name="handle" placeholder="deviantink" className="flex-1" />
         </div>
       </div>

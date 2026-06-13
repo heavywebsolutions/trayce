@@ -13,10 +13,10 @@ export default function AuthLayout({
           className="mb-8 flex items-center justify-center gap-2 text-ink-900"
         >
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-ink-900 text-sm font-bold text-white">
-            T
+            X
           </span>
           <span className="text-lg font-semibold tracking-tight">
-            Trayce
+            Traxxr
           </span>
         </Link>
         {children}

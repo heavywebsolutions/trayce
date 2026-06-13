@@ -9,7 +9,7 @@ export interface ContentTypeDef {
   hint: string;
 }
 
-// The set of code types Trayce can generate.
+// The set of code types Traxxr can generate.
 export const CONTENT_TYPES: ContentTypeDef[] = [
   { v: "url", label: "Website", mode: "url", hint: "Open a link" },
   { v: "app", label: "App", mode: "app", hint: "Send to the right app store" },

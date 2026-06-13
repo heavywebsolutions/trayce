@@ -59,10 +59,10 @@ export function DashboardNav() {
       <nav className="hidden w-60 shrink-0 flex-col gap-6 border-r border-ink-200 bg-white px-4 py-6 md:flex">
         <Link href="/dashboard" className="flex items-center gap-2 px-2">
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-ink-900 text-sm font-bold text-white">
-            T
+            X
           </span>
           <span className="text-base font-semibold tracking-tight text-ink-900">
-            Trayce
+            Traxxr
           </span>
         </Link>
 
