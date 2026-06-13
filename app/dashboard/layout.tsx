@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardNav } from "@/components/DashboardNav";
@@ -23,6 +24,13 @@ export default async function DashboardLayout({
             <span className="hidden text-sm text-ink-500 sm:inline">
               {user.email}
             </span>
+            <Link
+              href="/dashboard/settings"
+              aria-label="Settings"
+              className="rounded-lg px-2.5 py-1.5 text-base leading-none text-ink-500 hover:bg-ink-100"
+            >
+              ⚙
+            </Link>
             <form action="/api/auth/signout" method="post">
               <button className="rounded-lg px-3 py-1.5 text-sm font-medium text-ink-600 hover:bg-ink-100">
                 Sign out

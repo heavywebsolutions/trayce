@@ -10,6 +10,7 @@ type NavItem = {
   short?: string;
   icon: string;
   soon?: boolean;
+  desktopOnly?: boolean;
 };
 
 const groups: { label: string; items: NavItem[] }[] = [
@@ -40,9 +41,15 @@ const groups: { label: string; items: NavItem[] }[] = [
       { href: "/dashboard/integrations", label: "Integrations", short: "Apps", icon: "⚡" },
     ],
   },
+  {
+    label: "Account",
+    items: [
+      { href: "/dashboard/settings", label: "Settings", short: "You", icon: "⚙", desktopOnly: true },
+    ],
+  },
 ];
 
-const flat = groups.flatMap((g) => g.items);
+const flat = groups.flatMap((g) => g.items).filter((i) => !i.desktopOnly);
 
 function isActive(pathname: string, href: string) {
   if (href === "/dashboard") return pathname === "/dashboard";
