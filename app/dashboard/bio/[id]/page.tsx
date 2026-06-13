@@ -82,7 +82,7 @@ export default async function BioEditorPage({
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
         {/* Editing column */}
         <div className="space-y-5">
           <Card className="p-6">
@@ -179,12 +179,12 @@ export default async function BioEditorPage({
             <p className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-400">
               Live preview
             </p>
-            <div className="mx-auto w-[320px] max-w-full overflow-hidden rounded-[2rem] border-[6px] border-ink-900 bg-white shadow-cardHover">
+            <div className="mx-auto w-[380px] max-w-full overflow-hidden rounded-[2.25rem] border-[10px] border-ink-900 bg-white shadow-cardHover">
               <iframe
                 key={previewSrc}
                 src={previewSrc}
                 title="Live preview of your bio page"
-                className="block h-[640px] w-full border-0"
+                className="block h-[700px] w-full border-0"
               />
             </div>
             <p className="mt-2 text-center text-xs text-ink-400">
