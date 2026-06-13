@@ -15,35 +15,27 @@ type NavItem = {
 
 const groups: { label: string; items: NavItem[] }[] = [
   {
-    label: "Grow",
+    label: "",
+    items: [{ href: "/dashboard", label: "Home", short: "Home", icon: "▦" }],
+  },
+  {
+    label: "Create",
     items: [
-      { href: "/dashboard", label: "Overview", short: "Home", icon: "▦" },
-      { href: "/dashboard/codes", label: "Codes", icon: "▢" },
+      { href: "/dashboard/codes", label: "QR Codes", short: "Codes", icon: "▢" },
+      { href: "/dashboard/bio", label: "Bio Pages", short: "Bio", icon: "❖" },
     ],
   },
   {
-    label: "Customers",
+    label: "Results",
     items: [
       { href: "/dashboard/leads", label: "Leads", icon: "✉" },
-      { href: "/dashboard/bio", label: "Bio pages", short: "Bio", icon: "❖" },
-    ],
-  },
-  {
-    label: "Measure",
-    items: [
       { href: "/dashboard/analytics", label: "Analytics", short: "Stats", icon: "▤" },
-      { href: "/dashboard/attribution", label: "Attribution", short: "Rev", icon: "$", soon: true },
-    ],
-  },
-  {
-    label: "Connect",
-    items: [
-      { href: "/dashboard/integrations", label: "Integrations", short: "Apps", icon: "⚡" },
     ],
   },
   {
     label: "Account",
     items: [
+      { href: "/dashboard/integrations", label: "Integrations", short: "Apps", icon: "⚡" },
       { href: "/dashboard/settings", label: "Settings", short: "You", icon: "⚙", desktopOnly: true },
     ],
   },
@@ -56,24 +48,26 @@ function isActive(pathname: string, href: string) {
   return pathname.startsWith(href);
 }
 
-// Desktop: left rail grouped by intent. Mobile: thumb-reachable bottom tab bar.
+// Desktop: left rail grouped by plain function. Mobile: thumb-reachable bottom tab bar.
 export function DashboardNav() {
   const pathname = usePathname();
 
   return (
     <>
       {/* Desktop sidebar */}
-      <nav className="hidden w-60 shrink-0 flex-col gap-6 border-r border-ink-200 bg-white px-4 py-6 md:flex">
+      <nav className="hidden w-60 shrink-0 flex-col gap-5 border-r border-ink-200 bg-white px-4 py-6 md:flex">
         <Link href="/dashboard" className="flex items-center px-2">
           <img src="/traxxr-logo.png" alt="Traxxr" className="h-5 w-auto" />
         </Link>
 
         <div className="flex flex-col gap-5">
           {groups.map((group) => (
-            <div key={group.label}>
-              <p className="mb-1.5 px-3 text-xs font-semibold uppercase tracking-wide text-ink-400">
-                {group.label}
-              </p>
+            <div key={group.label || "home"}>
+              {group.label && (
+                <p className="mb-1.5 px-3 text-xs font-semibold uppercase tracking-wide text-ink-400">
+                  {group.label}
+                </p>
+              )}
               <div className="flex flex-col gap-0.5">
                 {group.items.map((item) => (
                   <Link
