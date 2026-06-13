@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AnalyticsControls } from "@/components/AnalyticsControls";
 import { AnalyticsView } from "@/components/AnalyticsView";
+import { BioPageFilter } from "@/components/BioPageFilter";
 import { Card, Badge } from "@/components/ui";
 import { formatNumber, cn } from "@/lib/utils";
 import {
@@ -25,9 +26,12 @@ const TABS = [
 
 const SUBTITLE: Record<string, string> = {
   codes: "Every scan across all your QR codes.",
-  bio: "Views and clicks across all your bio pages.",
+  bio: "Views and clicks across your bio pages.",
   revenue: "Tie scans and clicks to real sales.",
 };
+
+const RANGE_SELECT =
+  "created_at, device_type, ip_hash, user_agent, city, region, country";
 
 export default async function AnalyticsPage({
   searchParams,
@@ -38,6 +42,7 @@ export default async function AnalyticsPage({
     from?: string;
     to?: string;
     tab?: string;
+    bp?: string;
   }>;
 }) {
   const sp = await searchParams;
@@ -59,7 +64,7 @@ export default async function AnalyticsPage({
     .single();
   const wsId = ws?.id ?? "";
 
-  // Tab links keep the current date range.
+  // Tab links keep the current date range (but not the per-page filter).
   const hrefFor = (key: string) => {
     const p = new URLSearchParams();
     if (sp.g) p.set("g", sp.g);
@@ -69,6 +74,9 @@ export default async function AnalyticsPage({
     p.set("tab", key);
     return `/dashboard/analytics?${p.toString()}`;
   };
+
+  const fromIso = range.from.toISOString();
+  const toIso = range.to.toISOString();
 
   let content: React.ReactNode = null;
 
@@ -81,8 +89,8 @@ export default async function AnalyticsPage({
             "scanned_at, device_type, city, region, country, user_agent, ip_hash, codes(title)"
           )
           .eq("workspace_id", wsId)
-          .gte("scanned_at", range.from.toISOString())
-          .lte("scanned_at", range.to.toISOString())
+          .gte("scanned_at", fromIso)
+          .lte("scanned_at", toIso)
           .order("scanned_at", { ascending: false })
           .limit(20000),
         supabase
@@ -123,17 +131,17 @@ export default async function AnalyticsPage({
   } else if (tab === "bio") {
     const { data: pagesData } = await supabase
       .from("bio_pages")
-      .select("id, display_name, handle");
+      .select("id, display_name, handle")
+      .order("created_at", { ascending: true });
     const pages = pagesData ?? [];
-    const pageIds = pages.map((p) => p.id as string);
-    const nameById = new Map(
-      pages.map((p) => [
-        p.id as string,
-        (p.display_name as string) || `@${p.handle as string}`,
-      ])
-    );
+    const pageOptions = pages.map((p) => ({
+      id: p.id as string,
+      name: (p.display_name as string) || `@${p.handle as string}`,
+    }));
+    const selectedId =
+      sp.bp && pages.some((p) => p.id === sp.bp) ? sp.bp : null;
 
-    if (pageIds.length === 0) {
+    if (pages.length === 0) {
       content = (
         <Card className="px-6 py-12 text-center">
           <p className="text-sm font-medium text-ink-700">No bio pages yet</p>
@@ -147,18 +155,91 @@ export default async function AnalyticsPage({
           </Link>
         </Card>
       );
-    } else {
+    } else if (selectedId) {
+      // Drill into a single bio page: per-page attribution, top links within it.
       const [{ data: rawClicks }, { count: viewCount }, { count: subCount }] =
         await Promise.all([
           supabase
             .from("bio_events")
-            .select(
-              "created_at, device_type, ip_hash, user_agent, city, region, country, page_id"
-            )
+            .select(`${RANGE_SELECT}, bio_links(title)`)
+            .eq("page_id", selectedId)
+            .eq("type", "click")
+            .gte("created_at", fromIso)
+            .lte("created_at", toIso)
+            .order("created_at", { ascending: false })
+            .limit(20000),
+          supabase
+            .from("bio_events")
+            .select("*", { count: "exact", head: true })
+            .eq("page_id", selectedId)
+            .eq("type", "view")
+            .gte("created_at", fromIso)
+            .lte("created_at", toIso),
+          supabase
+            .from("bio_subscribers")
+            .select("*", { count: "exact", head: true })
+            .eq("page_id", selectedId),
+        ]);
+
+      const clicks: ScanLite[] = (rawClicks ?? []).map((e) => {
+        const link = Array.isArray(e.bio_links) ? e.bio_links[0] : e.bio_links;
+        return {
+          scanned_at: e.created_at,
+          device_type: e.device_type,
+          city: e.city,
+          region: e.region,
+          country: e.country,
+          user_agent: e.user_agent,
+          ip_hash: e.ip_hash,
+          code_title: link?.title ?? "Link",
+        } as ScanLite;
+      });
+
+      const views = viewCount ?? 0;
+      const clickCount = clicks.length;
+      const ctr = views > 0 ? Math.round((clickCount / views) * 100) : 0;
+
+      const stats = [
+        { label: "Views (range)", value: formatNumber(views) },
+        { label: "Clicks (range)", value: formatNumber(clickCount) },
+        { label: "Click rate", value: `${ctr}%` },
+        { label: "Subscribers", value: formatNumber(subCount ?? 0) },
+      ];
+
+      content = (
+        <>
+          <BioPageFilter pages={pageOptions} selected={selectedId} />
+          <AnalyticsControls />
+          <AnalyticsView
+            stats={stats}
+            buckets={bucketize(clicks, range)}
+            os={osBreakdown(clicks)}
+            locations={locationBreakdown(clicks)}
+            topCodes={codeBreakdown(clicks)}
+            labels={{
+              chartTitle: "Clicks over time",
+              noun: "click",
+              topTitle: "Top links",
+              topSubtitle: "Most clicked on this page",
+              locationsSubtitle: "Where clicks happen (IP-based)",
+            }}
+          />
+        </>
+      );
+    } else {
+      // All bio pages: aggregate, ranked by page so you can see which drives most.
+      const pageIds = pages.map((p) => p.id as string);
+      const nameById = new Map(pageOptions.map((p) => [p.id, p.name]));
+
+      const [{ data: rawClicks }, { count: viewCount }, { count: subCount }] =
+        await Promise.all([
+          supabase
+            .from("bio_events")
+            .select(`${RANGE_SELECT}, page_id`)
             .in("page_id", pageIds)
             .eq("type", "click")
-            .gte("created_at", range.from.toISOString())
-            .lte("created_at", range.to.toISOString())
+            .gte("created_at", fromIso)
+            .lte("created_at", toIso)
             .order("created_at", { ascending: false })
             .limit(20000),
           supabase
@@ -166,8 +247,8 @@ export default async function AnalyticsPage({
             .select("*", { count: "exact", head: true })
             .in("page_id", pageIds)
             .eq("type", "view")
-            .gte("created_at", range.from.toISOString())
-            .lte("created_at", range.to.toISOString()),
+            .gte("created_at", fromIso)
+            .lte("created_at", toIso),
           supabase
             .from("bio_subscribers")
             .select("*", { count: "exact", head: true })
@@ -196,11 +277,12 @@ export default async function AnalyticsPage({
         { label: "Views (range)", value: formatNumber(views) },
         { label: "Clicks (range)", value: formatNumber(clickCount) },
         { label: "Click rate", value: `${ctr}%` },
-        { label: "Subscribers", value: formatNumber(subCount ?? 0) },
+        { label: "Bio pages", value: formatNumber(pages.length) },
       ];
 
       content = (
         <>
+          <BioPageFilter pages={pageOptions} selected={null} />
           <AnalyticsControls />
           <AnalyticsView
             stats={stats}
@@ -212,10 +294,14 @@ export default async function AnalyticsPage({
               chartTitle: "Clicks over time",
               noun: "click",
               topTitle: "Top bio pages",
-              topSubtitle: "Most clicked in range",
+              topSubtitle: "Most clicks by page in range",
               locationsSubtitle: "Where clicks happen (IP-based)",
             }}
           />
+          <p className="mt-3 text-center text-xs text-ink-400">
+            Tip: pick a single page above to see one brand, location, or channel
+            on its own.
+          </p>
         </>
       );
     }
