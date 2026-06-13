@@ -10,7 +10,13 @@ import { SocialIcon } from "@/components/SocialIcon";
 import { formatPrice } from "@/lib/shopify";
 import type { BioPage, BioLink } from "@/lib/types";
 
-export async function BioPageView({ handle }: { handle: string }) {
+export async function BioPageView({
+  handle,
+  preview = false,
+}: {
+  handle: string;
+  preview?: boolean;
+}) {
   let admin;
   try {
     admin = createAdminClient();
@@ -24,7 +30,9 @@ export async function BioPageView({ handle }: { handle: string }) {
     .eq("handle", handle.toLowerCase())
     .maybeSingle();
 
-  if (!page || !page.published) notFound();
+  if (!page) notFound();
+  // In preview mode (the editor's iframe) we render even an unpublished draft.
+  if (!page.published && !preview) notFound();
   const p = page as BioPage;
 
   const { data: linkRows } = await admin
@@ -34,8 +42,9 @@ export async function BioPageView({ handle }: { handle: string }) {
     .order("position", { ascending: true });
   const links = (linkRows ?? []) as BioLink[];
 
-  // Count the visit (best-effort) + log an event for analytics.
-  try {
+  // Count the visit, but never while rendering the editor's live preview.
+  if (!preview)
+    try {
     await admin.rpc("increment_bio_view", { p_page_id: p.id });
     const h = await headers();
     const ua = h.get("user-agent") || "";

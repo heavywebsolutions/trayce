@@ -49,6 +49,9 @@ export default async function BioEditorPage({
     "https://traxxr.com"
   ).replace(/\/$/, "");
   const publicUrl = `${bioBase}/@${page.handle}`;
+  // preview=1 stops the iframe from logging a view; v= busts cache so the
+  // preview refreshes on every save.
+  const previewSrc = `/@${page.handle}?preview=1&v=${Date.now()}`;
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -79,8 +82,8 @@ export default async function BioEditorPage({
         </div>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        {/* Page settings + QR/subscribers */}
+      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+        {/* Editing column */}
         <div className="space-y-5">
           <Card className="p-6">
             <div className="flex items-start justify-between gap-4">
@@ -124,10 +127,7 @@ export default async function BioEditorPage({
             </h2>
             <BioSettingsForm page={page} />
           </Card>
-        </div>
 
-        {/* Links */}
-        <div className="space-y-5">
           <div className="rounded-2xl border-2 border-accent bg-accent-soft p-6 shadow-cardHover">
             <h2 className="flex items-center gap-2 text-base font-semibold text-accent">
               <span className="grid h-5 w-5 place-items-center rounded-full bg-accent text-xs font-bold leading-none text-white">
@@ -171,6 +171,26 @@ export default async function BioEditorPage({
               pageId={page.id}
             />
           </Card>
+        </div>
+
+        {/* Live preview */}
+        <div>
+          <div className="lg:sticky lg:top-6">
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-400">
+              Live preview
+            </p>
+            <div className="mx-auto w-[320px] max-w-full overflow-hidden rounded-[2rem] border-[6px] border-ink-900 bg-white shadow-cardHover">
+              <iframe
+                key={previewSrc}
+                src={previewSrc}
+                title="Live preview of your bio page"
+                className="block h-[640px] w-full border-0"
+              />
+            </div>
+            <p className="mt-2 text-center text-xs text-ink-400">
+              Refreshes each time you save a change.
+            </p>
+          </div>
         </div>
       </div>
 
