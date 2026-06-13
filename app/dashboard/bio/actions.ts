@@ -265,6 +265,20 @@ export async function deleteBioLink(formData: FormData): Promise<void> {
   revalidatePath(`/dashboard/bio/${pageId}`);
 }
 
+export async function toggleBioLink(formData: FormData): Promise<void> {
+  const id = String(formData.get("id") || "");
+  const pageId = String(formData.get("page_id") || "");
+  if (!id) return;
+  // The form sends the current state; we flip it.
+  const currentlyHidden = String(formData.get("hidden") || "") === "true";
+  const { supabase } = await currentWorkspace();
+  await supabase
+    .from("bio_links")
+    .update({ hidden: !currentlyHidden })
+    .eq("id", id);
+  revalidatePath(`/dashboard/bio/${pageId}`);
+}
+
 export async function reorderBioLinks(formData: FormData): Promise<void> {
   const pageId = String(formData.get("page_id") || "");
   if (!pageId) return;

@@ -9,6 +9,7 @@ import {
   reorderBioLinks,
   updateBioLinkConfig,
   fetchBioProduct,
+  toggleBioLink,
 } from "@/app/dashboard/bio/actions";
 import { formatNumber, cn } from "@/lib/utils";
 import { formatPrice } from "@/lib/shopify";
@@ -101,6 +102,7 @@ export function BioLinksList({
             data-id={l.id}
             className={cn(
               "rounded-xl border border-ink-200 bg-white p-4 shadow-sm transition",
+              l.hidden && "opacity-60",
               dragId === l.id &&
                 "relative z-10 border-accent-ring bg-accent-soft shadow-lg ring-1 ring-accent-ring"
             )}
@@ -124,13 +126,25 @@ export function BioLinksList({
                   ⣿
                 </button>
                 <Badge tone={kindTone[l.kind] ?? "gray"}>{l.kind}</Badge>
+                {l.hidden && <Badge tone="gray">Hidden</Badge>}
               </div>
               <div className="flex items-center gap-2">
-                {l.kind === "link" && (
+                {(l.kind === "link" || l.kind === "product") && (
                   <span className="text-xs text-ink-400">
                     {formatNumber(l.clicks)} clicks
                   </span>
                 )}
+                <form action={toggleBioLink}>
+                  <input type="hidden" name="id" value={l.id} />
+                  <input type="hidden" name="page_id" value={pageId} />
+                  <input type="hidden" name="hidden" value={String(l.hidden)} />
+                  <button
+                    className="rounded px-2 py-0.5 text-xs font-medium text-ink-500 hover:bg-ink-100"
+                    title={l.hidden ? "Show on your page" : "Hide from your page"}
+                  >
+                    {l.hidden ? "Show" : "Hide"}
+                  </button>
+                </form>
                 <form action={deleteBioLink}>
                   <input type="hidden" name="id" value={l.id} />
                   <input type="hidden" name="page_id" value={pageId} />

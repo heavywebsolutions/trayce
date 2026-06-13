@@ -40,6 +40,7 @@ export async function BioPageView({
     .from("bio_links")
     .select("*")
     .eq("page_id", p.id)
+    .eq("hidden", false)
     .order("position", { ascending: true });
   const links = (linkRows ?? []) as BioLink[];
 

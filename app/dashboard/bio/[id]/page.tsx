@@ -166,7 +166,7 @@ export default async function BioEditorPage({
               subtitle={`${links.length} on the page · drag to reorder`}
             />
             <BioLinksList
-              key={links.map((l) => l.id).sort().join("|")}
+              key={links.map((l) => `${l.id}:${l.hidden ? 1 : 0}`).sort().join("|")}
               links={links}
               pageId={page.id}
             />

@@ -90,6 +90,7 @@ export interface BioLink {
   config: BioLinkConfig;
   position: number;
   clicks: number;
+  hidden: boolean;
   created_at: string;
 }
 
