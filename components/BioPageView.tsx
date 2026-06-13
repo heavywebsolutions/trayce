@@ -289,7 +289,17 @@ export async function BioPageView({ handle }: { handle: string }) {
           })}
         </div>
 
-        <p className="mt-10 text-center text-xs opacity-50">Powered by Traxxr</p>
+        <p className="mt-10 text-center text-xs opacity-50">
+          Powered by{" "}
+          <a
+            href="https://traxxr.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold hover:underline"
+          >
+            Traxxr
+          </a>
+        </p>
       </div>
     </main>
   );

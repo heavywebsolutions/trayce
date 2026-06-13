@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, Button, Input } from "@/components/ui";
 import { BioSettingsForm } from "@/components/BioSettingsForm";
 import { BioLinksList } from "@/components/BioLinksList";
+import { CopyUrlButton } from "@/components/CopyUrlButton";
 import { addBioLink } from "@/app/dashboard/bio/actions";
 import { formatNumber } from "@/lib/utils";
 import type { BioPage, BioLink } from "@/lib/types";
@@ -42,6 +43,13 @@ export default async function BioEditorPage({
     .select("*", { count: "exact", head: true })
     .eq("page_id", id);
 
+  const bioBase = (
+    process.env.NEXT_PUBLIC_BIO_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "https://traxxr.com"
+  ).replace(/\/$/, "");
+  const publicUrl = `${bioBase}/@${page.handle}`;
+
   return (
     <div className="mx-auto max-w-5xl">
       <Link
@@ -61,6 +69,7 @@ export default async function BioEditorPage({
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <CopyUrlButton url={publicUrl} />
           <Link href={`/dashboard/bio/${page.id}/analytics`}>
             <Button variant="secondary">Analytics</Button>
           </Link>
@@ -119,8 +128,16 @@ export default async function BioEditorPage({
 
         {/* Links */}
         <div className="space-y-5">
-          <Card className="p-6">
-            <h2 className="text-base font-semibold text-ink-900">Add a block</h2>
+          <div className="rounded-2xl border-2 border-accent bg-accent-soft p-6 shadow-cardHover">
+            <h2 className="flex items-center gap-2 text-base font-semibold text-accent">
+              <span className="grid h-5 w-5 place-items-center rounded-full bg-accent text-xs font-bold leading-none text-white">
+                +
+              </span>
+              Add a block
+            </h2>
+            <p className="mt-1 text-xs text-ink-500">
+              Pick a type, fill it in, and add it to your page.
+            </p>
             <form action={addBioLink} className="mt-3 space-y-2.5">
               <input type="hidden" name="page_id" value={page.id} />
               <select
@@ -139,11 +156,9 @@ export default async function BioEditorPage({
               </select>
               <Input name="title" placeholder="Title / text" />
               <Input name="url" placeholder="https://… (URL or YouTube link)" />
-              <Button type="submit" variant="secondary">
-                Add block
-              </Button>
+              <Button type="submit">Add block</Button>
             </form>
-          </Card>
+          </div>
 
           <Card>
             <CardHeader

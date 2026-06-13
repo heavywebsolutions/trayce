@@ -50,7 +50,15 @@ export default async function LeadFormPage({
           />
         </Card>
         <p className="mt-4 text-center text-xs text-ink-400">
-          Powered by Traxxr
+          Powered by{" "}
+          <a
+            href="https://traxxr.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold hover:underline"
+          >
+            Traxxr
+          </a>
         </p>
       </div>
     </main>
