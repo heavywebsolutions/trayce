@@ -14,6 +14,14 @@ export const metadata: Metadata = {
     url: "https://traxxr.com",
     siteName: "Traxxr",
     type: "website",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Traxxr" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Traxxr — turn offline marketing into measurable revenue",
+    description:
+      "Dynamic QR codes you can edit after they're printed, with scan tracking built for operators.",
+    images: ["/og.png"],
   },
 };
 

@@ -10,14 +10,9 @@ export default function AuthLayout({
       <div className="w-full max-w-sm">
         <Link
           href="/"
-          className="mb-8 flex items-center justify-center gap-2 text-ink-900"
+          className="mb-8 flex items-center justify-center text-ink-900"
         >
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-ink-900 text-sm font-bold text-white">
-            X
-          </span>
-          <span className="text-lg font-semibold tracking-tight">
-            Traxxr
-          </span>
+          <img src="/traxxr-logo.png" alt="Traxxr" className="h-7 w-auto" />
         </Link>
         {children}
       </div>

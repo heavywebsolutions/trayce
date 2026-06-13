@@ -6,14 +6,7 @@ export const dynamic = "force-dynamic";
 
 function Logo() {
   return (
-    <span className="flex items-center gap-2">
-      <span className="grid h-8 w-8 place-items-center rounded-lg bg-ink-900 text-sm font-bold text-white">
-        X
-      </span>
-      <span className="text-lg font-semibold tracking-tight text-ink-900">
-        Traxxr
-      </span>
-    </span>
+    <img src="/traxxr-logo.png" alt="Traxxr" className="h-7 w-auto" />
   );
 }
 
