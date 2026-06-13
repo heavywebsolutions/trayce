@@ -272,7 +272,14 @@ export async function BioPageView({
                 );
               }
               return (
-                <BioVideo key={l.id} videoId={vid} title={l.title ?? undefined} />
+                <div key={l.id} className="space-y-2">
+                  {l.title && (
+                    <p className="text-center text-sm font-semibold opacity-90">
+                      {l.title}
+                    </p>
+                  )}
+                  <BioVideo videoId={vid} title={l.title ?? undefined} />
+                </div>
               );
             }
             // standard link (click-tracked via /l/[id])
