@@ -10,14 +10,27 @@ export default async function HandlePage({
 }: {
   params: Promise<{ handle: string }>;
 }) {
-  const { handle } = await params;
+  const { handle: rawParam } = await params;
 
-  if (!handle.startsWith("@")) {
-    if (RESERVED_HANDLES.has(handle.toLowerCase())) notFound();
-    redirect(`/@${handle}`);
+  // The leading "@" can reach us literally ("@name") or percent-encoded
+  // ("%40name") depending on how the browser/runtime encodes the path.
+  // Decode FIRST so the "@" check is reliable — otherwise an encoded "@"
+  // fails startsWith("@"), and we redirect forever, stacking %40s.
+  let decoded = rawParam;
+  try {
+    decoded = decodeURIComponent(rawParam);
+  } catch {
+    /* malformed encoding — fall back to the raw value */
   }
 
-  const real = handle.slice(1).toLowerCase();
+  const hadAt = decoded.startsWith("@");
+  const real = decoded.replace(/^@+/, "").toLowerCase();
+
   if (!real || RESERVED_HANDLES.has(real)) notFound();
+
+  // A bare /handle canonicalizes to /@handle — exactly one redirect, no loop,
+  // because the decoded target now satisfies the @ check on the next request.
+  if (!hadAt) redirect(`/@${real}`);
+
   return <BioPageView handle={real} />;
 }
