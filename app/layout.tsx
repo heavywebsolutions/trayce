@@ -4,11 +4,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://traxxr.com"),
-  title: "Traxxr — turn offline marketing into measurable revenue",
+  title: "Traxxr: turn offline marketing into measurable revenue",
   description:
     "Dynamic QR codes you can edit after they're printed, with scan tracking built for operators.",
   openGraph: {
-    title: "Traxxr — turn offline marketing into measurable revenue",
+    title: "Traxxr: turn offline marketing into measurable revenue",
     description:
       "Dynamic QR codes you can edit after they're printed, with scan tracking built for operators.",
     url: "https://traxxr.com",
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Traxxr — turn offline marketing into measurable revenue",
+    title: "Traxxr: turn offline marketing into measurable revenue",
     description:
       "Dynamic QR codes you can edit after they're printed, with scan tracking built for operators.",
     images: ["/og.png"],

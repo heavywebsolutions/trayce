@@ -1,22 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { SiteNav } from "@/components/SiteNav";
+import { SiteFooter } from "@/components/SiteFooter";
 
 export const dynamic = "force-dynamic";
-
-function Logo() {
-  return <img src="/traxxr-logo.png" alt="Traxxr" className="h-7 w-auto" />;
-}
-
-function LogoLight() {
-  return (
-    <img
-      src="/traxxr-logo.png"
-      alt="Traxxr"
-      className="h-7 w-auto brightness-0 invert"
-    />
-  );
-}
 
 const proof = [
   { v: "1,240", l: "scans", c: "" },
@@ -107,23 +95,7 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-white text-ink-900">
       {/* ===== Nav ===== */}
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <Logo />
-        <nav className="flex items-center gap-3">
-          <Link
-            href="/login"
-            className="px-3 py-2 text-sm font-semibold text-ink-600 hover:text-ink-900"
-          >
-            Log in
-          </Link>
-          <Link
-            href="/signup"
-            className="bg-ink-900 px-4 py-2 text-sm font-semibold text-white hover:bg-ink-800"
-          >
-            Start free
-          </Link>
-        </nav>
-      </header>
+      <SiteNav />
 
       {/* ===== BAND 1 · Hero (white) ===== */}
       <section className="bg-white">
@@ -597,15 +569,8 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ===== Footer (dark) ===== */}
-      <footer className="bg-ink-900 text-white">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-8 sm:flex-row">
-          <LogoLight />
-          <p className="text-xs text-white/40">
-            © {new Date().getFullYear()} Traxxr. Know what your marketing does.
-          </p>
-        </div>
-      </footer>
+      {/* ===== Footer ===== */}
+      <SiteFooter />
     </main>
   );
 }
