@@ -74,6 +74,20 @@ export default async function ConfigurePrintPage({
           {product.name}
         </h1>
         <p className="mt-0.5 text-sm text-ink-500">{product.blurb}</p>
+        <dl className="mt-4 grid gap-3 rounded-xl border border-ink-200 bg-white p-4 sm:grid-cols-3">
+          {[
+            { label: "Material", value: product.material },
+            { label: "Durability", value: product.durability },
+            { label: "Turnaround", value: product.turnaround },
+          ].map((s) => (
+            <div key={s.label}>
+              <dt className="text-xs font-medium uppercase tracking-wide text-ink-400">
+                {s.label}
+              </dt>
+              <dd className="mt-0.5 text-sm text-ink-700">{s.value}</dd>
+            </div>
+          ))}
+        </dl>
       </div>
 
       <PrintConfigurePanel product={product} codes={codes} />

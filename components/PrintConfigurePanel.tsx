@@ -159,6 +159,8 @@ export function PrintConfigurePanel({
   const derivedHost = hostFromUrl(selected?.destination_url);
   const prepCents = logoPrep && (decalLogo || prepSource) ? LOGO_PREP_CENTS : 0;
   const goodsTotal = (price?.totalCents ?? 0) + prepCents;
+  const selectedSize = product.sizes.find((s) => s.key === sizeKey);
+  const widthIn = selectedSize?.widthIn ?? 0;
 
   // Render the code exactly as designed. Use the stored design SVG if present;
   // otherwise rebuild it from the saved design columns and backfill it so the
@@ -582,6 +584,51 @@ export function PrintConfigurePanel({
               <span className="text-sm text-ink-400">Pick a code</span>
             )}
           </div>
+
+          {selected && (
+            <div className="mt-3 space-y-3">
+              <a
+                href={selected.content}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between rounded-xl border border-ink-200 px-3 py-2 text-sm text-ink-700 transition hover:bg-ink-50"
+              >
+                <span>
+                  Test scan
+                  {derivedHost ? (
+                    <span className="text-ink-400"> · {derivedHost}</span>
+                  ) : null}
+                </span>
+                <span className="font-medium text-accent">Open ↗</span>
+              </a>
+
+              {widthIn > 0 && (
+                <div className="rounded-xl border border-ink-200 px-3 py-3">
+                  <p className="mb-2 text-xs text-ink-400">
+                    Actual size vs a credit card
+                  </p>
+                  <div className="flex items-end gap-4">
+                    <div className="flex flex-col items-center gap-1">
+                      <div
+                        className="rounded-md border-2 border-accent bg-accent-soft"
+                        style={{ width: widthIn * 34, height: widthIn * 34 }}
+                      />
+                      <span className="text-[11px] text-ink-500">
+                        {widthIn}&quot;
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                      <div
+                        className="rounded-md border border-ink-300 bg-ink-50"
+                        style={{ width: 3.375 * 34, height: 2.125 * 34 }}
+                      />
+                      <span className="text-[11px] text-ink-400">Card</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <dl className="mt-4 space-y-1.5 text-sm">
             <div className="flex justify-between">

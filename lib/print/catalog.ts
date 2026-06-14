@@ -30,6 +30,9 @@ export type PrintProduct = {
   key: string;
   name: string;
   blurb: string;
+  material: string;
+  durability: string;
+  turnaround: string;
   sizes: PrintSize[];
   finishes: PrintFinish[];
   tiers: PrintTier[];
@@ -41,6 +44,9 @@ export const PRINT_PRODUCTS: PrintProduct[] = [
     name: "Die-cut decals",
     blurb:
       "Single decals cut to the shape of your code, on durable weatherproof vinyl.",
+    material: "Premium weatherproof vinyl with a laminate top coat.",
+    durability: "UV and water resistant. Indoor or outdoor, 3 to 5 year life.",
+    turnaround: "Made in 2 to 3 business days, ships in 3 to 5.",
     sizes: [
       { key: "2in", label: '2"', widthIn: 2, heightIn: 2, mult: 1.0 },
       { key: "3in", label: '3"', widthIn: 3, heightIn: 3, mult: 1.4 },
@@ -67,6 +73,9 @@ export const PRINT_PRODUCTS: PrintProduct[] = [
     name: "Window decals",
     blurb:
       "Clear or white vinyl decals built for storefront glass and vehicle windows.",
+    material: "Clear or white window vinyl, smooth-surface adhesive.",
+    durability: "Weatherproof and cleanly removable. Built for glass.",
+    turnaround: "Made in 2 to 3 business days, ships in 3 to 5.",
     sizes: [
       { key: "4in", label: '4"', widthIn: 4, heightIn: 4, mult: 1.0 },
       { key: "6in", label: '6"', widthIn: 6, heightIn: 6, mult: 1.5 },
