@@ -248,6 +248,22 @@ export async function updateDesign(formData: FormData): Promise<void> {
   revalidatePath("/dashboard/codes");
 }
 
+// Backfill the composed design SVG for a code that predates the column, so
+// Print & Ship preview, proof, and print stay consistent without a manual
+// re-save. Only writes when design_svg is currently null.
+export async function backfillDesignSvg(
+  codeId: string,
+  svg: string
+): Promise<void> {
+  if (!codeId || !svg.startsWith("<svg") || svg.length > 800_000) return;
+  const { supabase } = await currentWorkspaceId();
+  await supabase
+    .from("codes")
+    .update({ design_svg: svg })
+    .eq("id", codeId)
+    .is("design_svg", null);
+}
+
 // Save the current design as a reusable workspace template.
 export async function saveDesignTemplate(formData: FormData): Promise<void> {
   const name = String(formData.get("name") || "").trim().slice(0, 60) || "Untitled";

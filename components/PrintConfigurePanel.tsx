@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createPrintCheckout } from "@/app/dashboard/print/actions";
+import { backfillDesignSvg } from "@/app/dashboard/codes/actions";
 import { priceFor, formatUsd, type PrintProduct } from "@/lib/print/catalog";
 import {
   CTA_PRESETS,
@@ -10,6 +11,7 @@ import {
   type DecalShape,
   type CtaPosition,
 } from "@/lib/print/decal";
+import { buildDesignSvg } from "@/lib/qrStyling";
 import { DecalPreview } from "@/components/DecalPreview";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
@@ -19,6 +21,15 @@ type Code = {
   title: string | null;
   slug: string;
   design_svg: string | null;
+  content: string;
+  fg_color: string;
+  bg_color: string;
+  dot_style: string;
+  corner_style: string;
+  logo_url: string | null;
+  frame_style: string;
+  frame_color: string;
+  frame_text: string;
 };
 
 function Chip({
@@ -68,11 +79,46 @@ export function PrintConfigurePanel({
   const price = priceFor(product.key, sizeKey, finishKey, qty);
   const selected = codes.find((c) => c.id === codeId);
 
-  const codeHref = selected
-    ? selected.design_svg
-      ? `data:image/svg+xml;utf8,${encodeURIComponent(selected.design_svg)}`
-      : `/api/qr/${selected.slug}`
-    : "";
+  // Render the code exactly as designed. Use the stored design SVG if present;
+  // otherwise rebuild it from the saved design columns and backfill it so the
+  // proof and print file match too.
+  const [codeHref, setCodeHref] = useState("");
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      if (!selected) {
+        setCodeHref("");
+        return;
+      }
+      if (selected.design_svg) {
+        setCodeHref(
+          `data:image/svg+xml;utf8,${encodeURIComponent(selected.design_svg)}`
+        );
+        return;
+      }
+      const svg = await buildDesignSvg(selected.content, {
+        fg: selected.fg_color,
+        bg: selected.bg_color,
+        dot: selected.dot_style,
+        corner: selected.corner_style,
+        logo: selected.logo_url,
+        frame: selected.frame_style,
+        frameColor: selected.frame_color,
+        frameText: selected.frame_text,
+      });
+      if (!active) return;
+      if (svg) {
+        setCodeHref(`data:image/svg+xml;utf8,${encodeURIComponent(svg)}`);
+        backfillDesignSvg(selected.id, svg).catch(() => {});
+      } else {
+        setCodeHref(`/api/qr/${selected.slug}`);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [codeId]);
 
   if (codes.length === 0) {
     return (
