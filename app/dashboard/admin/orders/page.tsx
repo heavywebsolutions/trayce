@@ -24,11 +24,14 @@ type Order = {
   status: string;
   tracking_number: string | null;
   shipping: { name?: string | null; address?: Addr | null } | null;
+  proof_note: string | null;
   created_at: string;
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  paid: "bg-accent-soft text-accent",
+  proof_ready: "bg-accent-soft text-accent",
+  changes_requested: "bg-amber-50 text-amber-700",
+  approved: "bg-emerald-50 text-emerald-700",
   printing: "bg-amber-50 text-amber-700",
   shipped: "bg-emerald-50 text-emerald-700",
 };
@@ -46,14 +49,25 @@ export default async function FulfillmentQueuePage() {
   const { data: rows } = await admin
     .from("print_orders")
     .select(
-      "id, product_name, options, quantity, total_cents, status, tracking_number, shipping, created_at"
+      "id, product_name, options, quantity, total_cents, status, tracking_number, shipping, proof_note, created_at"
     )
-    .in("status", ["paid", "printing", "shipped"])
+    .in("status", [
+      "proof_ready",
+      "changes_requested",
+      "approved",
+      "printing",
+      "shipped",
+    ])
     .order("created_at", { ascending: false })
     .limit(200);
   const orders = (rows ?? []) as Order[];
 
-  const queue = orders.filter((o) => o.status !== "shipped");
+  const awaiting = orders.filter(
+    (o) => o.status === "proof_ready" || o.status === "changes_requested"
+  );
+  const queue = orders.filter(
+    (o) => o.status === "approved" || o.status === "printing"
+  );
   const shipped = orders.filter((o) => o.status === "shipped");
 
   return (
@@ -63,13 +77,30 @@ export default async function FulfillmentQueuePage() {
           Fulfillment queue
         </h1>
         <p className="mt-0.5 text-sm text-ink-500">
-          Internal back office. Paid orders to print and ship.
+          Internal back office. Approved orders are ready to print and ship.
         </p>
       </div>
 
+      {awaiting.length > 0 && (
+        <>
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-400">
+            Awaiting customer approval
+          </h2>
+          <div className="mb-10 space-y-3">
+            {awaiting.map((o) => (
+              <OrderCard key={o.id} o={o} />
+            ))}
+          </div>
+        </>
+      )}
+
+      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-400">
+        Ready to print
+      </h2>
       {queue.length === 0 ? (
-        <div className="mb-8 rounded-2xl border border-ink-200 bg-white p-10 text-center text-sm text-ink-500">
-          Nothing in the queue. New paid orders show up here.
+        <div className="mb-10 rounded-2xl border border-ink-200 bg-white p-10 text-center text-sm text-ink-500">
+          Nothing approved yet. Orders land here once the customer approves their
+          proof.
         </div>
       ) : (
         <div className="mb-10 space-y-3">
@@ -118,6 +149,11 @@ function OrderCard({ o }: { o: Order }) {
                 .join(", ")}
             </p>
           )}
+          {o.proof_note && (
+            <p className="mt-1 text-xs text-amber-700">
+              Change requested: {o.proof_note}
+            </p>
+          )}
         </div>
         <span
           className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
@@ -136,7 +172,7 @@ function OrderCard({ o }: { o: Order }) {
           Download print file
         </a>
 
-        {o.status === "paid" && (
+        {o.status === "approved" && (
           <form action={markPrinting}>
             <input type="hidden" name="id" value={o.id} />
             <button className="inline-flex min-h-[40px] items-center justify-center rounded-xl bg-accent px-4 text-sm font-semibold text-white transition hover:bg-accent-hover">

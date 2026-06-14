@@ -56,6 +56,10 @@ export const PRINT_PRODUCTS: PrintProduct[] = [
       { qty: 50, unitPriceCents: 110 },
       { qty: 100, unitPriceCents: 85 },
       { qty: 250, unitPriceCents: 65 },
+      { qty: 500, unitPriceCents: 52 },
+      { qty: 1000, unitPriceCents: 42 },
+      { qty: 2500, unitPriceCents: 34 },
+      { qty: 5000, unitPriceCents: 28 },
     ],
   },
   {
@@ -77,6 +81,10 @@ export const PRINT_PRODUCTS: PrintProduct[] = [
       { qty: 25, unitPriceCents: 320 },
       { qty: 50, unitPriceCents: 260 },
       { qty: 100, unitPriceCents: 210 },
+      { qty: 250, unitPriceCents: 170 },
+      { qty: 500, unitPriceCents: 140 },
+      { qty: 1000, unitPriceCents: 115 },
+      { qty: 2500, unitPriceCents: 95 },
     ],
   },
 ];

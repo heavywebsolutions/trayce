@@ -13,6 +13,9 @@ export function isAdmin(email: string | null | undefined): boolean {
 const STATUS_LABELS: Record<string, string> = {
   pending: "Pending",
   paid: "New",
+  proof_ready: "Proof ready",
+  approved: "Approved",
+  changes_requested: "Changes requested",
   printing: "Printing",
   shipped: "Shipped",
   canceled: "Canceled",

@@ -8,6 +8,9 @@ export const dynamic = "force-dynamic";
 
 const STATUS_STYLES: Record<string, string> = {
   paid: "bg-accent-soft text-accent",
+  proof_ready: "bg-accent-soft text-accent",
+  approved: "bg-emerald-50 text-emerald-700",
+  changes_requested: "bg-amber-50 text-amber-700",
   printing: "bg-amber-50 text-amber-700",
   shipped: "bg-emerald-50 text-emerald-700",
   canceled: "bg-ink-100 text-ink-500",
@@ -29,9 +32,9 @@ type Order = {
 export default async function OrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ ok?: string }>;
+  searchParams: Promise<{ ok?: string; approved?: string; change?: string }>;
 }) {
-  const { ok } = await searchParams;
+  const { ok, approved, change } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -66,9 +69,19 @@ export default async function OrdersPage({
       </div>
 
       {ok && (
+        <div className="mb-4 rounded-xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm text-accent">
+          Payment received. Your proof is ready, review and approve it below
+          before we print.
+        </div>
+      )}
+      {approved && (
         <div className="mb-4 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          Order placed. We are on it, you will see it move to Shipped here with a
-          tracking number.
+          Proof approved. It is headed to production.
+        </div>
+      )}
+      {change && (
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Got it. We will review your change and follow up before printing.
         </div>
       )}
 
@@ -116,8 +129,16 @@ export default async function OrdersPage({
                     day: "numeric",
                   })}
                 </span>
-                {o.tracking_number &&
-                  (o.tracking_url ? (
+                {o.status === "proof_ready" ||
+                o.status === "changes_requested" ? (
+                  <Link
+                    href={`/dashboard/orders/${o.id}`}
+                    className="font-semibold text-accent hover:underline"
+                  >
+                    Review proof →
+                  </Link>
+                ) : o.tracking_number ? (
+                  o.tracking_url ? (
                     <a
                       href={o.tracking_url}
                       target="_blank"
@@ -130,7 +151,15 @@ export default async function OrdersPage({
                     <span className="text-ink-500">
                       Tracking: {o.tracking_number}
                     </span>
-                  ))}
+                  )
+                ) : (
+                  <Link
+                    href={`/dashboard/orders/${o.id}`}
+                    className="text-ink-400 hover:text-ink-600"
+                  >
+                    View
+                  </Link>
+                )}
               </div>
             </div>
           ))}

@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
             unit_price_cents: parseInt(s.metadata.unit_price_cents || "0", 10),
             total_cents: parseInt(s.metadata.total_cents || "0", 10),
             currency: s.currency || "usd",
-            status: "paid",
+            status: "proof_ready",
             stripe_session_id: s.id,
             shipping: shipObj
               ? { name: shipObj.name ?? null, address: shipObj.address ?? null }
