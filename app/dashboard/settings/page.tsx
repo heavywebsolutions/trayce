@@ -2,11 +2,10 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Card, Badge, Button, Input, Label } from "@/components/ui";
 import { updateProfile, updatePassword } from "./actions";
+import Link from "next/link";
 import {
   startCheckout,
   openBillingPortal,
-  changePlan,
-  cancelSubscription,
   resumeSubscription,
 } from "@/app/dashboard/billing/actions";
 
@@ -269,22 +268,24 @@ export default async function SettingsPage({
                         PLAN_ORDER[p] >
                         PLAN_ORDER[plan as keyof typeof PLAN_ORDER];
                       return (
-                        <form key={p} action={changePlan}>
-                          <input type="hidden" name="plan" value={p} />
-                          <button className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-ink-200 px-4 py-2.5 text-sm font-semibold text-ink-800 transition hover:border-ink-300 hover:bg-ink-50">
-                            {isUp ? "Upgrade" : "Downgrade"} to{" "}
-                            {PLAN_META[p].label} · {PLAN_META[p].price}/mo
-                          </button>
-                        </form>
+                        <Link
+                          key={p}
+                          href={`/dashboard/settings/change?plan=${p}`}
+                          className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-ink-200 px-4 py-2.5 text-sm font-semibold text-ink-800 transition hover:border-ink-300 hover:bg-ink-50"
+                        >
+                          {isUp ? "Upgrade" : "Downgrade"} to {PLAN_META[p].label}{" "}
+                          · {PLAN_META[p].price}/mo
+                        </Link>
                       );
                     })}
                 </div>
               </div>
-              <form action={cancelSubscription}>
-                <button className="text-sm font-medium text-ink-500 underline-offset-2 hover:text-red-600 hover:underline">
-                  Cancel subscription
-                </button>
-              </form>
+              <Link
+                href="/dashboard/settings/cancel"
+                className="text-sm font-medium text-ink-500 underline-offset-2 hover:text-red-600 hover:underline"
+              >
+                Cancel subscription
+              </Link>
             </>
           )}
 
