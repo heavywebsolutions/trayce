@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { stripe, stripeConfigured } from "@/lib/stripe";
-import { getPrintProduct, priceFor } from "@/lib/print/catalog";
+import { getPrintProduct, priceFor, LOGO_PREP_CENTS } from "@/lib/print/catalog";
 
 const APP_URL = (
   process.env.NEXT_PUBLIC_APP_URL || "https://traxxr.com"
@@ -39,13 +39,14 @@ export async function createPrintCheckout(formData: FormData) {
   const font = String(formData.get("font") || "inter").slice(0, 24);
   const logoRaw = String(formData.get("logo") || "");
   const logo =
-    logoRaw.startsWith("data:image/") && logoRaw.length < 400_000
+    logoRaw.startsWith("data:image/") && logoRaw.length < 1_600_000
       ? logoRaw
       : "";
   const showUrl = String(formData.get("show_url") || "") === "true";
   const urlText = String(formData.get("url_text") || "").slice(0, 80);
   const urlPosition =
     String(formData.get("url_position") || "") === "top" ? "top" : "bottom";
+  const logoPrep = String(formData.get("logo_prep") || "") === "true" && !!logo;
 
   const product = getPrintProduct(productKey);
   const price = priceFor(productKey, sizeKey, finishKey, qty);
@@ -81,7 +82,10 @@ export async function createPrintCheckout(formData: FormData) {
     show_url: showUrl ? "true" : "false",
     url_text: showUrl ? urlText : "",
     url_position: urlPosition,
+    logo_prep: logoPrep ? "true" : "false",
   };
+
+  const goodsTotal = price.totalCents + (logoPrep ? LOGO_PREP_CENTS : 0);
 
   // Create a draft order up front so the full design (including an uploaded
   // logo, which is too large for Stripe metadata) is persisted. The webhook
@@ -97,7 +101,7 @@ export async function createPrintCheckout(formData: FormData) {
       options,
       quantity: qty,
       unit_price_cents: price.unitPriceCents,
-      total_cents: price.totalCents,
+      total_cents: goodsTotal,
       currency: "usd",
       status: "pending",
     })
@@ -118,6 +122,20 @@ export async function createPrintCheckout(formData: FormData) {
         },
         quantity: qty,
       },
+      ...(logoPrep
+        ? [
+            {
+              price_data: {
+                currency: "usd",
+                product_data: {
+                  name: "Pro logo prep (vectorize + background removal)",
+                },
+                unit_amount: LOGO_PREP_CENTS,
+              },
+              quantity: 1,
+            },
+          ]
+        : []),
     ],
     shipping_address_collection: { allowed_countries: ["US"] },
     shipping_options: [

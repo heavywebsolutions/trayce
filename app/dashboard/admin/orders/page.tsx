@@ -18,7 +18,7 @@ type Addr = {
 type Order = {
   id: string;
   product_name: string;
-  options: { size?: string; finish?: string } | null;
+  options: { size?: string; finish?: string; logo_prep?: string } | null;
   quantity: number;
   total_cents: number;
   status: string;
@@ -153,6 +153,11 @@ function OrderCard({ o }: { o: Order }) {
             <p className="mt-1 text-xs text-amber-700">
               Change requested: {o.proof_note}
             </p>
+          )}
+          {o.options?.logo_prep === "true" && (
+            <span className="mt-1 inline-block rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">
+              Pro logo prep
+            </span>
           )}
         </div>
         <span

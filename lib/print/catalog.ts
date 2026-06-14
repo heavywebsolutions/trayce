@@ -89,6 +89,10 @@ export const PRINT_PRODUCTS: PrintProduct[] = [
   },
 ];
 
+// Optional add-on: our team vectorizes the customer's logo and removes the
+// background during the proof step. Flat fee, placeholder pricing.
+export const LOGO_PREP_CENTS = 1900;
+
 export function getPrintProduct(key: string): PrintProduct | undefined {
   return PRINT_PRODUCTS.find((p) => p.key === key);
 }

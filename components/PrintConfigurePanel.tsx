@@ -4,7 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createPrintCheckout } from "@/app/dashboard/print/actions";
 import { backfillDesignSvg } from "@/app/dashboard/codes/actions";
-import { priceFor, formatUsd, type PrintProduct } from "@/lib/print/catalog";
+import {
+  priceFor,
+  formatUsd,
+  LOGO_PREP_CENTS,
+  type PrintProduct,
+} from "@/lib/print/catalog";
 import {
   CTA_PRESETS,
   DEFAULT_DECAL,
@@ -97,13 +102,14 @@ export function PrintConfigurePanel({
   const [showUrl, setShowUrl] = useState(false);
   const [urlPosition, setUrlPosition] = useState<"top" | "bottom">("bottom");
   const [urlText, setUrlText] = useState("");
+  const [logoPrep, setLogoPrep] = useState(false);
 
   function onDecalLogoFile(file: File) {
     const reader = new FileReader();
     reader.onload = () => {
       const img = new window.Image();
       img.onload = () => {
-        const max = 220;
+        const max = 1000;
         const scale = Math.min(1, max / Math.max(img.width, img.height));
         const w = Math.max(1, Math.round(img.width * scale));
         const h = Math.max(1, Math.round(img.height * scale));
@@ -133,6 +139,8 @@ export function PrintConfigurePanel({
   const price = priceFor(product.key, sizeKey, finishKey, qty);
   const selected = codes.find((c) => c.id === codeId);
   const derivedHost = hostFromUrl(selected?.destination_url);
+  const prepCents = logoPrep && decalLogo ? LOGO_PREP_CENTS : 0;
+  const goodsTotal = (price?.totalCents ?? 0) + prepCents;
 
   // Render the code exactly as designed. Use the stored design SVG if present;
   // otherwise rebuild it from the saved design columns and backfill it so the
@@ -444,6 +452,22 @@ export function PrintConfigurePanel({
                 </label>
               )}
             </div>
+            {decalLogo && (
+              <label className="mt-3 flex items-start gap-2 text-sm text-ink-600">
+                <input
+                  type="checkbox"
+                  checked={logoPrep}
+                  onChange={(e) => setLogoPrep(e.target.checked)}
+                  className="mt-0.5 h-4 w-4"
+                />
+                <span>
+                  Add{" "}
+                  <span className="font-medium text-ink-800">Pro logo prep</span>{" "}
+                  (+{formatUsd(LOGO_PREP_CENTS)}). Our team vectorizes your logo
+                  and removes the background before printing.
+                </span>
+              </label>
+            )}
           </div>
 
           <div>
@@ -525,10 +549,18 @@ export function PrintConfigurePanel({
               <dt className="text-ink-500">Quantity</dt>
               <dd className="font-medium tabular-nums text-ink-900">{qty}</dd>
             </div>
+            {prepCents > 0 && (
+              <div className="flex justify-between">
+                <dt className="text-ink-500">Logo prep</dt>
+                <dd className="font-medium tabular-nums text-ink-900">
+                  {formatUsd(prepCents)}
+                </dd>
+              </div>
+            )}
             <div className="flex justify-between border-t border-ink-100 pt-1.5">
               <dt className="font-semibold text-ink-900">Subtotal</dt>
               <dd className="font-semibold tabular-nums text-ink-900">
-                {price ? formatUsd(price.totalCents) : "—"}
+                {price ? formatUsd(goodsTotal) : "—"}
               </dd>
             </div>
           </dl>
@@ -559,11 +591,16 @@ export function PrintConfigurePanel({
             />
             <input type="hidden" name="url_text" value={showUrl ? urlText : ""} />
             <input type="hidden" name="url_position" value={urlPosition} />
+            <input
+              type="hidden"
+              name="logo_prep"
+              value={logoPrep ? "true" : "false"}
+            />
             <button
               disabled={!price || !codeId}
               className="inline-flex min-h-[44px] w-full items-center justify-center rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Continue to checkout{price ? ` · ${formatUsd(price.totalCents)}` : ""}
+              Continue to checkout{price ? ` · ${formatUsd(goodsTotal)}` : ""}
             </button>
           </form>
 
