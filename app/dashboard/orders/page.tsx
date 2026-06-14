@@ -46,6 +46,7 @@ export default async function OrdersPage({
     .select(
       "id, product_name, options, quantity, total_cents, status, tracking_number, tracking_url, created_at"
     )
+    .neq("status", "pending")
     .order("created_at", { ascending: false });
   const orders = (rows ?? []) as Order[];
 

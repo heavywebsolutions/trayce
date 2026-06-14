@@ -12,10 +12,19 @@ describe("decal compositor", () => {
     expect(svg).toContain("<image");
   });
 
-  it("renders the call to action text when present", () => {
+  it("renders the call to action text, uppercased by default", () => {
     const svg = composeDecalSvg("href", { ...DEFAULT_DECAL, cta: "View the menu" });
-    expect(svg).toContain("View the menu");
+    expect(svg).toContain("VIEW THE MENU");
     expect(svg).toContain("<text");
+  });
+
+  it("keeps original case when uppercase is off", () => {
+    const svg = composeDecalSvg("href", {
+      ...DEFAULT_DECAL,
+      cta: "View the menu",
+      ctaUppercase: false,
+    });
+    expect(svg).toContain("View the menu");
   });
 
   it("omits the text element when there is no call to action", () => {
@@ -24,7 +33,11 @@ describe("decal compositor", () => {
   });
 
   it("escapes markup in the call to action", () => {
-    const svg = composeDecalSvg("href", { ...DEFAULT_DECAL, cta: "<script>" });
+    const svg = composeDecalSvg("href", {
+      ...DEFAULT_DECAL,
+      cta: "<script>",
+      ctaUppercase: false,
+    });
     expect(svg).not.toContain("<script>");
     expect(svg).toContain("&lt;script&gt;");
   });

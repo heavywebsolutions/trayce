@@ -1,10 +1,12 @@
 // Shared decal compositor. Wraps a code image (the customer's designed code, or
-// a plain code) in the decal: shape, background, optional border, and a call to
-// action. The SAME function powers the live configurator preview and the
-// server-side print file, so what the customer sees is what gets printed.
+// a plain code) in the decal: shape, background, border, optional brand logo,
+// call to action, and URL. The SAME function powers the live configurator
+// preview and the server-side print file, so what the customer sees is what
+// gets printed.
 
 export type DecalShape = "square" | "rounded" | "circle";
 export type CtaPosition = "below" | "above";
+export type UrlPosition = "top" | "bottom";
 
 export type DecalOptions = {
   shape: DecalShape;
@@ -13,6 +15,13 @@ export type DecalOptions = {
   borderColor: string;
   cta: string; // empty string = no call to action
   ctaPosition: CtaPosition;
+  // Optional extras (defaulted everywhere they are read).
+  ctaUppercase?: boolean;
+  font?: string; // font key from FONT_OPTIONS
+  logo?: string | null; // data URL of a brand logo placed on the decal
+  showUrl?: boolean;
+  urlText?: string;
+  urlPosition?: UrlPosition;
 };
 
 export const CTA_PRESETS = [
@@ -24,6 +33,31 @@ export const CTA_PRESETS = [
   "Scan to order",
 ];
 
+// 10 popular display/sans/serif/script fonts for the call to action.
+export const FONT_OPTIONS: { key: string; name: string; stack: string }[] = [
+  { key: "inter", name: "Inter", stack: "'Inter', system-ui, sans-serif" },
+  { key: "poppins", name: "Poppins", stack: "'Poppins', sans-serif" },
+  { key: "montserrat", name: "Montserrat", stack: "'Montserrat', sans-serif" },
+  { key: "oswald", name: "Oswald", stack: "'Oswald', sans-serif" },
+  { key: "bebas", name: "Bebas Neue", stack: "'Bebas Neue', sans-serif" },
+  { key: "anton", name: "Anton", stack: "'Anton', sans-serif" },
+  { key: "roboto", name: "Roboto", stack: "'Roboto', sans-serif" },
+  { key: "lato", name: "Lato", stack: "'Lato', sans-serif" },
+  { key: "playfair", name: "Playfair Display", stack: "'Playfair Display', serif" },
+  { key: "pacifico", name: "Pacifico", stack: "'Pacifico', cursive" },
+];
+
+export function fontStack(key?: string): string {
+  return (
+    FONT_OPTIONS.find((f) => f.key === key)?.stack ??
+    "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+  );
+}
+
+// Stylesheet that loads the 10 fonts (weights 600/700 where available).
+export const GOOGLE_FONTS_HREF =
+  "https://fonts.googleapis.com/css2?family=Inter:wght@600;700&family=Poppins:wght@600;700&family=Montserrat:wght@600;700&family=Oswald:wght@600;700&family=Bebas+Neue&family=Anton&family=Roboto:wght@700&family=Lato:wght@700&family=Playfair+Display:wght@700&family=Pacifico&display=swap";
+
 export const DEFAULT_DECAL: DecalOptions = {
   shape: "rounded",
   bgColor: "#FFFFFF",
@@ -31,6 +65,12 @@ export const DEFAULT_DECAL: DecalOptions = {
   borderColor: "#0A2540",
   cta: "",
   ctaPosition: "below",
+  ctaUppercase: true,
+  font: "inter",
+  logo: null,
+  showUrl: false,
+  urlText: "",
+  urlPosition: "bottom",
 };
 
 export type DecalTemplate = {
@@ -128,43 +168,75 @@ export function readableOn(hex: string): string {
 // codeHref: a URL or data: URL pointing at the code image (SVG or PNG).
 export function composeDecalSvg(codeHref: string, o: DecalOptions): string {
   const S = 760;
-  const hasCta = o.cta.trim().length > 0;
+  const P = 70;
+  const gap = 22;
+
+  const fam = fontStack(o.font);
+  const textColor = readableOn(o.bgColor);
+  const upper = o.ctaUppercase !== false;
+  const ctaRaw = (o.cta || "").trim();
+  const hasCta = ctaRaw.length > 0;
+  const ctaText = upper ? ctaRaw.toUpperCase() : ctaRaw;
+  const logo = o.logo || null;
+  const urlText = (o.urlText || "").trim();
+  const showUrl = !!o.showUrl && urlText.length > 0;
+  const urlPos: UrlPosition = o.urlPosition === "top" ? "top" : "bottom";
+
   const rx = o.shape === "circle" ? S / 2 : o.shape === "rounded" ? 64 : 0;
   const strokeW = o.border ? 12 : 0;
   const inset = strokeW / 2;
-
   const card = `<rect x="${inset}" y="${inset}" width="${S - strokeW}" height="${
     S - strokeW
   }" rx="${Math.max(0, rx - inset)}" fill="${o.bgColor}"${
     o.border ? ` stroke="${o.borderColor}" stroke-width="${strokeW}"` : ""
   }/>`;
 
-  const codeSize = hasCta ? 470 : 560;
-  const codeX = (S - codeSize) / 2;
-  let codeY: number;
-  let ctaY: number;
-  if (hasCta && o.ctaPosition === "above") {
-    ctaY = 110;
-    codeY = 190;
-  } else if (hasCta) {
-    codeY = 110;
-    ctaY = codeY + codeSize + 75;
-  } else {
-    codeY = (S - codeSize) / 2;
-    ctaY = 0;
+  type Item = { kind: "url" | "logo" | "cta" | "code"; h: number };
+  const URLH = 40,
+    LOGOH = 96,
+    CTAH = 64;
+  const items: Item[] = [];
+  if (showUrl && urlPos === "top") items.push({ kind: "url", h: URLH });
+  if (logo) items.push({ kind: "logo", h: LOGOH });
+  if (hasCta && o.ctaPosition === "above") items.push({ kind: "cta", h: CTAH });
+  items.push({ kind: "code", h: 0 });
+  if (hasCta && o.ctaPosition === "below") items.push({ kind: "cta", h: CTAH });
+  if (showUrl && urlPos === "bottom") items.push({ kind: "url", h: URLH });
+
+  const avail = S - 2 * P;
+  const fixed =
+    items.filter((i) => i.kind !== "code").reduce((a, i) => a + i.h, 0) +
+    gap * (items.length - 1);
+  const codeH = Math.max(260, avail - fixed);
+  const codeItem = items.find((i) => i.kind === "code");
+  if (codeItem) codeItem.h = codeH;
+  const codeSize = Math.min(codeH, avail);
+
+  let y = P;
+  const els: string[] = [card];
+  for (const it of items) {
+    if (it.kind === "url") {
+      els.push(
+        `<text x="${S / 2}" y="${y + it.h / 2}" font-family="${fam}" font-size="28" font-weight="600" fill="${textColor}" opacity="0.85" text-anchor="middle" dominant-baseline="central">${escapeXml(urlText)}</text>`
+      );
+    } else if (it.kind === "logo" && logo) {
+      const lw = 220;
+      els.push(
+        `<image x="${(S - lw) / 2}" y="${y}" width="${lw}" height="${it.h}" href="${logo}" preserveAspectRatio="xMidYMid meet"/>`
+      );
+    } else if (it.kind === "cta") {
+      els.push(
+        `<text x="${S / 2}" y="${y + it.h / 2}" font-family="${fam}" font-size="46" font-weight="700" fill="${textColor}" text-anchor="middle" dominant-baseline="central">${escapeXml(ctaText)}</text>`
+      );
+    } else if (it.kind === "code") {
+      els.push(
+        `<image x="${(S - codeSize) / 2}" y="${y}" width="${codeSize}" height="${it.h}" href="${codeHref}" preserveAspectRatio="xMidYMid meet"/>`
+      );
+    }
+    y += it.h + gap;
   }
 
-  const codeEl = `<image x="${codeX}" y="${codeY}" width="${codeSize}" height="${codeSize}" href="${codeHref}" preserveAspectRatio="xMidYMid meet"/>`;
-
-  const ctaEl = hasCta
-    ? `<text x="${S / 2}" y="${ctaY}" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="46" font-weight="700" fill="${readableOn(
-        o.bgColor
-      )}" text-anchor="middle" dominant-baseline="middle">${escapeXml(
-        o.cta.trim().slice(0, 40)
-      )}</text>`
-    : "";
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}" viewBox="0 0 ${S} ${S}">${card}${codeEl}${ctaEl}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}" viewBox="0 0 ${S} ${S}">${els.join("")}</svg>`;
 }
 
 // Parse decal options off an order's options jsonb, filling safe defaults.
@@ -177,7 +249,6 @@ export function decalFromOptions(
   )
     ? (o.shape as DecalShape)
     : DEFAULT_DECAL.shape;
-  const ctaPosition = o.cta_position === "above" ? "above" : "below";
   return {
     shape,
     bgColor: typeof o.bg_color === "string" ? o.bg_color : DEFAULT_DECAL.bgColor,
@@ -187,6 +258,12 @@ export function decalFromOptions(
         ? o.border_color
         : DEFAULT_DECAL.borderColor,
     cta: typeof o.cta === "string" ? o.cta : "",
-    ctaPosition,
+    ctaPosition: o.cta_position === "above" ? "above" : "below",
+    ctaUppercase: o.cta_uppercase !== false && o.cta_uppercase !== "false",
+    font: typeof o.font === "string" ? o.font : DEFAULT_DECAL.font,
+    logo: typeof o.logo === "string" ? o.logo : null,
+    showUrl: o.show_url === true || o.show_url === "true",
+    urlText: typeof o.url_text === "string" ? o.url_text : "",
+    urlPosition: o.url_position === "top" ? "top" : "bottom",
   };
 }

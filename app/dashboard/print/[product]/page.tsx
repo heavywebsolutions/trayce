@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getPrintProduct } from "@/lib/print/catalog";
+import { GOOGLE_FONTS_HREF } from "@/lib/print/decal";
 import { qrContentFor } from "@/lib/qr";
 import { PrintConfigurePanel } from "@/components/PrintConfigurePanel";
 
@@ -42,6 +43,7 @@ export default async function ConfigurePrintPage({
     title: (c.title as string) ?? null,
     slug: c.slug as string,
     design_svg: (c.design_svg as string | null) ?? null,
+    destination_url: (c.destination_url as string) ?? "",
     content: qrContentFor({
       type: (c.type as string) ?? "dynamic",
       slug: c.slug as string,
@@ -59,6 +61,8 @@ export default async function ConfigurePrintPage({
 
   return (
     <div className="mx-auto max-w-5xl">
+      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+      <link rel="stylesheet" href={GOOGLE_FONTS_HREF} />
       <Link
         href="/dashboard/print"
         className="mb-4 inline-block text-sm text-ink-500 hover:text-ink-700"

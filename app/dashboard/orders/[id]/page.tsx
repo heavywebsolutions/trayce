@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui";
 import { formatUsd } from "@/lib/print/catalog";
 import { orderStatusLabel } from "@/lib/admin";
-import { decalFromOptions } from "@/lib/print/decal";
+import { decalFromOptions, GOOGLE_FONTS_HREF } from "@/lib/print/decal";
 import { DecalPreview } from "@/components/DecalPreview";
 import { approveProof, requestProofChange } from "../actions";
 
@@ -61,6 +61,8 @@ export default async function ProofPage({
 
   return (
     <div className="mx-auto max-w-2xl">
+      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+      <link rel="stylesheet" href={GOOGLE_FONTS_HREF} />
       <Link
         href="/dashboard/orders"
         className="mb-4 inline-block text-sm text-ink-500 hover:text-ink-700"

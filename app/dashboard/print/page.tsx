@@ -53,7 +53,7 @@ export default async function PrintCatalogPage() {
                   From {formatUsd(from)} each
                 </span>
                 <span className="text-sm font-medium text-accent">
-                  Configure →
+                  Design →
                 </span>
               </div>
               </div>

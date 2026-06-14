@@ -9,6 +9,7 @@ import {
   CTA_PRESETS,
   DEFAULT_DECAL,
   DECAL_TEMPLATES,
+  FONT_OPTIONS,
   type DecalShape,
   type CtaPosition,
   type DecalTemplate,
@@ -32,7 +33,20 @@ type Code = {
   frame_style: string;
   frame_color: string;
   frame_text: string;
+  destination_url: string;
 };
+
+function hostFromUrl(u?: string): string {
+  if (!u) return "";
+  try {
+    return new URL(u.startsWith("http") ? u : `https://${u}`).hostname.replace(
+      /^www\./,
+      ""
+    );
+  } catch {
+    return "";
+  }
+}
 
 function Chip({
   active,
@@ -77,6 +91,33 @@ export function PrintConfigurePanel({
   const [cta, setCta] = useState("");
   const [customCta, setCustomCta] = useState(false);
   const [ctaPosition, setCtaPosition] = useState<CtaPosition>("below");
+  const [ctaUppercase, setCtaUppercase] = useState(true);
+  const [font, setFont] = useState(DEFAULT_DECAL.font ?? "inter");
+  const [decalLogo, setDecalLogo] = useState<string | null>(null);
+  const [showUrl, setShowUrl] = useState(false);
+  const [urlPosition, setUrlPosition] = useState<"top" | "bottom">("bottom");
+
+  function onDecalLogoFile(file: File) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new window.Image();
+      img.onload = () => {
+        const max = 220;
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.drawImage(img, 0, 0, w, h);
+        setDecalLogo(canvas.toDataURL("image/png"));
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  }
 
   function applyTemplate(t: DecalTemplate) {
     setShape(t.decal.shape);
@@ -90,6 +131,7 @@ export function PrintConfigurePanel({
 
   const price = priceFor(product.key, sizeKey, finishKey, qty);
   const selected = codes.find((c) => c.id === codeId);
+  const urlText = hostFromUrl(selected?.destination_url);
 
   // Render the code exactly as designed. Use the stored design SVG if present;
   // otherwise rebuild it from the saved design columns and backfill it so the
@@ -332,7 +374,7 @@ export function PrintConfigurePanel({
               />
             )}
             {cta.trim() !== "" && (
-              <div className="mt-2 flex gap-2">
+              <div className="mt-2 flex flex-wrap items-center gap-2">
                 {(["below", "above"] as const).map((p) => (
                   <Chip
                     key={p}
@@ -342,9 +384,87 @@ export function PrintConfigurePanel({
                     {p === "below" ? "Below code" : "Above code"}
                   </Chip>
                 ))}
+                <Chip
+                  active={ctaUppercase}
+                  onClick={() => setCtaUppercase(!ctaUppercase)}
+                >
+                  {ctaUppercase ? "ALL CAPS" : "Normal case"}
+                </Chip>
               </div>
             )}
           </div>
+
+          <div>
+            <p className="mb-2 text-sm text-ink-600">Font</p>
+            <select
+              value={font}
+              onChange={(e) => setFont(e.target.value)}
+              className="min-h-[40px] w-full rounded-xl border border-ink-200 bg-white px-3 text-sm text-ink-900"
+            >
+              {FONT_OPTIONS.map((f) => (
+                <option key={f.key} value={f.key}>
+                  {f.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <p className="mb-2 text-sm text-ink-600">Your logo (optional)</p>
+            <div className="flex items-center gap-3">
+              {decalLogo ? (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={decalLogo}
+                    alt="Logo"
+                    className="h-10 w-10 rounded-lg border border-ink-200 object-contain p-1"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setDecalLogo(null)}
+                    className="text-sm font-medium text-ink-500 hover:text-red-600"
+                  >
+                    Remove
+                  </button>
+                </>
+              ) : (
+                <label className="inline-flex min-h-[40px] cursor-pointer items-center rounded-xl border border-dashed border-ink-300 px-4 text-sm font-medium text-ink-600 hover:bg-ink-50">
+                  Upload logo
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/svg+xml"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) onDecalLogoFile(f);
+                    }}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
+
+          {urlText && (
+            <div>
+              <p className="mb-2 text-sm text-ink-600">Include your URL</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <Chip active={showUrl} onClick={() => setShowUrl(!showUrl)}>
+                  {showUrl ? `On · ${urlText}` : "Off"}
+                </Chip>
+                {showUrl &&
+                  (["bottom", "top"] as const).map((p) => (
+                    <Chip
+                      key={p}
+                      active={p === urlPosition}
+                      onClick={() => setUrlPosition(p)}
+                    >
+                      {p === "bottom" ? "Bottom" : "Top"}
+                    </Chip>
+                  ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -358,7 +478,20 @@ export function PrintConfigurePanel({
             {selected ? (
               <DecalPreview
                 codeHref={codeHref}
-                options={{ shape, bgColor, border, borderColor, cta, ctaPosition }}
+                options={{
+                  shape,
+                  bgColor,
+                  border,
+                  borderColor,
+                  cta,
+                  ctaPosition,
+                  ctaUppercase,
+                  font,
+                  logo: decalLogo,
+                  showUrl,
+                  urlText,
+                  urlPosition,
+                }}
                 className="w-full max-w-[260px]"
               />
             ) : (
@@ -397,6 +530,20 @@ export function PrintConfigurePanel({
             <input type="hidden" name="border_color" value={borderColor} />
             <input type="hidden" name="cta" value={cta} />
             <input type="hidden" name="cta_position" value={ctaPosition} />
+            <input
+              type="hidden"
+              name="cta_uppercase"
+              value={ctaUppercase ? "true" : "false"}
+            />
+            <input type="hidden" name="font" value={font} />
+            <input type="hidden" name="logo" value={decalLogo ?? ""} />
+            <input
+              type="hidden"
+              name="show_url"
+              value={showUrl ? "true" : "false"}
+            />
+            <input type="hidden" name="url_text" value={showUrl ? urlText : ""} />
+            <input type="hidden" name="url_position" value={urlPosition} />
             <button
               disabled={!price || !codeId}
               className="inline-flex min-h-[44px] w-full items-center justify-center rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"

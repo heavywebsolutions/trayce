@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { stripe, stripeConfigured } from "@/lib/stripe";
 import { getPrintProduct, priceFor } from "@/lib/print/catalog";
 
@@ -34,6 +35,17 @@ export async function createPrintCheckout(formData: FormData) {
   const cta = String(formData.get("cta") || "").slice(0, 40);
   const ctaPosition =
     String(formData.get("cta_position") || "") === "above" ? "above" : "below";
+  const ctaUppercase = String(formData.get("cta_uppercase") || "true") !== "false";
+  const font = String(formData.get("font") || "inter").slice(0, 24);
+  const logoRaw = String(formData.get("logo") || "");
+  const logo =
+    logoRaw.startsWith("data:image/") && logoRaw.length < 400_000
+      ? logoRaw
+      : "";
+  const showUrl = String(formData.get("show_url") || "") === "true";
+  const urlText = String(formData.get("url_text") || "").slice(0, 80);
+  const urlPosition =
+    String(formData.get("url_position") || "") === "top" ? "top" : "bottom";
 
   const product = getPrintProduct(productKey);
   const price = priceFor(productKey, sizeKey, finishKey, qty);
@@ -53,6 +65,45 @@ export async function createPrintCheckout(formData: FormData) {
     .eq("owner_id", user.id)
     .maybeSingle();
   if (!ws) redirect("/dashboard/print");
+
+  const options = {
+    size: sizeKey,
+    finish: finishKey,
+    shape,
+    bg_color: bgColor,
+    border: border ? "true" : "false",
+    border_color: borderColor,
+    cta,
+    cta_position: ctaPosition,
+    cta_uppercase: ctaUppercase ? "true" : "false",
+    font,
+    logo: logo,
+    show_url: showUrl ? "true" : "false",
+    url_text: showUrl ? urlText : "",
+    url_position: urlPosition,
+  };
+
+  // Create a draft order up front so the full design (including an uploaded
+  // logo, which is too large for Stripe metadata) is persisted. The webhook
+  // flips it to proof_ready after payment.
+  const admin = createAdminClient();
+  const { data: order } = await admin
+    .from("print_orders")
+    .insert({
+      workspace_id: ws.id,
+      code_id: codeId,
+      product_key: productKey,
+      product_name: product.name,
+      options,
+      quantity: qty,
+      unit_price_cents: price.unitPriceCents,
+      total_cents: price.totalCents,
+      currency: "usd",
+      status: "pending",
+    })
+    .select("id")
+    .single();
+  if (!order) redirect(`/dashboard/print/${productKey}?err=invalid`);
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
@@ -86,21 +137,8 @@ export async function createPrintCheckout(formData: FormData) {
     client_reference_id: ws.id,
     metadata: {
       kind: "print_order",
+      order_id: order.id,
       workspace_id: ws.id,
-      code_id: codeId ?? "",
-      product_key: productKey,
-      product_name: product.name,
-      size: sizeKey,
-      finish: finishKey,
-      shape,
-      bg_color: bgColor,
-      border: border ? "true" : "false",
-      border_color: borderColor,
-      cta,
-      cta_position: ctaPosition,
-      qty: String(qty),
-      unit_price_cents: String(price.unitPriceCents),
-      total_cents: String(price.totalCents),
     },
     success_url: `${APP_URL}/dashboard/orders?ok=1`,
     cancel_url: `${APP_URL}/dashboard/print/${productKey}?canceled=1`,
