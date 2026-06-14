@@ -22,11 +22,12 @@ const config: Config = {
           100: "#EFF2F6",
           50: "#F6F9FC",
         },
+        // Brand accent = the Traxxr logo blue (#2587DE) and its shades.
         accent: {
-          DEFAULT: "#4F46E5",
-          hover: "#4338CA",
-          soft: "#EEF2FF",
-          ring: "#6366F1",
+          DEFAULT: "#2587DE",
+          hover: "#1C6FBE",
+          soft: "#E9F2FC",
+          ring: "#62A8E8",
         },
       },
       boxShadow: {

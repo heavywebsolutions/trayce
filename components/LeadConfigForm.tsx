@@ -52,7 +52,7 @@ export function LeadConfigForm({
             type="checkbox"
             name="lead_collect_name"
             defaultChecked={code.lead_collect_name}
-            className="accent-[#4F46E5]"
+            className="accent-[#2587DE]"
           />
           Collect name
         </label>
@@ -61,7 +61,7 @@ export function LeadConfigForm({
             type="checkbox"
             name="lead_collect_phone"
             defaultChecked={code.lead_collect_phone}
-            className="accent-[#4F46E5]"
+            className="accent-[#2587DE]"
           />
           Collect phone
         </label>

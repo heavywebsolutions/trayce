@@ -12,7 +12,7 @@ export default function Error({
     <main className="flex min-h-screen flex-col items-center justify-center bg-white px-6 text-center">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/traxxr-logo.png" alt="Traxxr" className="h-7 w-auto" />
-      <p className="mt-10 text-sm font-bold uppercase tracking-[0.16em] text-[#1C63C2]">
+      <p className="mt-10 text-sm font-bold uppercase tracking-[0.16em] text-[#1C6FBE]">
         Something broke
       </p>
       <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-ink-900">
@@ -25,7 +25,7 @@ export default function Error({
       <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
         <button
           onClick={reset}
-          className="bg-[#2E80E6] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#1C63C2]"
+          className="bg-[#2587DE] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#1C6FBE]"
         >
           Try again
         </button>

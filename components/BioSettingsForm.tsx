@@ -222,7 +222,7 @@ export function BioSettingsForm({ page }: { page: BioPage }) {
           type="checkbox"
           name="framed"
           defaultChecked={page.framed}
-          className="accent-[#4F46E5]"
+          className="accent-[#2587DE]"
         />
         Contain content in a panel (great over busy backgrounds)
       </label>

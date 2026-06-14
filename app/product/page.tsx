@@ -55,7 +55,7 @@ export default function ProductPage() {
       {/* Hero */}
       <section className="bg-white">
         <div className="mx-auto max-w-3xl px-6 pb-12 pt-12 text-center sm:pt-16">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1C63C2]">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1C6FBE]">
             The product
           </p>
           <h1 className="mt-4 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
@@ -69,7 +69,7 @@ export default function ProductPage() {
           <div className="mt-8">
             <Link
               href="/signup"
-              className="inline-block bg-[#2E80E6] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1C63C2]"
+              className="inline-block bg-[#2587DE] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1C6FBE]"
             >
               Start free →
             </Link>
@@ -92,7 +92,7 @@ export default function ProductPage() {
           <div className="mx-auto max-w-3xl px-6 py-16">
             <p
               className={`text-xs font-bold uppercase tracking-[0.14em] ${
-                b.dark ? "text-[#7FB2F2]" : "text-[#1C63C2]"
+                b.dark ? "text-[#7FB2F2]" : "text-[#1C6FBE]"
               }`}
             >
               {b.kicker}
@@ -137,7 +137,7 @@ export default function ProductPage() {
           </p>
           <Link
             href="/signup"
-            className="mt-8 inline-block bg-[#2E80E6] px-7 py-3 text-sm font-semibold text-white hover:bg-[#1C63C2]"
+            className="mt-8 inline-block bg-[#2587DE] px-7 py-3 text-sm font-semibold text-white hover:bg-[#1C6FBE]"
           >
             Start free →
           </Link>

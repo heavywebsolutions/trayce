@@ -61,7 +61,7 @@ export function ContentFields({
                 type="checkbox"
                 checked={value[f.name] === "true"}
                 onChange={(e) => onChange(f.name, e.target.checked ? "true" : "false")}
-                className="accent-[#4F46E5]"
+                className="accent-[#2587DE]"
               />
               {f.label}
             </label>

@@ -101,12 +101,12 @@ export default async function Home() {
       <section className="bg-white">
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 pb-16 pt-10 lg:grid-cols-[1.05fr_1.12fr] lg:pt-16">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1C63C2]">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1C6FBE]">
               For any brand that prints, posts &amp; sells
             </p>
             <h1 className="mt-4 text-4xl font-extrabold leading-[1.03] tracking-tight sm:text-[3.3rem]">
               Every scan and click, tracked. Every lead{" "}
-              <span className="text-[#1C63C2]">yours to keep.</span>
+              <span className="text-[#1C6FBE]">yours to keep.</span>
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-ink-500">
               Put a Traxxr code on anything you print, packaging, flyers,
@@ -117,7 +117,7 @@ export default async function Home() {
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Link
                 href="/signup"
-                className="bg-[#2E80E6] px-6 py-3 text-center text-sm font-semibold text-white hover:bg-[#1C63C2]"
+                className="bg-[#2587DE] px-6 py-3 text-center text-sm font-semibold text-white hover:bg-[#1C6FBE]"
               >
                 Start free →
               </Link>
@@ -185,15 +185,15 @@ export default async function Home() {
                 >
                   <defs>
                     <linearGradient id="heroG" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0" stopColor="#2E80E6" stopOpacity="0.38" />
-                      <stop offset="1" stopColor="#2E80E6" stopOpacity="0" />
+                      <stop offset="0" stopColor="#2587DE" stopOpacity="0.38" />
+                      <stop offset="1" stopColor="#2587DE" stopOpacity="0" />
                     </linearGradient>
                   </defs>
                   <path d={`${chartPath} L460,120 L0,120 Z`} fill="url(#heroG)" />
                   <path
                     d={chartPath}
                     fill="none"
-                    stroke="#2E80E6"
+                    stroke="#2587DE"
                     strokeWidth="2.5"
                   />
                   <circle
@@ -201,7 +201,7 @@ export default async function Home() {
                     cy="26"
                     r="4"
                     fill="#fff"
-                    stroke="#2E80E6"
+                    stroke="#2587DE"
                     strokeWidth="2.5"
                   />
                 </svg>
@@ -227,7 +227,7 @@ export default async function Home() {
               >
                 <span
                   className="absolute left-6 top-0 h-[3px] w-10"
-                  style={{ background: s.c || "#2E80E6" }}
+                  style={{ background: s.c || "#2587DE" }}
                 />
                 <p
                   className="text-[2rem] font-extrabold leading-none tracking-tight"
@@ -298,9 +298,9 @@ export default async function Home() {
                     <rect x="15" y="27" width="2" height="2" />
                     <rect x="19" y="26" width="2" height="2" />
                   </g>
-                  <rect x="12" y="12" width="5" height="5" fill="#2E80E6" />
+                  <rect x="12" y="12" width="5" height="5" fill="#2587DE" />
                 </svg>
-                <span className="bg-[#2E80E6] px-3 py-1 text-[11px] font-bold tracking-wide text-white">
+                <span className="bg-[#2587DE] px-3 py-1 text-[11px] font-bold tracking-wide text-white">
                   SCAN ME
                 </span>
               </div>
@@ -309,7 +309,7 @@ export default async function Home() {
                   Code color
                 </p>
                 <div className="mb-3.5 flex gap-2">
-                  {["#0b1220", "#2E80E6", "#10B98A", "#FF6A45", "#7c3aed"].map(
+                  {["#0b1220", "#2587DE", "#10B98A", "#FF6A45", "#7c3aed"].map(
                     (c, i) => (
                       <span
                         key={c}
@@ -326,7 +326,7 @@ export default async function Home() {
                   Dot style
                 </p>
                 <div className="mb-4 flex gap-2">
-                  <span className="grid h-8 w-8 place-items-center border-2 border-[#2E80E6] bg-white">
+                  <span className="grid h-8 w-8 place-items-center border-2 border-[#2587DE] bg-white">
                     <span className="h-3.5 w-3.5 bg-ink-700" />
                   </span>
                   <span className="grid h-8 w-8 place-items-center border border-ink-200 bg-white">
@@ -351,7 +351,7 @@ export default async function Home() {
             </div>
           </div>
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1C63C2]">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1C6FBE]">
               Dynamic QR codes
             </p>
             <h3 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight">
@@ -383,7 +383,7 @@ export default async function Home() {
       <section className="border-y border-ink-100 bg-ink-50">
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-20 lg:grid-cols-[1.08fr_1fr]">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1C63C2]">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#1C6FBE]">
               Real analytics
             </p>
             <h3 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight">
@@ -436,7 +436,7 @@ export default async function Home() {
                   </span>
                   <span className="h-2.5 flex-1 bg-ink-100">
                     <span
-                      className="block h-2.5 bg-[#2E80E6]"
+                      className="block h-2.5 bg-[#2587DE]"
                       style={{ width: r.w }}
                     />
                   </span>
@@ -503,7 +503,7 @@ export default async function Home() {
                 <ul className="mt-4 space-y-2 text-sm text-ink-600">
                   {t.features.map((f) => (
                     <li key={f} className="flex gap-2">
-                      <span className="text-[#2E80E6]">✓</span> {f}
+                      <span className="text-[#2587DE]">✓</span> {f}
                     </li>
                   ))}
                 </ul>
@@ -511,7 +511,7 @@ export default async function Home() {
                   href="/signup"
                   className={`mt-6 block px-4 py-2.5 text-center text-sm font-bold ${
                     t.highlight
-                      ? "bg-[#2E80E6] text-white hover:bg-[#1C63C2]"
+                      ? "bg-[#2587DE] text-white hover:bg-[#1C6FBE]"
                       : "border border-ink-200 text-ink-700 hover:bg-ink-50"
                   }`}
                 >
@@ -552,7 +552,7 @@ export default async function Home() {
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
               href="/signup"
-              className="bg-[#2E80E6] px-7 py-3 text-sm font-semibold text-white hover:bg-[#1C63C2]"
+              className="bg-[#2587DE] px-7 py-3 text-sm font-semibold text-white hover:bg-[#1C6FBE]"
             >
               Start free →
             </Link>

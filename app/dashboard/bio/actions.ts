@@ -111,7 +111,7 @@ export async function updateBioPage(formData: FormData): Promise<void> {
     tagline: String(formData.get("tagline") || "").slice(0, 160),
     custom_domain,
     bg_color: hex(formData.get("bg_color"), "#0A2540"),
-    accent_color: hex(formData.get("accent_color"), "#4F46E5"),
+    accent_color: hex(formData.get("accent_color"), "#2587DE"),
     button_text_color: hex(formData.get("button_text_color"), "#FFFFFF"),
     font_family: ["sans", "serif", "mono", "rounded", "condensed"].includes(
       String(formData.get("font_family"))

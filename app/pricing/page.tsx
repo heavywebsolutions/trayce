@@ -101,7 +101,7 @@ export default function PricingPage() {
       {/* Hero */}
       <section className="bg-white">
         <div className="mx-auto max-w-3xl px-6 pb-12 pt-12 text-center sm:pt-16">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1C63C2]">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1C6FBE]">
             Pricing
           </p>
           <h1 className="mt-4 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
@@ -140,7 +140,7 @@ export default function PricingPage() {
                 <ul className="mt-4 space-y-2 text-sm text-ink-600">
                   {t.features.map((f) => (
                     <li key={f} className="flex gap-2">
-                      <span className="text-[#2E80E6]">✓</span> {f}
+                      <span className="text-[#2587DE]">✓</span> {f}
                     </li>
                   ))}
                 </ul>
@@ -148,7 +148,7 @@ export default function PricingPage() {
                   href="/signup"
                   className={`mt-6 block px-4 py-2.5 text-center text-sm font-bold ${
                     t.highlight
-                      ? "bg-[#2E80E6] text-white hover:bg-[#1C63C2]"
+                      ? "bg-[#2587DE] text-white hover:bg-[#1C6FBE]"
                       : "border border-ink-200 text-ink-700 hover:bg-ink-50"
                   }`}
                 >
@@ -214,7 +214,7 @@ export default function PricingPage() {
           </p>
           <Link
             href="/signup"
-            className="mt-8 inline-block bg-[#2E80E6] px-7 py-3 text-sm font-semibold text-white hover:bg-[#1C63C2]"
+            className="mt-8 inline-block bg-[#2587DE] px-7 py-3 text-sm font-semibold text-white hover:bg-[#1C6FBE]"
           >
             Start free →
           </Link>

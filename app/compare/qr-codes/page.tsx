@@ -54,7 +54,7 @@ export default function CompareQrPage() {
 
       <section className="bg-white">
         <div className="mx-auto max-w-3xl px-6 pb-10 pt-12 text-center sm:pt-16">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1C63C2]">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1C6FBE]">
             Comparison
           </p>
           <h1 className="mt-4 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
@@ -140,7 +140,7 @@ export default function CompareQrPage() {
           </p>
           <Link
             href="/signup"
-            className="mt-8 inline-block bg-[#2E80E6] px-7 py-3 text-sm font-semibold text-white hover:bg-[#1C63C2]"
+            className="mt-8 inline-block bg-[#2587DE] px-7 py-3 text-sm font-semibold text-white hover:bg-[#1C6FBE]"
           >
             Start free →
           </Link>

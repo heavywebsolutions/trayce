@@ -209,7 +209,7 @@ export function BioLinksList({
                       type="checkbox"
                       name="collect_name"
                       defaultChecked={l.config?.collect_name ?? true}
-                      className="accent-[#4F46E5]"
+                      className="accent-[#2587DE]"
                     />
                     Collect name
                   </label>
@@ -218,7 +218,7 @@ export function BioLinksList({
                       type="checkbox"
                       name="collect_phone"
                       defaultChecked={l.config?.collect_phone ?? false}
-                      className="accent-[#4F46E5]"
+                      className="accent-[#2587DE]"
                     />
                     Collect phone
                   </label>

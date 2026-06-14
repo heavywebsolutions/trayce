@@ -116,7 +116,7 @@ export default async function IntegrationsPage() {
                     type="checkbox"
                     name="enabled"
                     defaultChecked={connected ? enabled : true}
-                    className="accent-[#4F46E5]"
+                    className="accent-[#2587DE]"
                   />
                   Enabled
                 </label>

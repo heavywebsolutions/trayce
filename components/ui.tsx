@@ -105,7 +105,7 @@ const badgeTones: Record<string, string> = {
   green: "bg-emerald-50 text-emerald-700 border-emerald-100",
   amber: "bg-amber-50 text-amber-700 border-amber-100",
   gray: "bg-ink-100 text-ink-600 border-ink-200",
-  indigo: "bg-accent-soft text-accent border-indigo-100",
+  indigo: "bg-accent-soft text-accent border-blue-100",
   violet: "bg-violet-50 text-violet-700 border-violet-100",
 };
 

@@ -266,15 +266,15 @@ export default async function DashboardPage() {
         >
           <defs>
             <linearGradient id="scanfill" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0" stopColor="#4F46E5" stopOpacity="0.22" />
-              <stop offset="1" stopColor="#4F46E5" stopOpacity="0" />
+              <stop offset="0" stopColor="#2587DE" stopOpacity="0.22" />
+              <stop offset="1" stopColor="#2587DE" stopOpacity="0" />
             </linearGradient>
           </defs>
           <path d={path(scanSeries, maxY, W, H, PAD, true)} fill="url(#scanfill)" />
           <path
             d={path(scanSeries, maxY, W, H, PAD, false)}
             fill="none"
-            stroke="#4F46E5"
+            stroke="#2587DE"
             strokeWidth="2.5"
           />
           <path

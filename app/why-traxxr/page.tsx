@@ -40,7 +40,7 @@ export default function WhyTraxxrPage() {
       {/* Hero */}
       <section className="bg-white">
         <div className="mx-auto max-w-3xl px-6 pb-12 pt-12 text-center sm:pt-16">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1C63C2]">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1C6FBE]">
             Why Traxxr
           </p>
           <h1 className="mt-4 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
@@ -62,7 +62,7 @@ export default function WhyTraxxrPage() {
           <div className="divide-y divide-ink-100 border-y border-ink-100">
             {reasons.map((r) => (
               <div key={r.n} className="grid gap-4 py-8 sm:grid-cols-[64px_1fr]">
-                <p className="text-2xl font-extrabold tabular-nums text-[#2E80E6]">
+                <p className="text-2xl font-extrabold tabular-nums text-[#2587DE]">
                   {r.n}
                 </p>
                 <div>
@@ -93,7 +93,7 @@ export default function WhyTraxxrPage() {
                 The same bio page, plus trackable QR codes and zero fees on your
                 sales.
               </p>
-              <span className="mt-4 inline-block text-sm font-semibold text-[#1C63C2]">
+              <span className="mt-4 inline-block text-sm font-semibold text-[#1C6FBE]">
                 Compare →
               </span>
             </Link>
@@ -106,7 +106,7 @@ export default function WhyTraxxrPage() {
                 Editable codes, real analytics, and lead capture instead of a
                 throwaway image.
               </p>
-              <span className="mt-4 inline-block text-sm font-semibold text-[#1C63C2]">
+              <span className="mt-4 inline-block text-sm font-semibold text-[#1C6FBE]">
                 Compare →
               </span>
             </Link>
@@ -126,7 +126,7 @@ export default function WhyTraxxrPage() {
           </p>
           <Link
             href="/signup"
-            className="mt-8 inline-block bg-[#2E80E6] px-7 py-3 text-sm font-semibold text-white hover:bg-[#1C63C2]"
+            className="mt-8 inline-block bg-[#2587DE] px-7 py-3 text-sm font-semibold text-white hover:bg-[#1C6FBE]"
           >
             Start free →
           </Link>
