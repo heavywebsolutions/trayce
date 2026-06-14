@@ -8,8 +8,10 @@ import { priceFor, formatUsd, type PrintProduct } from "@/lib/print/catalog";
 import {
   CTA_PRESETS,
   DEFAULT_DECAL,
+  DECAL_TEMPLATES,
   type DecalShape,
   type CtaPosition,
+  type DecalTemplate,
 } from "@/lib/print/decal";
 import { buildDesignSvg } from "@/lib/qrStyling";
 import { DecalPreview } from "@/components/DecalPreview";
@@ -75,6 +77,16 @@ export function PrintConfigurePanel({
   const [cta, setCta] = useState("");
   const [customCta, setCustomCta] = useState(false);
   const [ctaPosition, setCtaPosition] = useState<CtaPosition>("below");
+
+  function applyTemplate(t: DecalTemplate) {
+    setShape(t.decal.shape);
+    setBgColor(t.decal.bgColor);
+    setBorder(t.decal.border);
+    setBorderColor(t.decal.borderColor);
+    setCta(t.decal.cta);
+    setCustomCta(true);
+    setCtaPosition(t.decal.ctaPosition);
+  }
 
   const price = priceFor(product.key, sizeKey, finishKey, qty);
   const selected = codes.find((c) => c.id === codeId);
@@ -221,6 +233,32 @@ export function PrintConfigurePanel({
           <p className="text-xs font-medium uppercase tracking-wide text-ink-400">
             Decal style
           </p>
+
+          <div>
+            <p className="mb-2 text-sm text-ink-600">Start from a template</p>
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+              {DECAL_TEMPLATES.map((t) => (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => applyTemplate(t)}
+                  className="rounded-xl border border-ink-200 p-1.5 text-center transition hover:border-ink-300 hover:bg-ink-50"
+                >
+                  <div className="rounded-lg bg-ink-50 p-1.5">
+                    <DecalPreview
+                      codeHref={codeHref}
+                      options={t.decal}
+                      fontPx={7}
+                      className="w-full"
+                    />
+                  </div>
+                  <span className="mt-1 block text-[11px] font-medium text-ink-600">
+                    {t.name}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
 
           <div>
             <p className="mb-2 text-sm text-ink-600">Shape</p>

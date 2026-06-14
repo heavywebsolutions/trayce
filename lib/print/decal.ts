@@ -33,6 +33,76 @@ export const DEFAULT_DECAL: DecalOptions = {
   ctaPosition: "below",
 };
 
+export type DecalTemplate = {
+  key: string;
+  name: string;
+  decal: DecalOptions;
+};
+
+// Starter layouts customers can pick, then swap the call to action for their own.
+export const DECAL_TEMPLATES: DecalTemplate[] = [
+  {
+    key: "review",
+    name: "Review booster",
+    decal: {
+      shape: "circle",
+      bgColor: "#FFFFFF",
+      border: false,
+      borderColor: "#0A2540",
+      cta: "Scan to leave a review",
+      ctaPosition: "below",
+    },
+  },
+  {
+    key: "menu",
+    name: "Menu",
+    decal: {
+      shape: "rounded",
+      bgColor: "#0A2540",
+      border: false,
+      borderColor: "#0A2540",
+      cta: "View the menu",
+      ctaPosition: "below",
+    },
+  },
+  {
+    key: "giveaway",
+    name: "Giveaway",
+    decal: {
+      shape: "rounded",
+      bgColor: "#2587DE",
+      border: false,
+      borderColor: "#2587DE",
+      cta: "Enter the giveaway",
+      ctaPosition: "above",
+    },
+  },
+  {
+    key: "follow",
+    name: "Follow us",
+    decal: {
+      shape: "circle",
+      bgColor: "#FFFFFF",
+      border: true,
+      borderColor: "#0A2540",
+      cta: "Follow us",
+      ctaPosition: "below",
+    },
+  },
+  {
+    key: "order",
+    name: "Order now",
+    decal: {
+      shape: "square",
+      bgColor: "#FFFFFF",
+      border: true,
+      borderColor: "#2587DE",
+      cta: "Scan to order",
+      ctaPosition: "below",
+    },
+  },
+];
+
 function escapeXml(s: string): string {
   return s.replace(
     /[<>&"']/g,

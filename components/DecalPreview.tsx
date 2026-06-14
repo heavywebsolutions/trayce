@@ -8,10 +8,12 @@ export function DecalPreview({
   codeHref,
   options,
   className,
+  fontPx = 17,
 }: {
   codeHref: string;
   options: DecalOptions;
   className?: string;
+  fontPx?: number;
 }) {
   const { shape, bgColor, border, borderColor, cta, ctaPosition } = options;
   const hasCta = cta.trim().length > 0;
@@ -22,7 +24,7 @@ export function DecalPreview({
       style={{
         color: readableOn(bgColor),
         fontWeight: 700,
-        fontSize: "1.05rem",
+        fontSize: fontPx,
         lineHeight: 1.15,
         textAlign: "center",
       }}
