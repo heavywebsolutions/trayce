@@ -21,7 +21,7 @@ async function getWorkspaceSub() {
 
   const { data: ws } = await supabase
     .from("workspaces")
-    .select("id, stripe_customer_id, stripe_subscription_id")
+    .select("id, plan, stripe_customer_id, stripe_subscription_id")
     .eq("owner_id", user.id)
     .maybeSingle();
   if (!ws) redirect("/dashboard/settings");
@@ -35,8 +35,19 @@ async function getWorkspaceSub() {
     });
     subscriptionId = list.data[0]?.id ?? null;
   }
-  return { workspaceId: ws.id as string, subscriptionId };
+  return {
+    workspaceId: ws.id as string,
+    currentPlan: (ws.plan as string) ?? "free",
+    subscriptionId,
+  };
 }
+
+const PLAN_RANK: Record<string, number> = {
+  free: 0,
+  starter: 1,
+  growth: 2,
+  agency: 3,
+};
 
 // Start a Stripe Checkout session for the chosen plan and send the user to it.
 export async function startCheckout(formData: FormData) {
@@ -116,16 +127,21 @@ export async function changePlan(formData: FormData) {
     redirect("/dashboard/settings?billing=unavailable");
   }
 
-  const { workspaceId, subscriptionId } = await getWorkspaceSub();
+  const { workspaceId, currentPlan, subscriptionId } = await getWorkspaceSub();
   if (!subscriptionId) redirect("/dashboard/settings?billing=nocustomer");
 
   const sub = await stripe.subscriptions.retrieve(subscriptionId);
   const itemId = sub.items.data[0]?.id;
   if (!itemId) redirect("/dashboard/settings?billing=unavailable");
 
+  const isUpgrade = (PLAN_RANK[plan] ?? 0) > (PLAN_RANK[currentPlan] ?? 0);
+
   await stripe.subscriptions.update(subscriptionId, {
     items: [{ id: itemId, price: priceId }],
-    proration_behavior: "create_prorations",
+    // Upgrade: invoice the prorated difference immediately so the customer pays
+    // now for the access they get now. Downgrade: bank the prorated credit and
+    // apply it to future invoices (no cash refund).
+    proration_behavior: isUpgrade ? "always_invoice" : "create_prorations",
     cancel_at_period_end: false,
     metadata: { workspace_id: workspaceId, plan },
   });

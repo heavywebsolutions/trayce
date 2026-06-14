@@ -149,16 +149,17 @@ export default async function ChangePlanPage({
         <div className="mt-5 rounded-xl bg-ink-50 px-4 py-3 text-sm text-ink-600">
           {isUpgrade ? (
             <>
-              You will be charged the prorated difference for the rest of this
-              billing period, and {to.price}/mo from your next renewal. The new
-              features are available immediately.
+              You will be charged the prorated difference now for the rest of
+              this billing period, then {to.price}/mo at your next renewal. The
+              new features unlock immediately.
             </>
           ) : (
             <>
-              Your plan changes to {to.label} right away and you will be credited
-              the prorated difference toward future invoices. Anything above the{" "}
-              {to.label} limits, such as extra bio pages, will be paused until
-              you are back within the plan.
+              Your plan changes to {to.label} right away. You will get a prorated
+              credit for the unused time on your current plan, applied to your
+              future invoices (not refunded to your card). Anything above the{" "}
+              {to.label} limits, such as extra bio pages, is paused until you are
+              back within the plan.
             </>
           )}
         </div>
