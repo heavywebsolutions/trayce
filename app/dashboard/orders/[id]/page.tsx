@@ -4,7 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui";
 import { formatUsd } from "@/lib/print/catalog";
 import { orderStatusLabel } from "@/lib/admin";
-import { composeDecalSvg, decalFromOptions } from "@/lib/print/decal";
+import { decalFromOptions } from "@/lib/print/decal";
+import { DecalPreview } from "@/components/DecalPreview";
 import { approveProof, requestProofChange } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -50,11 +51,9 @@ export default async function ProofPage({
       codeHref = `${APP_URL}/api/qr/${code.slug}`;
     }
   }
-  const proofSvg = composeDecalSvg(
-    codeHref,
-    decalFromOptions(order.options as Record<string, unknown> | null)
+  const decal = decalFromOptions(
+    order.options as Record<string, unknown> | null
   );
-  const proofSrc = `data:image/svg+xml;utf8,${encodeURIComponent(proofSvg)}`;
 
   const opts = order.options as { size?: string; finish?: string } | null;
   const needsReview =
@@ -81,11 +80,10 @@ export default async function ProofPage({
 
       <div className="rounded-2xl border border-ink-200 bg-white p-6">
         <div className="grid aspect-square w-full place-items-center rounded-xl bg-ink-50 p-8">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={proofSrc}
-            alt="Order proof"
-            className="h-full w-full max-w-[340px] object-contain"
+          <DecalPreview
+            codeHref={codeHref}
+            options={decal}
+            className="w-full max-w-[340px]"
           />
         </div>
 

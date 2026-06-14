@@ -1,16 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { createPrintCheckout } from "@/app/dashboard/print/actions";
 import { priceFor, formatUsd, type PrintProduct } from "@/lib/print/catalog";
 import {
-  composeDecalSvg,
   CTA_PRESETS,
   DEFAULT_DECAL,
   type DecalShape,
   type CtaPosition,
 } from "@/lib/print/decal";
+import { DecalPreview } from "@/components/DecalPreview";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -65,26 +65,13 @@ export function PrintConfigurePanel({
   const [customCta, setCustomCta] = useState(false);
   const [ctaPosition, setCtaPosition] = useState<CtaPosition>("below");
 
-  const [origin, setOrigin] = useState("");
-  useEffect(() => setOrigin(window.location.origin), []);
-
   const price = priceFor(product.key, sizeKey, finishKey, qty);
   const selected = codes.find((c) => c.id === codeId);
 
   const codeHref = selected
     ? selected.design_svg
       ? `data:image/svg+xml;utf8,${encodeURIComponent(selected.design_svg)}`
-      : `${origin}/api/qr/${selected.slug}`
-    : "";
-  const composed = selected
-    ? composeDecalSvg(codeHref, {
-        shape,
-        bgColor,
-        border,
-        borderColor,
-        cta,
-        ctaPosition,
-      })
+      : `/api/qr/${selected.slug}`
     : "";
 
   if (codes.length === 0) {
@@ -284,12 +271,11 @@ export function PrintConfigurePanel({
             Preview
           </p>
           <div className="grid aspect-square w-full place-items-center rounded-xl bg-ink-50 p-6">
-            {selected && composed ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={`data:image/svg+xml;utf8,${encodeURIComponent(composed)}`}
-                alt="Decal preview"
-                className="h-full w-full max-w-[260px] object-contain"
+            {selected ? (
+              <DecalPreview
+                codeHref={codeHref}
+                options={{ shape, bgColor, border, borderColor, cta, ctaPosition }}
+                className="w-full max-w-[260px]"
               />
             ) : (
               <span className="text-sm text-ink-400">Pick a code</span>
