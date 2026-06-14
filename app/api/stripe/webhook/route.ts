@@ -52,12 +52,19 @@ export async function POST(request: NextRequest) {
           s.metadata?.workspace_id || s.client_reference_id || null;
         const customerId =
           typeof s.customer === "string" ? s.customer : s.customer?.id ?? null;
-        // First purchase: bind the Stripe customer to the workspace so future
-        // subscription events can find it.
-        if (workspaceId && customerId) {
+        const plan = s.metadata?.plan || null;
+        // Bind the Stripe customer to the workspace AND set the plan now, so the
+        // upgrade is reflected immediately regardless of the order in which the
+        // subscription.* events arrive. Later subscription events refine status
+        // and the renewal date by stripe_customer_id.
+        if (workspaceId) {
           await admin
             .from("workspaces")
-            .update({ stripe_customer_id: customerId })
+            .update({
+              ...(customerId ? { stripe_customer_id: customerId } : {}),
+              ...(plan ? { plan } : {}),
+              subscription_status: "active",
+            })
             .eq("id", workspaceId);
         }
         break;
