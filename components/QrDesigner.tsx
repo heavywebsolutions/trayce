@@ -354,6 +354,8 @@ export function QrDesigner({
     fd.set("frame_style", frame);
     fd.set("frame_color", frameColor);
     fd.set("frame_text", frameText);
+    const svg = await buildSvg();
+    if (svg) fd.set("design_svg", svg);
     await updateDesign(fd);
     setSaving(false);
     setSaved(true);
@@ -374,24 +376,18 @@ export function QrDesigner({
     setTplName("");
   }
 
-  async function download(ext: "png" | "svg") {
-    if (ext === "png") {
-      if (!preview) return;
-      const a = document.createElement("a");
-      a.href = preview;
-      a.download = `qr-${codeId.slice(0, 8)}.png`;
-      a.click();
-      return;
-    }
-    // SVG: vector frame + embedded QR raster, fully self-contained.
-    if (!qr.current) return;
+  // Compose the full designed code (frame + QR + label) as a self-contained
+  // SVG. Reused for the SVG download, and stored on save so Print & Ship shows
+  // and prints the exact design.
+  async function buildSvg(): Promise<string | null> {
+    if (!qr.current) return null;
     let blob: Blob | null = null;
     try {
       blob = await qr.current.getRawData("png");
     } catch {
-      return;
+      return null;
     }
-    if (!blob) return;
+    if (!blob) return null;
     const qrUrl = await blobToDataURL(blob);
 
     const L = layoutFor(frame);
@@ -406,7 +402,21 @@ export function QrDesigner({
     const textEl = L.bar
       ? `<text x="${L.bar.x + L.bar.w / 2}" y="${L.bar.y + L.bar.h / 2}" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="40" font-weight="600" text-anchor="middle" dominant-baseline="central">${safeText}</text>`
       : "";
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${L.W}" height="${L.H}" viewBox="0 0 ${L.W} ${L.H}">${bgRect}<image x="${L.qrX}" y="${L.qrY}" width="${L.Q}" height="${L.Q}" href="${qrUrl}"/>${barEl}${textEl}</svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${L.W}" height="${L.H}" viewBox="0 0 ${L.W} ${L.H}">${bgRect}<image x="${L.qrX}" y="${L.qrY}" width="${L.Q}" height="${L.Q}" href="${qrUrl}"/>${barEl}${textEl}</svg>`;
+  }
+
+  async function download(ext: "png" | "svg") {
+    if (ext === "png") {
+      if (!preview) return;
+      const a = document.createElement("a");
+      a.href = preview;
+      a.download = `qr-${codeId.slice(0, 8)}.png`;
+      a.click();
+      return;
+    }
+    // SVG: vector frame + embedded QR raster, fully self-contained.
+    const svg = await buildSvg();
+    if (!svg) return;
     const out = new Blob([svg], { type: "image/svg+xml" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(out);

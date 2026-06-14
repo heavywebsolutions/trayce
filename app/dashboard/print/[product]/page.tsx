@@ -29,7 +29,7 @@ export default async function ConfigurePrintPage({
 
   const { data: codeRows } = await supabase
     .from("codes")
-    .select("id, title, slug")
+    .select("id, title, slug, design_svg")
     .eq("workspace_id", ws?.id ?? "")
     .order("created_at", { ascending: false })
     .limit(100);
@@ -38,6 +38,7 @@ export default async function ConfigurePrintPage({
     id: c.id as string,
     title: (c.title as string) ?? null,
     slug: c.slug as string,
+    design_svg: (c.design_svg as string | null) ?? null,
   }));
 
   return (

@@ -7,7 +7,12 @@ import { priceFor, formatUsd, type PrintProduct } from "@/lib/print/catalog";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
-type Code = { id: string; title: string | null; slug: string };
+type Code = {
+  id: string;
+  title: string | null;
+  slug: string;
+  design_svg: string | null;
+};
 
 function Chip({
   active,
@@ -156,7 +161,13 @@ export function PrintConfigurePanel({
             {selected ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={`/api/qr/${selected.slug}`}
+                src={
+                  selected.design_svg
+                    ? `data:image/svg+xml;utf8,${encodeURIComponent(
+                        selected.design_svg
+                      )}`
+                    : `/api/qr/${selected.slug}`
+                }
                 alt="Your code"
                 className="h-full w-full max-w-[220px] object-contain"
               />

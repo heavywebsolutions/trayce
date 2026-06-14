@@ -31,14 +31,32 @@ export async function GET(
   if (!order) return new Response("Order not found", { status: 404 });
 
   let content = "";
+  let designSvg: string | null = null;
   if (order.code_id) {
     const { data: code } = await admin
       .from("codes")
-      .select("type, slug, destination_url")
+      .select("type, slug, destination_url, design_svg")
       .eq("id", order.code_id)
       .maybeSingle();
-    if (code) content = qrContentFor(code);
+    if (code) {
+      content = qrContentFor(code);
+      designSvg = (code.design_svg as string | null) ?? null;
+    }
   }
+
+  // Prefer the customer's exact saved design (colors, logo, frame). This is the
+  // what-you-designed-is-what-we-print guarantee.
+  if (designSvg) {
+    const filename = `print-${order.product_key}-${order.id.slice(0, 8)}.svg`;
+    return new Response(designSvg, {
+      headers: {
+        "Content-Type": "image/svg+xml",
+        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Cache-Control": "no-store",
+      },
+    });
+  }
+
   if (!content) {
     return new Response("No code attached to this order", { status: 422 });
   }

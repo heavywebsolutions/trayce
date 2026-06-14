@@ -218,20 +218,31 @@ export async function updateDesign(formData: FormData): Promise<void> {
   const frameText =
     String(formData.get("frame_text") || "SCAN ME").slice(0, 24) || "SCAN ME";
 
+  // The fully composed design SVG (frame + colored QR + label), captured by the
+  // designer so Print & Ship can show and print the exact design. Optional, so
+  // a save without it never wipes an existing one.
+  const designSvgRaw = formData.get("design_svg");
+  const designSvg =
+    typeof designSvgRaw === "string" &&
+    designSvgRaw.startsWith("<svg") &&
+    designSvgRaw.length < 800_000
+      ? designSvgRaw
+      : null;
+
+  const patch: Record<string, unknown> = {
+    fg_color: fg,
+    bg_color: bg,
+    dot_style: dot,
+    corner_style: corner,
+    logo_url: logo,
+    frame_style: frame,
+    frame_color: frameColor,
+    frame_text: frameText,
+  };
+  if (designSvg) patch.design_svg = designSvg;
+
   const { supabase } = await currentWorkspaceId();
-  await supabase
-    .from("codes")
-    .update({
-      fg_color: fg,
-      bg_color: bg,
-      dot_style: dot,
-      corner_style: corner,
-      logo_url: logo,
-      frame_style: frame,
-      frame_color: frameColor,
-      frame_text: frameText,
-    })
-    .eq("id", codeId);
+  await supabase.from("codes").update(patch).eq("id", codeId);
 
   revalidatePath(`/dashboard/codes/${codeId}`);
   revalidatePath("/dashboard/codes");
