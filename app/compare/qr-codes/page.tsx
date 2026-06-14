@@ -37,7 +37,7 @@ const rows = [
   },
   {
     f: "Starting price for dynamic codes",
-    t: "$12 a month",
+    t: "$9.95 a month",
     o: "Often $9 to $49 a month",
   },
   {

@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Card, Badge, Button, Input, Label } from "@/components/ui";
 import { updateProfile, updatePassword } from "./actions";
+import { startCheckout, openBillingPortal } from "@/app/dashboard/billing/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -17,17 +17,17 @@ const PLAN_META: Record<
   },
   starter: {
     label: "Starter",
-    price: "$12",
+    price: "$9.95",
     blurb: "Dynamic editable codes, full design, and analytics history.",
   },
   growth: {
     label: "Growth",
-    price: "$29",
+    price: "$19.95",
     blurb: "Lead capture, email sync, and Shopify product blocks.",
   },
   agency: {
     label: "Agency",
-    price: "$99",
+    price: "$59.95",
     blurb: "Bulk codes, multiple workspaces, and priority support.",
   },
 };
@@ -35,9 +35,9 @@ const PLAN_META: Record<
 export default async function SettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ saved?: string }>;
+  searchParams: Promise<{ saved?: string; billing?: string }>;
 }) {
-  const { saved } = await searchParams;
+  const { saved, billing } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -46,7 +46,7 @@ export default async function SettingsPage({
 
   const { data: ws } = await supabase
     .from("workspaces")
-    .select("id, name, plan, subscription_status, current_period_end")
+    .select("id, name, plan, subscription_status, current_period_end, stripe_customer_id")
     .eq("owner_id", user.id)
     .maybeSingle();
 
@@ -90,6 +90,24 @@ export default async function SettingsPage({
           {saved === "password"
             ? "Your password has been updated."
             : "Your changes have been saved."}
+        </div>
+      )}
+
+      {billing === "success" && (
+        <div className="mb-4 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          You are all set. Your plan is active.
+        </div>
+      )}
+      {billing === "cancelled" && (
+        <div className="mb-4 rounded-xl border border-ink-200 bg-ink-50 px-4 py-3 text-sm text-ink-600">
+          Checkout cancelled. No charge was made.
+        </div>
+      )}
+      {(billing === "unavailable" || billing === "nocustomer") && (
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          {billing === "nocustomer"
+            ? "No billing account yet. Upgrade to a paid plan first."
+            : "Billing is not available right now. Please try again shortly."}
         </div>
       )}
 
@@ -191,22 +209,26 @@ export default async function SettingsPage({
         </div>
 
         <div className="mt-5 flex flex-wrap items-center gap-2">
-          <Link
-            href="/pricing"
-            className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover"
-          >
-            {isPaid ? "Change plan" : "View plans and upgrade"}
-          </Link>
-          <span
-            aria-disabled
-            className="inline-flex min-h-[44px] cursor-not-allowed items-center justify-center rounded-xl border border-ink-200 px-4 py-2.5 text-sm font-semibold text-ink-300"
-          >
-            Manage billing
-          </span>
+          {isPaid ? (
+            <form action={openBillingPortal}>
+              <button className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover">
+                Manage billing
+              </button>
+            </form>
+          ) : (
+            (["starter", "growth", "agency"] as const).map((p) => (
+              <form key={p} action={startCheckout}>
+                <input type="hidden" name="plan" value={p} />
+                <button className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-ink-200 px-4 py-2.5 text-sm font-semibold text-ink-800 transition hover:border-ink-300 hover:bg-ink-50">
+                  Upgrade to {PLAN_META[p].label} · {PLAN_META[p].price}/mo
+                </button>
+              </form>
+            ))
+          )}
         </div>
         <p className="mt-3 text-xs text-ink-400">
-          Updating your card, downloading invoices, and canceling will open here
-          once paid plans go live. For now, everything runs on the free plan.
+          Secure checkout by Stripe. Update your card, download invoices, change
+          plan, or cancel anytime from the billing portal.
         </p>
       </Card>
 

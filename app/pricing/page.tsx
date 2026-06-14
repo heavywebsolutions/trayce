@@ -25,7 +25,7 @@ const tiers = [
   },
   {
     name: "Starter",
-    price: "$12",
+    price: "$9.95",
     tagline: "For one brand",
     features: [
       "Everything in Free",
@@ -39,7 +39,7 @@ const tiers = [
   },
   {
     name: "Growth",
-    price: "$29",
+    price: "$19.95",
     tagline: "The money tier",
     features: [
       "Everything in Starter",
@@ -53,7 +53,7 @@ const tiers = [
   },
   {
     name: "Agency",
-    price: "$99",
+    price: "$59.95",
     tagline: "Teams and resellers",
     features: [
       "Everything in Growth",
