@@ -1,9 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createPrintCheckout } from "@/app/dashboard/print/actions";
 import { priceFor, formatUsd, type PrintProduct } from "@/lib/print/catalog";
+import {
+  composeDecalSvg,
+  CTA_PRESETS,
+  DEFAULT_DECAL,
+  type DecalShape,
+  type CtaPosition,
+} from "@/lib/print/decal";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -50,9 +57,35 @@ export function PrintConfigurePanel({
   const [finishKey, setFinishKey] = useState(product.finishes[0].key);
   const [qty, setQty] = useState(product.tiers[0].qty);
   const [codeId, setCodeId] = useState(codes[0]?.id ?? "");
+  const [shape, setShape] = useState<DecalShape>(DEFAULT_DECAL.shape);
+  const [bgColor, setBgColor] = useState(DEFAULT_DECAL.bgColor);
+  const [border, setBorder] = useState(DEFAULT_DECAL.border);
+  const [borderColor, setBorderColor] = useState(DEFAULT_DECAL.borderColor);
+  const [cta, setCta] = useState("");
+  const [customCta, setCustomCta] = useState(false);
+  const [ctaPosition, setCtaPosition] = useState<CtaPosition>("below");
+
+  const [origin, setOrigin] = useState("");
+  useEffect(() => setOrigin(window.location.origin), []);
 
   const price = priceFor(product.key, sizeKey, finishKey, qty);
   const selected = codes.find((c) => c.id === codeId);
+
+  const codeHref = selected
+    ? selected.design_svg
+      ? `data:image/svg+xml;utf8,${encodeURIComponent(selected.design_svg)}`
+      : `${origin}/api/qr/${selected.slug}`
+    : "";
+  const composed = selected
+    ? composeDecalSvg(codeHref, {
+        shape,
+        bgColor,
+        border,
+        borderColor,
+        cta,
+        ctaPosition,
+      })
+    : "";
 
   if (codes.length === 0) {
     return (
@@ -149,6 +182,99 @@ export function PrintConfigurePanel({
             })}
           </div>
         </div>
+
+        {/* Decal style */}
+        <div className="space-y-4 border-t border-ink-100 pt-5">
+          <p className="text-xs font-medium uppercase tracking-wide text-ink-400">
+            Decal style
+          </p>
+
+          <div>
+            <p className="mb-2 text-sm text-ink-600">Shape</p>
+            <div className="flex flex-wrap gap-2">
+              {(["square", "rounded", "circle"] as const).map((s) => (
+                <Chip key={s} active={s === shape} onClick={() => setShape(s)}>
+                  {s[0].toUpperCase() + s.slice(1)}
+                </Chip>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-end gap-5">
+            <label className="text-sm text-ink-600">
+              <span className="mb-1 block">Background</span>
+              <input
+                type="color"
+                value={bgColor}
+                onChange={(e) => setBgColor(e.target.value)}
+                className="h-9 w-16 cursor-pointer rounded-lg border border-ink-200 bg-white"
+              />
+            </label>
+            <div className="text-sm text-ink-600">
+              <span className="mb-1 block">Border</span>
+              <div className="flex items-center gap-2">
+                <Chip active={border} onClick={() => setBorder(!border)}>
+                  {border ? "On" : "Off"}
+                </Chip>
+                {border && (
+                  <input
+                    type="color"
+                    value={borderColor}
+                    onChange={(e) => setBorderColor(e.target.value)}
+                    className="h-9 w-12 cursor-pointer rounded-lg border border-ink-200 bg-white"
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-2 text-sm text-ink-600">Call to action</p>
+            <select
+              value={customCta ? "__custom" : cta}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v === "__custom") {
+                  setCustomCta(true);
+                } else {
+                  setCustomCta(false);
+                  setCta(v);
+                }
+              }}
+              className="min-h-[40px] w-full rounded-xl border border-ink-200 bg-white px-3 text-sm text-ink-900"
+            >
+              <option value="">None</option>
+              {CTA_PRESETS.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+              <option value="__custom">Custom…</option>
+            </select>
+            {customCta && (
+              <input
+                value={cta}
+                onChange={(e) => setCta(e.target.value)}
+                maxLength={40}
+                placeholder="Your call to action"
+                className="mt-2 min-h-[40px] w-full rounded-xl border border-ink-200 px-3 text-sm text-ink-900"
+              />
+            )}
+            {cta.trim() !== "" && (
+              <div className="mt-2 flex gap-2">
+                {(["below", "above"] as const).map((p) => (
+                  <Chip
+                    key={p}
+                    active={p === ctaPosition}
+                    onClick={() => setCtaPosition(p)}
+                  >
+                    {p === "below" ? "Below code" : "Above code"}
+                  </Chip>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Preview + summary */}
@@ -158,18 +284,12 @@ export function PrintConfigurePanel({
             Preview
           </p>
           <div className="grid aspect-square w-full place-items-center rounded-xl bg-ink-50 p-6">
-            {selected ? (
+            {selected && composed ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={
-                  selected.design_svg
-                    ? `data:image/svg+xml;utf8,${encodeURIComponent(
-                        selected.design_svg
-                      )}`
-                    : `/api/qr/${selected.slug}`
-                }
-                alt="Your code"
-                className="h-full w-full max-w-[220px] object-contain"
+                src={`data:image/svg+xml;utf8,${encodeURIComponent(composed)}`}
+                alt="Decal preview"
+                className="h-full w-full max-w-[260px] object-contain"
               />
             ) : (
               <span className="text-sm text-ink-400">Pick a code</span>
@@ -201,6 +321,12 @@ export function PrintConfigurePanel({
             <input type="hidden" name="finish" value={finishKey} />
             <input type="hidden" name="qty" value={qty} />
             <input type="hidden" name="code_id" value={codeId} />
+            <input type="hidden" name="shape" value={shape} />
+            <input type="hidden" name="bg_color" value={bgColor} />
+            <input type="hidden" name="border" value={border ? "true" : "false"} />
+            <input type="hidden" name="border_color" value={borderColor} />
+            <input type="hidden" name="cta" value={cta} />
+            <input type="hidden" name="cta_position" value={ctaPosition} />
             <button
               disabled={!price || !codeId}
               className="inline-flex min-h-[44px] w-full items-center justify-center rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"

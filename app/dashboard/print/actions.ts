@@ -21,6 +21,20 @@ export async function createPrintCheckout(formData: FormData) {
   const qty = parseInt(String(formData.get("qty") || "0"), 10);
   const codeId = String(formData.get("code_id") || "") || null;
 
+  // Decal options, sanitized.
+  const hex = (v: unknown, fallback: string) =>
+    typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v) ? v : fallback;
+  const shapeRaw = String(formData.get("shape") || "");
+  const shape = ["square", "rounded", "circle"].includes(shapeRaw)
+    ? shapeRaw
+    : "rounded";
+  const bgColor = hex(formData.get("bg_color"), "#FFFFFF");
+  const border = String(formData.get("border") || "") === "true";
+  const borderColor = hex(formData.get("border_color"), "#0A2540");
+  const cta = String(formData.get("cta") || "").slice(0, 40);
+  const ctaPosition =
+    String(formData.get("cta_position") || "") === "above" ? "above" : "below";
+
   const product = getPrintProduct(productKey);
   const price = priceFor(productKey, sizeKey, finishKey, qty);
   if (!product || !price) {
@@ -78,6 +92,12 @@ export async function createPrintCheckout(formData: FormData) {
       product_name: product.name,
       size: sizeKey,
       finish: finishKey,
+      shape,
+      bg_color: bgColor,
+      border: border ? "true" : "false",
+      border_color: borderColor,
+      cta,
+      cta_position: ctaPosition,
       qty: String(qty),
       unit_price_cents: String(price.unitPriceCents),
       total_cents: String(price.totalCents),

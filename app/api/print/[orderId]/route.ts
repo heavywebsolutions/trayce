@@ -3,7 +3,7 @@ import { qrContentFor } from "@/lib/qr";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdmin } from "@/lib/admin";
-import { getPrintProduct } from "@/lib/print/catalog";
+import { composeDecalSvg, decalFromOptions } from "@/lib/print/decal";
 
 // Admin-only print-ready file for an order. Returns a vector SVG (scales to any
 // size with no quality loss) of the order's code, rendered with a full quiet
@@ -44,38 +44,32 @@ export async function GET(
     }
   }
 
-  // Prefer the customer's exact saved design (colors, logo, frame). This is the
-  // what-you-designed-is-what-we-print guarantee.
+  // Inner code image: the customer's exact saved design if present, otherwise a
+  // clean high-error-correction render of the same content.
+  let codeHref: string;
   if (designSvg) {
-    const filename = `print-${order.product_key}-${order.id.slice(0, 8)}.svg`;
-    return new Response(designSvg, {
-      headers: {
-        "Content-Type": "image/svg+xml",
-        "Content-Disposition": `attachment; filename="${filename}"`,
-        "Cache-Control": "no-store",
-      },
+    codeHref = `data:image/svg+xml;utf8,${encodeURIComponent(designSvg)}`;
+  } else if (content) {
+    const plain = await QRCode.toString(content, {
+      type: "svg",
+      errorCorrectionLevel: "H",
+      margin: 4,
+      color: { dark: "#0A2540", light: "#FFFFFF" },
+      width: 760,
     });
-  }
-
-  if (!content) {
+    codeHref = `data:image/svg+xml;utf8,${encodeURIComponent(plain)}`;
+  } else {
     return new Response("No code attached to this order", { status: 422 });
   }
 
-  const product = getPrintProduct(order.product_key);
-  const sizeKey = (order.options as { size?: string } | null)?.size;
-  const size = product?.sizes.find((s) => s.key === sizeKey);
-  const widthIn = size?.widthIn ?? 4;
-  const px = Math.round(widthIn * 300); // 300 DPI reference size
+  // Compose the decal exactly as the customer configured it (shape, background,
+  // border, call to action), so the proof and the print match the order.
+  const svg = composeDecalSvg(
+    codeHref,
+    decalFromOptions(order.options as Record<string, unknown> | null)
+  );
 
-  const svg = await QRCode.toString(content, {
-    type: "svg",
-    errorCorrectionLevel: "H",
-    margin: 4, // full quiet zone per the QR spec, important for print
-    color: { dark: "#0A2540", light: "#FFFFFF" },
-    width: px,
-  });
-
-  const filename = `print-${order.product_key}-${sizeKey ?? "size"}-${order.id.slice(0, 8)}.svg`;
+  const filename = `print-${order.product_key}-${order.id.slice(0, 8)}.svg`;
   return new Response(svg, {
     headers: {
       "Content-Type": "image/svg+xml",
