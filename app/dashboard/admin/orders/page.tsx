@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdmin, orderStatusLabel } from "@/lib/admin";
-import { formatUsd } from "@/lib/print/catalog";
+import { formatUsd, LOGO_PREP_LABEL } from "@/lib/print/catalog";
 import { markPrinting, markShipped } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +18,12 @@ type Addr = {
 type Order = {
   id: string;
   product_name: string;
-  options: { size?: string; finish?: string; logo_prep?: string } | null;
+  options: {
+    size?: string;
+    finish?: string;
+    logo_prep?: string;
+    prep_source?: string;
+  } | null;
   quantity: number;
   total_cents: number;
   status: string;
@@ -156,7 +161,7 @@ function OrderCard({ o }: { o: Order }) {
           )}
           {o.options?.logo_prep === "true" && (
             <span className="mt-1 inline-block rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent">
-              Pro logo prep
+              {LOGO_PREP_LABEL}
             </span>
           )}
         </div>
@@ -176,6 +181,15 @@ function OrderCard({ o }: { o: Order }) {
         >
           Download print file
         </a>
+        {o.options?.prep_source && (
+          <a
+            href={o.options.prep_source}
+            download={`logo-source-${o.id.slice(0, 8)}`}
+            className="inline-flex min-h-[40px] items-center justify-center rounded-xl border border-ink-200 px-4 text-sm font-semibold text-ink-800 transition hover:border-ink-300 hover:bg-ink-50"
+          >
+            Download logo source
+          </a>
+        )}
 
         {o.status === "approved" && (
           <form action={markPrinting}>

@@ -89,9 +89,11 @@ export const PRINT_PRODUCTS: PrintProduct[] = [
   },
 ];
 
-// Optional add-on: our team vectorizes the customer's logo and removes the
-// background during the proof step. Flat fee, placeholder pricing.
-export const LOGO_PREP_CENTS = 1900;
+// Enhancement & Vectorization add-on: our team cleans up, vectorizes, and
+// removes the background from a customer's logo during the proof step. Required
+// for non-print-ready uploads (JPEG/PDF), optional for PNG/SVG. Placeholder fee.
+export const LOGO_PREP_CENTS = 1995;
+export const LOGO_PREP_LABEL = "Enhancement & Vectorization";
 
 export function getPrintProduct(key: string): PrintProduct | undefined {
   return PRINT_PRODUCTS.find((p) => p.key === key);

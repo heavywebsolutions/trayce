@@ -4,7 +4,12 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { stripe, stripeConfigured } from "@/lib/stripe";
-import { getPrintProduct, priceFor, LOGO_PREP_CENTS } from "@/lib/print/catalog";
+import {
+  getPrintProduct,
+  priceFor,
+  LOGO_PREP_CENTS,
+  LOGO_PREP_LABEL,
+} from "@/lib/print/catalog";
 
 const APP_URL = (
   process.env.NEXT_PUBLIC_APP_URL || "https://traxxr.com"
@@ -37,16 +42,30 @@ export async function createPrintCheckout(formData: FormData) {
     String(formData.get("cta_position") || "") === "above" ? "above" : "below";
   const ctaUppercase = String(formData.get("cta_uppercase") || "true") !== "false";
   const font = String(formData.get("font") || "inter").slice(0, 24);
+  // Print-ready logo: PNG or SVG only.
   const logoRaw = String(formData.get("logo") || "");
   const logo =
-    logoRaw.startsWith("data:image/") && logoRaw.length < 1_600_000
+    (logoRaw.startsWith("data:image/png") ||
+      logoRaw.startsWith("data:image/svg")) &&
+    logoRaw.length < 1_600_000
       ? logoRaw
+      : "";
+  // Source file needing prep: JPEG or PDF.
+  const prepRaw = String(formData.get("prep_source") || "");
+  const prepSource =
+    (prepRaw.startsWith("data:image/jpeg") ||
+      prepRaw.startsWith("data:application/pdf")) &&
+    prepRaw.length < 5_000_000
+      ? prepRaw
       : "";
   const showUrl = String(formData.get("show_url") || "") === "true";
   const urlText = String(formData.get("url_text") || "").slice(0, 80);
   const urlPosition =
     String(formData.get("url_position") || "") === "top" ? "top" : "bottom";
-  const logoPrep = String(formData.get("logo_prep") || "") === "true" && !!logo;
+  // Prep is forced when a non-print-ready source was uploaded, optional for PNG/SVG.
+  const logoPrep =
+    !!prepSource ||
+    (String(formData.get("logo_prep") || "") === "true" && !!logo);
 
   const product = getPrintProduct(productKey);
   const price = priceFor(productKey, sizeKey, finishKey, qty);
@@ -79,6 +98,7 @@ export async function createPrintCheckout(formData: FormData) {
     cta_uppercase: ctaUppercase ? "true" : "false",
     font,
     logo: logo,
+    prep_source: prepSource,
     show_url: showUrl ? "true" : "false",
     url_text: showUrl ? urlText : "",
     url_position: urlPosition,
@@ -128,7 +148,7 @@ export async function createPrintCheckout(formData: FormData) {
               price_data: {
                 currency: "usd",
                 product_data: {
-                  name: "Pro logo prep (vectorize + background removal)",
+                  name: `${LOGO_PREP_LABEL} (logo cleanup + vectorization)`,
                 },
                 unit_amount: LOGO_PREP_CENTS,
               },

@@ -8,6 +8,7 @@ import {
   priceFor,
   formatUsd,
   LOGO_PREP_CENTS,
+  LOGO_PREP_LABEL,
   type PrintProduct,
 } from "@/lib/print/catalog";
 import {
@@ -103,25 +104,42 @@ export function PrintConfigurePanel({
   const [urlPosition, setUrlPosition] = useState<"top" | "bottom">("bottom");
   const [urlText, setUrlText] = useState("");
   const [logoPrep, setLogoPrep] = useState(false);
+  const [prepSource, setPrepSource] = useState<string | null>(null);
+  const [prepFileName, setPrepFileName] = useState("");
+  const [logoError, setLogoError] = useState("");
+
+  function resetLogo() {
+    setDecalLogo(null);
+    setPrepSource(null);
+    setPrepFileName("");
+    setLogoError("");
+    setLogoPrep(false);
+  }
 
   function onDecalLogoFile(file: File) {
+    setLogoError("");
+    const type = file.type;
     const reader = new FileReader();
     reader.onload = () => {
-      const img = new window.Image();
-      img.onload = () => {
-        const max = 1000;
-        const scale = Math.min(1, max / Math.max(img.width, img.height));
-        const w = Math.max(1, Math.round(img.width * scale));
-        const h = Math.max(1, Math.round(img.height * scale));
-        const canvas = document.createElement("canvas");
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
-        ctx.drawImage(img, 0, 0, w, h);
-        setDecalLogo(canvas.toDataURL("image/png"));
-      };
-      img.src = reader.result as string;
+      const dataUrl = reader.result as string;
+      if (!dataUrl || dataUrl.length > 5_000_000) {
+        setLogoError("That file is too large. Please keep it under about 3 MB.");
+        return;
+      }
+      if (type === "image/png" || type === "image/svg+xml") {
+        // Print-ready: use as-is (SVG stays vector, PNG keeps transparency).
+        setDecalLogo(dataUrl);
+        setPrepSource(null);
+        setPrepFileName("");
+      } else if (type === "image/jpeg" || type === "application/pdf") {
+        // Not print-ready: hold the source for our team and require prep.
+        setPrepSource(dataUrl);
+        setPrepFileName(file.name.slice(0, 60));
+        setDecalLogo(null);
+        setLogoPrep(true);
+      } else {
+        setLogoError("Unsupported file. Upload a PNG, SVG, JPEG, or PDF.");
+      }
     };
     reader.readAsDataURL(file);
   }
@@ -139,7 +157,7 @@ export function PrintConfigurePanel({
   const price = priceFor(product.key, sizeKey, finishKey, qty);
   const selected = codes.find((c) => c.id === codeId);
   const derivedHost = hostFromUrl(selected?.destination_url);
-  const prepCents = logoPrep && decalLogo ? LOGO_PREP_CENTS : 0;
+  const prepCents = logoPrep && (decalLogo || prepSource) ? LOGO_PREP_CENTS : 0;
   const goodsTotal = (price?.totalCents ?? 0) + prepCents;
 
   // Render the code exactly as designed. Use the stored design SVG if present;
@@ -419,39 +437,64 @@ export function PrintConfigurePanel({
           </div>
 
           <div>
-            <p className="mb-2 text-sm text-ink-600">Your logo (optional)</p>
-            <div className="flex items-center gap-3">
-              {decalLogo ? (
-                <>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={decalLogo}
-                    alt="Logo"
-                    className="h-10 w-10 rounded-lg border border-ink-200 object-contain p-1"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setDecalLogo(null)}
-                    className="text-sm font-medium text-ink-500 hover:text-red-600"
-                  >
-                    Remove
-                  </button>
-                </>
-              ) : (
-                <label className="inline-flex min-h-[40px] cursor-pointer items-center rounded-xl border border-dashed border-ink-300 px-4 text-sm font-medium text-ink-600 hover:bg-ink-50">
-                  Upload logo
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/svg+xml"
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) onDecalLogoFile(f);
-                    }}
-                  />
-                </label>
-              )}
-            </div>
+            <p className="mb-1 text-sm text-ink-600">Your logo (optional)</p>
+            <p className="mb-2 text-xs text-ink-400">
+              PNG or SVG are print ready. JPEG or PDF need {LOGO_PREP_LABEL} (+
+              {formatUsd(LOGO_PREP_CENTS)}).
+            </p>
+
+            {decalLogo ? (
+              <div className="flex items-center gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={decalLogo}
+                  alt="Logo"
+                  className="h-10 w-10 rounded-lg border border-ink-200 object-contain p-1"
+                />
+                <button
+                  type="button"
+                  onClick={resetLogo}
+                  className="text-sm font-medium text-ink-500 hover:text-red-600"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : prepSource ? (
+              <div className="rounded-xl border border-ink-200 p-3">
+                <p className="text-sm text-ink-700">
+                  <span className="font-medium">{prepFileName}</span> uploaded.
+                </p>
+                <p className="mt-0.5 text-xs text-ink-500">
+                  {LOGO_PREP_LABEL} added (+{formatUsd(LOGO_PREP_CENTS)}). Our
+                  team cleans it up and places it on your proof.
+                </p>
+                <button
+                  type="button"
+                  onClick={resetLogo}
+                  className="mt-1 text-sm font-medium text-ink-500 hover:text-red-600"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <label className="inline-flex min-h-[40px] cursor-pointer items-center rounded-xl border border-dashed border-ink-300 px-4 text-sm font-medium text-ink-600 hover:bg-ink-50">
+                Upload logo
+                <input
+                  type="file"
+                  accept="image/png,image/svg+xml,image/jpeg,application/pdf"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) onDecalLogoFile(f);
+                  }}
+                />
+              </label>
+            )}
+
+            {logoError && (
+              <p className="mt-2 text-xs text-red-600">{logoError}</p>
+            )}
+
             {decalLogo && (
               <label className="mt-3 flex items-start gap-2 text-sm text-ink-600">
                 <input
@@ -462,9 +505,11 @@ export function PrintConfigurePanel({
                 />
                 <span>
                   Add{" "}
-                  <span className="font-medium text-ink-800">Pro logo prep</span>{" "}
-                  (+{formatUsd(LOGO_PREP_CENTS)}). Our team vectorizes your logo
-                  and removes the background before printing.
+                  <span className="font-medium text-ink-800">
+                    {LOGO_PREP_LABEL}
+                  </span>{" "}
+                  (+{formatUsd(LOGO_PREP_CENTS)}). Our team cleans up and
+                  vectorizes your logo before printing.
                 </span>
               </label>
             )}
@@ -584,6 +629,7 @@ export function PrintConfigurePanel({
             />
             <input type="hidden" name="font" value={font} />
             <input type="hidden" name="logo" value={decalLogo ?? ""} />
+            <input type="hidden" name="prep_source" value={prepSource ?? ""} />
             <input
               type="hidden"
               name="show_url"
