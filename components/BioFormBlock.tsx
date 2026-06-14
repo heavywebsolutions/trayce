@@ -47,7 +47,7 @@ export function BioFormBlock({
   if (state?.ok) {
     return (
       <div className="rounded-2xl bg-white/10 px-4 py-5 text-center text-sm font-medium">
-        {config.success || "Thanks — we'll be in touch!"}
+        {config.success || "Thanks, we'll be in touch!"}
       </div>
     );
   }

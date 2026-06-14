@@ -43,7 +43,7 @@ export async function createBioPage(
     return { error: "Handle must be 3–30 letters, numbers, or hyphens." };
   }
   if (RESERVED_HANDLES.has(handle)) {
-    return { error: "That handle is reserved — try another." };
+    return { error: "That handle is reserved, try another." };
   }
   const display_name = String(formData.get("display_name") || "").trim() || handle;
 
@@ -54,7 +54,7 @@ export async function createBioPage(
     .select("id")
     .eq("handle", handle)
     .maybeSingle();
-  if (existing) return { error: "That handle is taken — try another." };
+  if (existing) return { error: "That handle is taken, try another." };
 
   const { data: page, error } = await supabase
     .from("bio_pages")
@@ -195,10 +195,10 @@ export async function updateBioLinkConfig(formData: FormData): Promise<void> {
   const config = {
     button: String(formData.get("button") || "Submit").slice(0, 40) || "Submit",
     success:
-      String(formData.get("success") || "Thanks — we'll be in touch!").slice(
+      String(formData.get("success") || "Thanks, we'll be in touch!").slice(
         0,
         160
-      ) || "Thanks — we'll be in touch!",
+      ) || "Thanks, we'll be in touch!",
     collect_name: formData.get("collect_name") === "on",
     collect_phone: formData.get("collect_phone") === "on",
   };

@@ -15,7 +15,7 @@ export default async function IntegrationsPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // Never fetch the secret into the page — only what we need to render status.
+  // Never fetch the secret into the page, only what we need to render status.
   const { data: rows } = await supabase
     .from("integrations")
     .select("provider, enabled, list_id, endpoint");
@@ -31,8 +31,8 @@ export default async function IntegrationsPage() {
           Integrations
         </h1>
         <p className="mt-0.5 text-sm text-ink-500">
-          Auto-sync every captured contact — code leads, bio forms, and
-          subscribers — into your email tools in real time.
+          Auto-sync every captured contact, code leads, bio forms, and
+          subscribers, into your email tools in real time.
         </p>
       </div>
 

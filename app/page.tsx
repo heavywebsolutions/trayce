@@ -16,19 +16,19 @@ const proof = [
 const moreFeatures = [
   {
     title: "Link-in-bio that pays you back",
-    body: "A branded page for every social bio — links, video, products, and email signup. Replace Linktree, keep 100% of your sales, own the audience.",
+    body: "A branded page for every social bio, links, video, products, and email signup. Replace Linktree, keep 100% of your sales, own the audience.",
   },
   {
     title: "Lead capture you own",
-    body: "Turn any code or bio link into an on-page form. Every submission is a contact that's yours to keep — never rented.",
+    body: "Turn any code or bio link into an on-page form. Every submission is a contact that's yours to keep, never rented.",
   },
   {
     title: "Real-time email sync",
-    body: "Pipe every lead straight into Klaviyo, Mailchimp, ConvertKit, Brevo, or any tool via webhook — the moment they sign up.",
+    body: "Pipe every lead straight into Klaviyo, Mailchimp, ConvertKit, Brevo, or any tool via webhook, the moment they sign up.",
   },
   {
     title: "Shoppable blocks",
-    body: "Drop live Shopify products onto your pages — image, price, and a buy button pulled straight from your store.",
+    body: "Drop live Shopify products onto your pages, image, price, and a buy button pulled straight from your store.",
   },
 ];
 
@@ -109,8 +109,8 @@ export default async function Home() {
               <span className="text-[#1C63C2]">yours to keep.</span>
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-ink-500">
-              Put a Traxxr code on anything you print — packaging, flyers,
-              signage, business cards — and a smart link in every bio. Track
+              Put a Traxxr code on anything you print, packaging, flyers,
+              signage, business cards, and a smart link in every bio. Track
               every scan and click, capture leads you own, and sync them straight
               to your email list. Editable anytime. No reprints.
             </p>
@@ -242,7 +242,7 @@ export default async function Home() {
             ))}
           </div>
           <p className="mt-4 text-center text-xs text-white/30">
-            Illustrative figures — your real numbers appear here as your codes
+            Illustrative figures, your real numbers appear here as your codes
             get scanned.
           </p>
         </div>
@@ -358,7 +358,7 @@ export default async function Home() {
               Codes you can change after they&apos;re printed.
             </h3>
             <p className="mt-4 text-base leading-relaxed text-ink-500">
-              Design a branded code — your colors, your logo dead-center, a “Scan
+              Design a branded code, your colors, your logo dead-center, a “Scan
               Me” frame. Then re-point it anywhere, anytime: a new offer, an
               updated menu, a different page. The printed code never changes. What
               it does always can.
@@ -390,7 +390,7 @@ export default async function Home() {
               Stop guessing which marketing works.
             </h3>
             <p className="mt-4 text-base leading-relaxed text-ink-500">
-              Every scan and click in real time — when, where, on what device, and
+              Every scan and click in real time, when, where, on what device, and
               which exact code or link drove it. Finally know if the flyer beat
               the billboard, or the window decal beat the postcard.
             </p>
@@ -476,7 +476,7 @@ export default async function Home() {
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="mx-auto mb-12 max-w-2xl text-center">
             <h2 className="text-3xl font-extrabold tracking-tight">
-              Everything Linktree and a QR tool do — in one place, for less.
+              Everything Linktree and a QR tool do, in one place, for less.
             </h2>
             <p className="mt-3 text-ink-500">
               Cancel both. Pay less. Own your leads. 0% sales fee, ever.
@@ -531,7 +531,7 @@ export default async function Home() {
         <div className="mx-auto max-w-3xl px-6 py-20 text-center">
           <p className="text-xl font-medium leading-relaxed sm:text-2xl">
             “We put a Traxxr code on every wrap we print. For the first time we
-            can see which designs actually drive people back to the site — and the
+            can see which designs actually drive people back to the site, and the
             leads land in our email tool automatically.”
           </p>
           <p className="mt-5 text-sm text-white/60">
@@ -547,7 +547,7 @@ export default async function Home() {
             Stop running marketing you can&apos;t measure.
           </h2>
           <p className="mx-auto mt-4 max-w-md text-ink-500">
-            Create your first code, print it, and watch the scans roll in — free.
+            Create your first code, print it, and watch the scans roll in, free.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link

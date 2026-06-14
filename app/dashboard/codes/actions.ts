@@ -304,7 +304,7 @@ export async function saveLeadConfig(formData: FormData): Promise<void> {
       lead_collect_phone: formData.get("lead_collect_phone") === "on",
       lead_success_message: str(
         "lead_success_message",
-        "Thanks — you're on the list!"
+        "Thanks, you're on the list!"
       ),
     })
     .eq("id", codeId);

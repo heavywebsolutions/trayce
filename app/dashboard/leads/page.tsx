@@ -70,7 +70,7 @@ export default async function LeadsPage() {
                   </div>
                   <div className="shrink-0 text-right">
                     <p className="truncate text-xs text-ink-500">
-                      {code?.title ?? l.source ?? "—"}
+                      {code?.title ?? l.source ?? "-"}
                     </p>
                     <p className="tabular text-[11px] text-ink-400">
                       {timeAgo(l.created_at)}

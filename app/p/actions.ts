@@ -64,7 +64,7 @@ export async function submitBioForm(
     phone,
     ...geo,
   });
-  if (error) return { error: "Couldn't submit that — please try again." };
+  if (error) return { error: "Couldn't submit that, please try again." };
 
   await syncContact(link.workspace_id, {
     email,
@@ -121,7 +121,7 @@ export async function submitBioSubscribe(
     email,
     ...geo,
   });
-  if (error) return { error: "Couldn't save that — please try again." };
+  if (error) return { error: "Couldn't save that, please try again." };
 
   await syncContact(page.workspace_id, {
     email,

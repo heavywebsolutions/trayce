@@ -36,7 +36,7 @@ export function BioSubscribeBlock({
   if (state?.ok) {
     return (
       <div className="rounded-2xl bg-white/10 px-4 py-4 text-center text-sm font-medium">
-        Thanks — you&apos;re on the list!
+        Thanks, you&apos;re on the list!
       </div>
     );
   }

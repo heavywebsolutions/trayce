@@ -28,7 +28,7 @@ export default async function BioListPage() {
           Bio pages
         </h1>
         <p className="mt-0.5 text-sm text-ink-500">
-          One branded link-in-bio page — every one comes with a QR and click
+          One branded link-in-bio page, every one comes with a QR and click
           tracking.
         </p>
       </div>

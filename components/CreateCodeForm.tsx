@@ -74,11 +74,11 @@ export function CreateCodeForm() {
         <Input
           id="title"
           name="title"
-          placeholder="e.g. Booth banner — Sand Hollow"
+          placeholder="e.g. Booth banner, Sand Hollow"
         />
       </div>
 
-      {/* Dynamic vs static — only meaningful for Website codes */}
+      {/* Dynamic vs static, only meaningful for Website codes */}
       {mode === "url" && (
         <div className="grid grid-cols-2 gap-2">
           {[
@@ -106,7 +106,7 @@ export function CreateCodeForm() {
       )}
       {mode === "direct" && (
         <p className="text-xs text-ink-400">
-          This type is encoded straight into the QR — it works offline and
+          This type is encoded straight into the QR, it works offline and
           can&apos;t be edited or scan-tracked once printed.
         </p>
       )}

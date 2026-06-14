@@ -62,7 +62,7 @@ export async function submitLead(
     ...geo,
   });
 
-  if (error) return { error: "Couldn't save that — please try again." };
+  if (error) return { error: "Couldn't save that, please try again." };
 
   await syncContact(code.workspace_id, {
     email,

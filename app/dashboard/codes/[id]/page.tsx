@@ -85,7 +85,7 @@ export default async function CodeDetailPage({
     <Card className="p-6">
       <h2 className="text-base font-semibold text-ink-900">Destination</h2>
       <p className="mb-4 mt-0.5 text-sm text-ink-500">
-        Change where this code sends people. The printed QR never changes — this
+        Change where this code sends people. The printed QR never changes, this
         does.
       </p>
       <EditDestinationForm codeId={c.id} current={c.destination_url} />
@@ -172,7 +172,7 @@ export default async function CodeDetailPage({
           </ul>
         ) : (
           <p className="px-6 py-8 text-center text-sm text-ink-500">
-            No leads yet. Print the code and share it — submissions show up here.
+            No leads yet. Print the code and share it, submissions show up here.
           </p>
         )}
       </Card>
@@ -259,7 +259,7 @@ export default async function CodeDetailPage({
                   </h2>
                   <p className="mb-3 mt-0.5 text-sm text-ink-500">
                     This is a static code, so the URL is baked straight into the
-                    QR — it can&apos;t be changed once it&apos;s printed.
+                    QR, it can&apos;t be changed once it&apos;s printed.
                   </p>
                   <code className="block truncate rounded-lg bg-ink-50 px-3 py-2.5 text-sm text-ink-700">
                     {c.destination_url}
@@ -268,7 +268,7 @@ export default async function CodeDetailPage({
 
                 <Card className="border-accent-ring/30 bg-accent-soft/40 p-6">
                   <h2 className="text-base font-semibold text-ink-900">
-                    Want to edit this — or see who scans it?
+                    Want to edit this, or see who scans it?
                   </h2>
                   <p className="mt-1 text-sm text-ink-600">
                     Make it dynamic and you can re-point it anytime and track
@@ -303,7 +303,7 @@ export default async function CodeDetailPage({
               </div>
               <p className="mb-4 text-sm text-ink-500">
                 {isStatic
-                  ? "This is encoded straight into the QR — editing it changes the QR, so update before you print."
+                  ? "This is encoded straight into the QR, editing it changes the QR, so update before you print."
                   : "Edit where each device is sent. Scans are still tracked."}
               </p>
               <ContentEditor

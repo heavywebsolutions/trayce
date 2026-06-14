@@ -45,7 +45,7 @@ export function BioLinksList({
     });
   }
 
-  // Pointer-based drag — works with both mouse and touch.
+  // Pointer-based drag, works with both mouse and touch.
   function targetIndex(clientY: number): number {
     const ul = listRef.current;
     if (!ul) return -1;
@@ -231,7 +231,7 @@ export function BioLinksList({
                 <Input
                   name="success"
                   defaultValue={
-                    l.config?.success ?? "Thanks — we'll be in touch!"
+                    l.config?.success ?? "Thanks, we'll be in touch!"
                   }
                   placeholder="Success message"
                 />
