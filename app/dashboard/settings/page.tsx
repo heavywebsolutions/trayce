@@ -7,6 +7,7 @@ import {
   startCheckout,
   openBillingPortal,
   resumeSubscription,
+  resumeNow,
 } from "@/app/dashboard/billing/actions";
 
 export const dynamic = "force-dynamic";
@@ -53,7 +54,7 @@ export default async function SettingsPage({
 
   const { data: ws } = await supabase
     .from("workspaces")
-    .select("id, name, plan, subscription_status, current_period_end, stripe_customer_id, cancel_at_period_end")
+    .select("id, name, plan, subscription_status, current_period_end, stripe_customer_id, cancel_at_period_end, paused_until")
     .eq("owner_id", user.id)
     .maybeSingle();
 
@@ -61,6 +62,14 @@ export default async function SettingsPage({
   const meta = PLAN_META[plan] ?? PLAN_META.free;
   const isPaid = plan !== "free";
   const canceling = Boolean(ws?.cancel_at_period_end);
+  const paused = ws?.subscription_status === "paused";
+  const pausedUntil = ws?.paused_until
+    ? new Date(ws.paused_until as string).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : null;
   const displayName = (user.user_metadata?.display_name as string) ?? "";
   const renews = ws?.current_period_end
     ? new Date(ws.current_period_end as string).toLocaleDateString("en-US", {
@@ -125,6 +134,12 @@ export default async function SettingsPage({
       {billing === "resumed" && (
         <div className="mb-4 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
           Your subscription has been resumed.
+        </div>
+      )}
+      {billing === "paused" && (
+        <div className="mb-4 rounded-xl border border-ink-200 bg-ink-50 px-4 py-3 text-sm text-ink-600">
+          Your subscription is paused. Billing is on hold and resumes
+          automatically, or you can resume any time.
         </div>
       )}
       {(billing === "unavailable" || billing === "nocustomer") && (
@@ -215,11 +230,13 @@ export default async function SettingsPage({
           )}
         </p>
         <p className="mt-1 text-sm text-ink-500">{meta.blurb}</p>
-        {isPaid && renews && (
+        {isPaid && (paused ? pausedUntil : renews) && (
           <p className="mt-1 text-sm text-ink-500">
-            {canceling
-              ? `Your plan cancels on ${renews}. You keep access until then.`
-              : `Renews on ${renews}.`}
+            {paused
+              ? `Paused until ${pausedUntil}. You will not be billed until then.`
+              : canceling
+                ? `Your plan cancels on ${renews}. You keep access until then.`
+                : `Renews on ${renews}.`}
           </p>
         )}
 
@@ -248,6 +265,12 @@ export default async function SettingsPage({
                 </form>
               ))}
             </div>
+          ) : paused ? (
+            <form action={resumeNow}>
+              <button className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover">
+                Resume now
+              </button>
+            </form>
           ) : canceling ? (
             <form action={resumeSubscription}>
               <button className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover">

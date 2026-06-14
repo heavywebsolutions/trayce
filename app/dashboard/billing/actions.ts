@@ -157,9 +157,14 @@ export async function changePlan(formData: FormData) {
 }
 
 // Schedule cancellation at the end of the current paid period (keeps access
-// until then), rather than cutting the user off immediately.
-export async function cancelSubscription() {
+// until then), rather than cutting the user off immediately. Records the
+// cancellation reason from the save flow for churn analysis.
+export async function cancelSubscription(formData: FormData) {
   if (!stripeConfigured()) redirect("/dashboard/settings?billing=unavailable");
+
+  const reason = String(formData.get("reason") || "").slice(0, 80);
+  const note = String(formData.get("note") || "").slice(0, 500);
+  const reasonText = note ? `${reason || "other"}: ${note}` : reason;
 
   const { workspaceId, subscriptionId } = await getWorkspaceSub();
   if (!subscriptionId) redirect("/dashboard/settings?billing=nocustomer");
@@ -170,11 +175,68 @@ export async function cancelSubscription() {
 
   await createAdminClient()
     .from("workspaces")
-    .update({ cancel_at_period_end: true })
+    .update({
+      cancel_at_period_end: true,
+      ...(reasonText ? { cancel_reason: reasonText } : {}),
+    })
     .eq("id", workspaceId);
 
   revalidatePath("/dashboard/settings");
   redirect("/dashboard/settings?billing=cancel_scheduled");
+}
+
+// Pause billing for 1-3 months instead of cancelling. Stripe voids invoices
+// during the pause and auto-resumes on the chosen date.
+export async function pauseSubscription(formData: FormData) {
+  if (!stripeConfigured()) redirect("/dashboard/settings?billing=unavailable");
+
+  const months = Math.min(
+    3,
+    Math.max(1, parseInt(String(formData.get("months") || "1"), 10) || 1)
+  );
+  const reason = String(formData.get("reason") || "").slice(0, 80);
+
+  const { workspaceId, subscriptionId } = await getWorkspaceSub();
+  if (!subscriptionId) redirect("/dashboard/settings?billing=nocustomer");
+
+  const resumesAt = Math.floor(Date.now() / 1000) + months * 30 * 24 * 60 * 60;
+
+  await stripe.subscriptions.update(subscriptionId, {
+    pause_collection: { behavior: "void", resumes_at: resumesAt },
+  });
+
+  await createAdminClient()
+    .from("workspaces")
+    .update({
+      subscription_status: "paused",
+      paused_until: new Date(resumesAt * 1000).toISOString(),
+      cancel_at_period_end: false,
+      ...(reason ? { cancel_reason: `pause: ${reason}` } : {}),
+    })
+    .eq("id", workspaceId);
+
+  revalidatePath("/dashboard/settings");
+  redirect("/dashboard/settings?billing=paused");
+}
+
+// Resume a paused subscription right away.
+export async function resumeNow() {
+  if (!stripeConfigured()) redirect("/dashboard/settings?billing=unavailable");
+
+  const { workspaceId, subscriptionId } = await getWorkspaceSub();
+  if (!subscriptionId) redirect("/dashboard/settings?billing=nocustomer");
+
+  await stripe.subscriptions.update(subscriptionId, {
+    pause_collection: null,
+  });
+
+  await createAdminClient()
+    .from("workspaces")
+    .update({ subscription_status: "active", paused_until: null })
+    .eq("id", workspaceId);
+
+  revalidatePath("/dashboard/settings");
+  redirect("/dashboard/settings?billing=resumed");
 }
 
 // Undo a scheduled cancellation.

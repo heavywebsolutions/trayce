@@ -85,12 +85,18 @@ export async function POST(request: NextRequest) {
           typeof sub.customer === "string" ? sub.customer : sub.customer.id;
         const priceId = sub.items.data[0]?.price?.id ?? null;
         const active = sub.status === "active" || sub.status === "trialing";
+        const pause = sub.pause_collection;
+        const paused = Boolean(pause);
+        const pausedUntil = pause?.resumes_at
+          ? new Date(pause.resumes_at * 1000).toISOString()
+          : null;
         await updateByCustomer(customerId, {
           plan: active ? planFromPrice(priceId) : "free",
-          subscription_status: sub.status,
+          subscription_status: paused ? "paused" : sub.status,
           current_period_end: periodEndISO(sub),
           stripe_subscription_id: sub.id,
           cancel_at_period_end: sub.cancel_at_period_end ?? false,
+          paused_until: pausedUntil,
         });
         break;
       }
@@ -105,6 +111,7 @@ export async function POST(request: NextRequest) {
           current_period_end: null,
           stripe_subscription_id: null,
           cancel_at_period_end: false,
+          paused_until: null,
         });
         break;
       }

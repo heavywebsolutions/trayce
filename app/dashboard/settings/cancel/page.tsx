@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Card, Button } from "@/components/ui";
-import { cancelSubscription } from "@/app/dashboard/billing/actions";
+import { Card } from "@/components/ui";
+import { CancelFlow } from "@/components/CancelFlow";
 
 export const dynamic = "force-dynamic";
 
@@ -12,11 +12,20 @@ const PLAN_LABELS: Record<string, string> = {
   agency: "Agency",
 };
 
+// The next cheaper paid plan to offer as a downgrade alternative to cancelling.
+const LOWER_PLAN: Record<
+  string,
+  { key: string; label: string; price: string } | null
+> = {
+  starter: null,
+  growth: { key: "starter", label: "Starter", price: "$9.95" },
+  agency: { key: "growth", label: "Growth", price: "$19.95" },
+};
+
 // What a customer gives up when they drop from their paid plan back to Free.
 const LOSE: Record<string, string[]> = {
   starter: [
-    "Dynamic, editable codes (printed codes become locked)",
-    "Full design with logos and frames",
+    "Dynamic, editable codes",
     "Scan history and analytics",
     "All but one bio page",
   ],
@@ -30,8 +39,7 @@ const LOSE: Record<string, string[]> = {
   ],
   agency: [
     "Bulk code generation",
-    "Multiple workspaces",
-    "Priority support",
+    "Multiple workspaces and priority support",
     "Lead capture, email sync, and Shopify blocks",
     "Dynamic codes and scan history",
     "All but one bio page",
@@ -47,7 +55,7 @@ export default async function CancelPlanPage() {
 
   const { data: ws } = await supabase
     .from("workspaces")
-    .select("plan, current_period_end, cancel_at_period_end")
+    .select("id, plan, current_period_end, cancel_at_period_end")
     .eq("owner_id", user.id)
     .maybeSingle();
 
@@ -57,8 +65,27 @@ export default async function CancelPlanPage() {
     redirect("/dashboard/settings");
   }
 
+  const wsId = ws!.id as string;
+  const [leads, scans, codes, bioPages] = await Promise.all([
+    supabase
+      .from("leads")
+      .select("id", { count: "exact", head: true })
+      .eq("workspace_id", wsId),
+    supabase
+      .from("scans")
+      .select("id", { count: "exact", head: true })
+      .eq("workspace_id", wsId),
+    supabase
+      .from("codes")
+      .select("id", { count: "exact", head: true })
+      .eq("workspace_id", wsId),
+    supabase
+      .from("bio_pages")
+      .select("id", { count: "exact", head: true })
+      .eq("workspace_id", wsId),
+  ]);
+
   const label = PLAN_LABELS[plan] ?? plan;
-  const lose = LOSE[plan] ?? [];
   const endsOn = ws?.current_period_end
     ? new Date(ws.current_period_end as string).toLocaleDateString("en-US", {
         year: "numeric",
@@ -78,66 +105,27 @@ export default async function CancelPlanPage() {
 
       <div className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight text-ink-900">
-          Cancel your {label} plan?
+          Thinking about leaving {label}?
         </h1>
         <p className="mt-0.5 text-sm text-ink-500">
           {endsOn
-            ? `You will keep ${label} access until ${endsOn}. After that your account moves to the free plan.`
-            : `Your plan will move to free at the end of the current billing period.`}
+            ? `If you cancel, you keep ${label} access until ${endsOn}, then move to the free plan.`
+            : `If you cancel, your plan moves to free at the end of the current billing period.`}
         </p>
       </div>
 
       <Card className="p-6">
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-          <p className="text-sm font-semibold text-amber-900">
-            What you will lose when it ends
-          </p>
-          <ul className="mt-2 space-y-1.5">
-            {lose.map((f) => (
-              <li key={f} className="flex gap-2 text-sm text-amber-900">
-                <span aria-hidden>•</span>
-                <span>{f}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="mt-4 rounded-xl border border-ink-200 p-4">
-          <p className="text-sm font-semibold text-ink-800">
-            What you keep on Free
-          </p>
-          <ul className="mt-2 space-y-1.5 text-sm text-ink-600">
-            <li className="flex gap-2">
-              <span aria-hidden>•</span>
-              <span>Unlimited static codes</span>
-            </li>
-            <li className="flex gap-2">
-              <span aria-hidden>•</span>
-              <span>One bio page</span>
-            </li>
-            <li className="flex gap-2">
-              <span aria-hidden>•</span>
-              <span>Basic scan counts</span>
-            </li>
-          </ul>
-        </div>
-
-        <p className="mt-4 text-xs text-ink-400">
-          Nothing is deleted. Anything over the free limits, like extra bio
-          pages and dynamic codes, is paused and comes right back if you
-          resubscribe.
-        </p>
-
-        <div className="mt-5 flex flex-wrap items-center gap-3">
-          <Link href="/dashboard/settings">
-            <Button>Keep my plan</Button>
-          </Link>
-          <form action={cancelSubscription}>
-            <button className="text-sm font-medium text-red-600 underline-offset-2 hover:underline">
-              Yes, cancel my subscription
-            </button>
-          </form>
-        </div>
+        <CancelFlow
+          planLabel={label}
+          usage={{
+            leads: leads.count ?? 0,
+            scans: scans.count ?? 0,
+            codes: codes.count ?? 0,
+            bioPages: bioPages.count ?? 0,
+          }}
+          loseList={LOSE[plan] ?? []}
+          lowerPlan={LOWER_PLAN[plan] ?? null}
+        />
       </Card>
     </div>
   );
