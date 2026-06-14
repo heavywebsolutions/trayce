@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PRINT_PRODUCTS, formatUsd } from "@/lib/print/catalog";
+import { ProductArt } from "@/components/ProductArt";
 
 export const dynamic = "force-dynamic";
 
@@ -39,8 +40,12 @@ export default async function PrintCatalogPage() {
             <Link
               key={p.key}
               href={`/dashboard/print/${p.key}`}
-              className="group flex flex-col rounded-2xl border border-ink-200 bg-white p-6 transition hover:border-ink-300 hover:shadow-card"
+              className="group flex flex-col overflow-hidden rounded-2xl border border-ink-200 bg-white transition hover:border-ink-300 hover:shadow-card"
             >
+              <div className="h-44 w-full border-b border-ink-100 bg-gradient-to-b from-ink-50 to-white p-4">
+                <ProductArt kind={p.key} />
+              </div>
+              <div className="flex flex-1 flex-col p-6">
               <h2 className="text-base font-semibold text-ink-900">{p.name}</h2>
               <p className="mt-1 flex-1 text-sm text-ink-500">{p.blurb}</p>
               <div className="mt-4 flex items-center justify-between">
@@ -50,6 +55,7 @@ export default async function PrintCatalogPage() {
                 <span className="text-sm font-medium text-accent">
                   Configure →
                 </span>
+              </div>
               </div>
             </Link>
           );
