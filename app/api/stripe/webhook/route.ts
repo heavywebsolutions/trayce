@@ -52,18 +52,26 @@ export async function POST(request: NextRequest) {
           s.metadata?.workspace_id || s.client_reference_id || null;
         const customerId =
           typeof s.customer === "string" ? s.customer : s.customer?.id ?? null;
+        const subscriptionId =
+          typeof s.subscription === "string"
+            ? s.subscription
+            : s.subscription?.id ?? null;
         const plan = s.metadata?.plan || null;
-        // Bind the Stripe customer to the workspace AND set the plan now, so the
-        // upgrade is reflected immediately regardless of the order in which the
-        // subscription.* events arrive. Later subscription events refine status
-        // and the renewal date by stripe_customer_id.
+        // Bind the Stripe customer + subscription to the workspace AND set the
+        // plan now, so the upgrade is reflected immediately regardless of the
+        // order in which the subscription.* events arrive. Later subscription
+        // events refine status, renewal date, and cancel state.
         if (workspaceId) {
           await admin
             .from("workspaces")
             .update({
               ...(customerId ? { stripe_customer_id: customerId } : {}),
+              ...(subscriptionId
+                ? { stripe_subscription_id: subscriptionId }
+                : {}),
               ...(plan ? { plan } : {}),
               subscription_status: "active",
+              cancel_at_period_end: false,
             })
             .eq("id", workspaceId);
         }
@@ -81,6 +89,8 @@ export async function POST(request: NextRequest) {
           plan: active ? planFromPrice(priceId) : "free",
           subscription_status: sub.status,
           current_period_end: periodEndISO(sub),
+          stripe_subscription_id: sub.id,
+          cancel_at_period_end: sub.cancel_at_period_end ?? false,
         });
         break;
       }
@@ -93,6 +103,8 @@ export async function POST(request: NextRequest) {
           plan: "free",
           subscription_status: "canceled",
           current_period_end: null,
+          stripe_subscription_id: null,
+          cancel_at_period_end: false,
         });
         break;
       }

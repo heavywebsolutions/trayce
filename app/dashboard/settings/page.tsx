@@ -2,7 +2,13 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Card, Badge, Button, Input, Label } from "@/components/ui";
 import { updateProfile, updatePassword } from "./actions";
-import { startCheckout, openBillingPortal } from "@/app/dashboard/billing/actions";
+import {
+  startCheckout,
+  openBillingPortal,
+  changePlan,
+  cancelSubscription,
+  resumeSubscription,
+} from "@/app/dashboard/billing/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +38,8 @@ const PLAN_META: Record<
   },
 };
 
+const PLAN_ORDER = { free: 0, starter: 1, growth: 2, agency: 3 } as const;
+
 export default async function SettingsPage({
   searchParams,
 }: {
@@ -46,13 +54,14 @@ export default async function SettingsPage({
 
   const { data: ws } = await supabase
     .from("workspaces")
-    .select("id, name, plan, subscription_status, current_period_end, stripe_customer_id")
+    .select("id, name, plan, subscription_status, current_period_end, stripe_customer_id, cancel_at_period_end")
     .eq("owner_id", user.id)
     .maybeSingle();
 
   const plan = (ws?.plan as string) ?? "free";
   const meta = PLAN_META[plan] ?? PLAN_META.free;
   const isPaid = plan !== "free";
+  const canceling = Boolean(ws?.cancel_at_period_end);
   const displayName = (user.user_metadata?.display_name as string) ?? "";
   const renews = ws?.current_period_end
     ? new Date(ws.current_period_end as string).toLocaleDateString("en-US", {
@@ -101,6 +110,22 @@ export default async function SettingsPage({
       {billing === "cancelled" && (
         <div className="mb-4 rounded-xl border border-ink-200 bg-ink-50 px-4 py-3 text-sm text-ink-600">
           Checkout cancelled. No charge was made.
+        </div>
+      )}
+      {billing === "changed" && (
+        <div className="mb-4 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          Your plan has been updated.
+        </div>
+      )}
+      {billing === "cancel_scheduled" && (
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Your plan is set to cancel at the end of the current period. You can
+          resume anytime before then.
+        </div>
+      )}
+      {billing === "resumed" && (
+        <div className="mb-4 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          Your subscription has been resumed.
         </div>
       )}
       {(billing === "unavailable" || billing === "nocustomer") && (
@@ -192,7 +217,11 @@ export default async function SettingsPage({
         </p>
         <p className="mt-1 text-sm text-ink-500">{meta.blurb}</p>
         {isPaid && renews && (
-          <p className="mt-1 text-sm text-ink-500">Renews on {renews}.</p>
+          <p className="mt-1 text-sm text-ink-500">
+            {canceling
+              ? `Your plan cancels on ${renews}. You keep access until then.`
+              : `Renews on ${renews}.`}
+          </p>
         )}
 
         <div className="mt-4 grid grid-cols-3 gap-3">
@@ -208,27 +237,68 @@ export default async function SettingsPage({
           ))}
         </div>
 
-        <div className="mt-5 flex flex-wrap items-center gap-2">
-          {isPaid ? (
-            <form action={openBillingPortal}>
+        <div className="mt-5 space-y-4">
+          {!isPaid ? (
+            <div className="flex flex-wrap items-center gap-2">
+              {(["starter", "growth", "agency"] as const).map((p) => (
+                <form key={p} action={startCheckout}>
+                  <input type="hidden" name="plan" value={p} />
+                  <button className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-ink-200 px-4 py-2.5 text-sm font-semibold text-ink-800 transition hover:border-ink-300 hover:bg-ink-50">
+                    Upgrade to {PLAN_META[p].label} · {PLAN_META[p].price}/mo
+                  </button>
+                </form>
+              ))}
+            </div>
+          ) : canceling ? (
+            <form action={resumeSubscription}>
               <button className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover">
-                Manage billing
+                Resume subscription
               </button>
             </form>
           ) : (
-            (["starter", "growth", "agency"] as const).map((p) => (
-              <form key={p} action={startCheckout}>
-                <input type="hidden" name="plan" value={p} />
-                <button className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-ink-200 px-4 py-2.5 text-sm font-semibold text-ink-800 transition hover:border-ink-300 hover:bg-ink-50">
-                  Upgrade to {PLAN_META[p].label} · {PLAN_META[p].price}/mo
+            <>
+              <div>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-400">
+                  Switch plan
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  {(["starter", "growth", "agency"] as const)
+                    .filter((p) => p !== plan)
+                    .map((p) => {
+                      const isUp =
+                        PLAN_ORDER[p] >
+                        PLAN_ORDER[plan as keyof typeof PLAN_ORDER];
+                      return (
+                        <form key={p} action={changePlan}>
+                          <input type="hidden" name="plan" value={p} />
+                          <button className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-ink-200 px-4 py-2.5 text-sm font-semibold text-ink-800 transition hover:border-ink-300 hover:bg-ink-50">
+                            {isUp ? "Upgrade" : "Downgrade"} to{" "}
+                            {PLAN_META[p].label} · {PLAN_META[p].price}/mo
+                          </button>
+                        </form>
+                      );
+                    })}
+                </div>
+              </div>
+              <form action={cancelSubscription}>
+                <button className="text-sm font-medium text-ink-500 underline-offset-2 hover:text-red-600 hover:underline">
+                  Cancel subscription
                 </button>
               </form>
-            ))
+            </>
+          )}
+
+          {isPaid && (
+            <form action={openBillingPortal}>
+              <button className="text-xs font-medium text-accent hover:underline">
+                Update card or view invoices ↗
+              </button>
+            </form>
           )}
         </div>
         <p className="mt-3 text-xs text-ink-400">
-          Secure checkout by Stripe. Update your card, download invoices, change
-          plan, or cancel anytime from the billing portal.
+          Plan changes are prorated automatically. Card details and invoices are
+          handled securely by Stripe.
         </p>
       </Card>
 
