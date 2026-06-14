@@ -96,6 +96,7 @@ export function PrintConfigurePanel({
   const [decalLogo, setDecalLogo] = useState<string | null>(null);
   const [showUrl, setShowUrl] = useState(false);
   const [urlPosition, setUrlPosition] = useState<"top" | "bottom">("bottom");
+  const [urlText, setUrlText] = useState("");
 
   function onDecalLogoFile(file: File) {
     const reader = new FileReader();
@@ -131,7 +132,7 @@ export function PrintConfigurePanel({
 
   const price = priceFor(product.key, sizeKey, finishKey, qty);
   const selected = codes.find((c) => c.id === codeId);
-  const urlText = hostFromUrl(selected?.destination_url);
+  const derivedHost = hostFromUrl(selected?.destination_url);
 
   // Render the code exactly as designed. Use the stored design SVG if present;
   // otherwise rebuild it from the saved design columns and backfill it so the
@@ -445,31 +446,45 @@ export function PrintConfigurePanel({
             </div>
           </div>
 
-          {urlText && (
-            <div>
-              <p className="mb-2 text-sm text-ink-600">Include your URL</p>
-              <div className="flex flex-wrap items-center gap-2">
-                <Chip active={showUrl} onClick={() => setShowUrl(!showUrl)}>
-                  {showUrl ? `On · ${urlText}` : "Off"}
-                </Chip>
-                {showUrl &&
-                  (["bottom", "top"] as const).map((p) => (
-                    <Chip
-                      key={p}
-                      active={p === urlPosition}
-                      onClick={() => setUrlPosition(p)}
-                    >
-                      {p === "bottom" ? "Bottom" : "Top"}
-                    </Chip>
-                  ))}
-              </div>
+          <div>
+            <p className="mb-2 text-sm text-ink-600">Include your URL</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <Chip
+                active={showUrl}
+                onClick={() => {
+                  const next = !showUrl;
+                  setShowUrl(next);
+                  if (next && !urlText) setUrlText(derivedHost);
+                }}
+              >
+                {showUrl ? "On" : "Off"}
+              </Chip>
+              {showUrl &&
+                (["bottom", "top"] as const).map((p) => (
+                  <Chip
+                    key={p}
+                    active={p === urlPosition}
+                    onClick={() => setUrlPosition(p)}
+                  >
+                    {p === "bottom" ? "Bottom" : "Top"}
+                  </Chip>
+                ))}
             </div>
-          )}
+            {showUrl && (
+              <input
+                value={urlText}
+                onChange={(e) => setUrlText(e.target.value)}
+                maxLength={80}
+                placeholder="yourbrand.com"
+                className="mt-2 min-h-[40px] w-full rounded-xl border border-ink-200 px-3 text-sm text-ink-900"
+              />
+            )}
+          </div>
         </div>
       </div>
 
       {/* Preview + summary */}
-      <div className="lg:sticky lg:top-6">
+      <div className="lg:sticky lg:top-6 lg:self-start">
         <div className="rounded-2xl border border-ink-200 bg-white p-5">
           <p className="mb-3 text-xs font-medium uppercase tracking-wide text-ink-400">
             Preview
