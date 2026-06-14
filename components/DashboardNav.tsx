@@ -23,6 +23,7 @@ const groups: { label: string; items: NavItem[] }[] = [
     items: [
       { href: "/dashboard/codes", label: "QR Codes", short: "Codes", icon: "▢" },
       { href: "/dashboard/bio", label: "Bio Pages", short: "Bio", icon: "❖" },
+      { href: "/dashboard/print", label: "Print & Ship", short: "Print", icon: "▣" },
     ],
   },
   {
@@ -35,7 +36,7 @@ const groups: { label: string; items: NavItem[] }[] = [
   {
     label: "Account",
     items: [
-      { href: "/dashboard/integrations", label: "Integrations", short: "Apps", icon: "⚡" },
+      { href: "/dashboard/integrations", label: "Integrations", short: "Apps", icon: "⚡", desktopOnly: true },
       { href: "/dashboard/settings", label: "Settings", short: "You", icon: "⚙", desktopOnly: true },
     ],
   },

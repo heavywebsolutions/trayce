@@ -50,6 +50,42 @@ export async function POST(request: NextRequest) {
         const s = event.data.object as Stripe.Checkout.Session;
         const workspaceId =
           s.metadata?.workspace_id || s.client_reference_id || null;
+
+        // Print & Ship one-time order (mode=payment), not a subscription.
+        if (s.metadata?.kind === "print_order" && workspaceId) {
+          const ship =
+            (s as unknown as { shipping_details?: unknown }).shipping_details ??
+            (
+              s as unknown as {
+                collected_information?: { shipping_details?: unknown };
+              }
+            ).collected_information?.shipping_details ??
+            s.customer_details ??
+            null;
+          const shipObj = ship as {
+            name?: string | null;
+            address?: unknown;
+          } | null;
+          await admin.from("print_orders").insert({
+            workspace_id: workspaceId,
+            code_id: s.metadata.code_id || null,
+            product_key: s.metadata.product_key,
+            product_name: s.metadata.product_name,
+            options: { size: s.metadata.size, finish: s.metadata.finish },
+            quantity: parseInt(s.metadata.qty || "0", 10),
+            unit_price_cents: parseInt(s.metadata.unit_price_cents || "0", 10),
+            total_cents: parseInt(s.metadata.total_cents || "0", 10),
+            currency: s.currency || "usd",
+            status: "paid",
+            stripe_session_id: s.id,
+            shipping: shipObj
+              ? { name: shipObj.name ?? null, address: shipObj.address ?? null }
+              : null,
+            paid_at: new Date().toISOString(),
+          });
+          break;
+        }
+
         const customerId =
           typeof s.customer === "string" ? s.customer : s.customer?.id ?? null;
         const subscriptionId =
