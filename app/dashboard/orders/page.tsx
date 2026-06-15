@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatUsd } from "@/lib/print/catalog";
 import { orderStatusLabel } from "@/lib/admin";
+import { reorderPrint } from "@/app/dashboard/print/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -161,6 +162,14 @@ export default async function OrdersPage({
                     View
                   </Link>
                 )}
+              </div>
+              <div className="mt-3 border-t border-ink-100 pt-3">
+                <form action={reorderPrint}>
+                  <input type="hidden" name="order_id" value={o.id} />
+                  <button className="text-sm font-semibold text-accent hover:underline">
+                    Reorder →
+                  </button>
+                </form>
               </div>
             </div>
           ))}

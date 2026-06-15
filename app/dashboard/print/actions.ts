@@ -9,11 +9,75 @@ import {
   priceFor,
   LOGO_PREP_CENTS,
   LOGO_PREP_LABEL,
+  type PrintProduct,
+  type PriceResult,
 } from "@/lib/print/catalog";
 
 const APP_URL = (
   process.env.NEXT_PUBLIC_APP_URL || "https://traxxr.com"
 ).replace(/\/$/, "");
+
+// Shared Stripe Checkout session for a print order, used by both new orders and
+// reorders so they never drift apart.
+async function createPrintStripeSession(params: {
+  product: PrintProduct;
+  price: PriceResult;
+  logoPrep: boolean;
+  workspaceId: string;
+  orderId: string;
+  productKey: string;
+  userEmail?: string | null;
+}) {
+  const { product, price, logoPrep, workspaceId, orderId, productKey } = params;
+  return stripe.checkout.sessions.create({
+    mode: "payment",
+    line_items: [
+      {
+        price_data: {
+          currency: "usd",
+          product_data: {
+            name: `${product.name} · ${price.size.label} · ${price.finish.label}`,
+          },
+          unit_amount: price.unitPriceCents,
+        },
+        quantity: price.tier.qty,
+      },
+      ...(logoPrep
+        ? [
+            {
+              price_data: {
+                currency: "usd",
+                product_data: {
+                  name: `${LOGO_PREP_LABEL} (logo cleanup + vectorization)`,
+                },
+                unit_amount: LOGO_PREP_CENTS,
+              },
+              quantity: 1,
+            },
+          ]
+        : []),
+    ],
+    shipping_address_collection: { allowed_countries: ["US"] },
+    shipping_options: [
+      {
+        shipping_rate_data: {
+          type: "fixed_amount",
+          fixed_amount: { amount: 600, currency: "usd" },
+          display_name: "Standard shipping",
+          delivery_estimate: {
+            minimum: { unit: "business_day", value: 3 },
+            maximum: { unit: "business_day", value: 7 },
+          },
+        },
+      },
+    ],
+    customer_email: params.userEmail ?? undefined,
+    client_reference_id: workspaceId,
+    metadata: { kind: "print_order", order_id: orderId, workspace_id: workspaceId },
+    success_url: `${APP_URL}/dashboard/orders?ok=1`,
+    cancel_url: `${APP_URL}/dashboard/print/${productKey}?canceled=1`,
+  });
+}
 
 // Create a one-time Stripe Checkout (mode=payment) for a physical print order.
 // Price is recomputed server-side from the catalog so the client cannot tamper
@@ -129,59 +193,92 @@ export async function createPrintCheckout(formData: FormData) {
     .single();
   if (!order) redirect(`/dashboard/print/${productKey}?err=invalid`);
 
-  const session = await stripe.checkout.sessions.create({
-    mode: "payment",
-    line_items: [
-      {
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: `${product.name} · ${price.size.label} · ${price.finish.label}`,
-          },
-          unit_amount: price.unitPriceCents,
-        },
-        quantity: qty,
-      },
-      ...(logoPrep
-        ? [
-            {
-              price_data: {
-                currency: "usd",
-                product_data: {
-                  name: `${LOGO_PREP_LABEL} (logo cleanup + vectorization)`,
-                },
-                unit_amount: LOGO_PREP_CENTS,
-              },
-              quantity: 1,
-            },
-          ]
-        : []),
-    ],
-    shipping_address_collection: { allowed_countries: ["US"] },
-    shipping_options: [
-      {
-        shipping_rate_data: {
-          type: "fixed_amount",
-          fixed_amount: { amount: 600, currency: "usd" },
-          display_name: "Standard shipping",
-          delivery_estimate: {
-            minimum: { unit: "business_day", value: 3 },
-            maximum: { unit: "business_day", value: 7 },
-          },
-        },
-      },
-    ],
-    customer_email: user.email ?? undefined,
-    client_reference_id: ws.id,
-    metadata: {
-      kind: "print_order",
-      order_id: order.id,
-      workspace_id: ws.id,
-    },
-    success_url: `${APP_URL}/dashboard/orders?ok=1`,
-    cancel_url: `${APP_URL}/dashboard/print/${productKey}?canceled=1`,
+  const session = await createPrintStripeSession({
+    product,
+    price,
+    logoPrep,
+    workspaceId: ws.id,
+    orderId: order.id as string,
+    productKey,
+    userEmail: user.email,
   });
 
   if (session.url) redirect(session.url);
   redirect(`/dashboard/print/${productKey}`);
+}
+
+// Reorder: copy a past order's exact design and quantity into a new draft and
+// send the customer to checkout. Price is recomputed from the current catalog.
+export async function reorderPrint(formData: FormData) {
+  if (!stripeConfigured()) redirect("/dashboard/orders?err=unavailable");
+
+  const orderId = String(formData.get("order_id") || "");
+  if (!orderId) redirect("/dashboard/orders");
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  // RLS ensures the user can only read their own orders.
+  const { data: src } = await supabase
+    .from("print_orders")
+    .select("product_key, code_id, options, quantity")
+    .eq("id", orderId)
+    .maybeSingle();
+  if (!src) redirect("/dashboard/orders");
+
+  const options = (src.options ?? {}) as Record<string, unknown>;
+  const sizeKey = typeof options.size === "string" ? options.size : "";
+  const finishKey = typeof options.finish === "string" ? options.finish : "";
+  const qty = (src.quantity as number) ?? 0;
+  const productKey = src.product_key as string;
+
+  const product = getPrintProduct(productKey);
+  const price = priceFor(productKey, sizeKey, finishKey, qty);
+  // If the catalog changed (size/qty no longer offered), send them to reconfigure.
+  if (!product || !price) redirect(`/dashboard/print/${productKey}`);
+
+  const { data: ws } = await supabase
+    .from("workspaces")
+    .select("id")
+    .eq("owner_id", user.id)
+    .maybeSingle();
+  if (!ws) redirect("/dashboard/orders");
+
+  const logoPrep = options.logo_prep === "true";
+  const goodsTotal = price.totalCents + (logoPrep ? LOGO_PREP_CENTS : 0);
+
+  const admin = createAdminClient();
+  const { data: order } = await admin
+    .from("print_orders")
+    .insert({
+      workspace_id: ws.id,
+      code_id: src.code_id,
+      product_key: productKey,
+      product_name: product.name,
+      options,
+      quantity: qty,
+      unit_price_cents: price.unitPriceCents,
+      total_cents: goodsTotal,
+      currency: "usd",
+      status: "pending",
+    })
+    .select("id")
+    .single();
+  if (!order) redirect("/dashboard/orders");
+
+  const session = await createPrintStripeSession({
+    product,
+    price,
+    logoPrep,
+    workspaceId: ws.id,
+    orderId: order.id as string,
+    productKey,
+    userEmail: user.email,
+  });
+
+  if (session.url) redirect(session.url);
+  redirect("/dashboard/orders");
 }
