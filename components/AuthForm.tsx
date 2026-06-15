@@ -47,6 +47,18 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         />
       </div>
 
+      {!isLogin && (
+        <div>
+          <Label htmlFor="promo">Promo code (optional)</Label>
+          <Input
+            id="promo"
+            name="promo"
+            placeholder="Ambassador or early-access code"
+            autoCapitalize="characters"
+          />
+        </div>
+      )}
+
       {isLogin && (
         <div className="-mt-1 text-right">
           <Link href="/forgot" className="text-sm font-medium text-accent">

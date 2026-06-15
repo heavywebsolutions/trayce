@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardNav } from "@/components/DashboardNav";
+import { isAdmin } from "@/lib/admin";
 
 export default async function DashboardLayout({
   children,
@@ -24,6 +25,14 @@ export default async function DashboardLayout({
             <span className="hidden text-sm text-ink-500 sm:inline">
               {user.email}
             </span>
+            {isAdmin(user.email) && (
+              <Link
+                href="/dashboard/admin"
+                className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-accent hover:bg-ink-100"
+              >
+                Admin
+              </Link>
+            )}
             <Link
               href="/dashboard/settings"
               aria-label="Settings"

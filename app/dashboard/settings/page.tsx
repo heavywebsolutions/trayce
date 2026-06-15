@@ -8,6 +8,7 @@ import {
   openBillingPortal,
   resumeSubscription,
   resumeNow,
+  redeemPromo,
 } from "@/app/dashboard/billing/actions";
 
 export const dynamic = "force-dynamic";
@@ -43,9 +44,13 @@ const PLAN_ORDER = { free: 0, starter: 1, growth: 2, agency: 3 } as const;
 export default async function SettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ saved?: string; billing?: string }>;
+  searchParams: Promise<{
+    saved?: string;
+    billing?: string;
+    promo?: string;
+  }>;
 }) {
-  const { saved, billing } = await searchParams;
+  const { saved, billing, promo } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -54,13 +59,14 @@ export default async function SettingsPage({
 
   const { data: ws } = await supabase
     .from("workspaces")
-    .select("id, name, plan, subscription_status, current_period_end, stripe_customer_id, cancel_at_period_end, paused_until")
+    .select("id, name, plan, subscription_status, current_period_end, stripe_customer_id, cancel_at_period_end, paused_until, comp")
     .eq("owner_id", user.id)
     .maybeSingle();
 
   const plan = (ws?.plan as string) ?? "free";
   const meta = PLAN_META[plan] ?? PLAN_META.free;
   const isPaid = plan !== "free";
+  const comp = Boolean(ws?.comp);
   const canceling = Boolean(ws?.cancel_at_period_end);
   const paused = ws?.subscription_status === "paused";
   const pausedUntil = ws?.paused_until
@@ -107,6 +113,17 @@ export default async function SettingsPage({
           {saved === "password"
             ? "Your password has been updated."
             : "Your changes have been saved."}
+        </div>
+      )}
+
+      {promo === "ok" && (
+        <div className="mb-4 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          Promo applied. Your plan has been upgraded.
+        </div>
+      )}
+      {promo === "err" && (
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          That promo code could not be applied. Check the code and try again.
         </div>
       )}
 
@@ -225,12 +242,21 @@ export default async function SettingsPage({
         </div>
         <p className="mt-2 text-sm text-ink-600">
           <span className="font-semibold">{meta.label} plan</span>
-          {meta.price !== "$0" && (
-            <span className="text-ink-400"> · {meta.price}/mo</span>
+          {comp ? (
+            <span className="text-ink-400"> · complimentary</span>
+          ) : (
+            meta.price !== "$0" && (
+              <span className="text-ink-400"> · {meta.price}/mo</span>
+            )
           )}
         </p>
         <p className="mt-1 text-sm text-ink-500">{meta.blurb}</p>
-        {isPaid && (paused ? pausedUntil : renews) && (
+        {comp && (
+          <p className="mt-1 text-sm text-ink-500">
+            This plan is complimentary. You will never be billed for it.
+          </p>
+        )}
+        {!comp && isPaid && (paused ? pausedUntil : renews) && (
           <p className="mt-1 text-sm text-ink-500">
             {paused
               ? `Paused until ${pausedUntil}. You will not be billed until then.`
@@ -253,6 +279,13 @@ export default async function SettingsPage({
           ))}
         </div>
 
+        {comp ? (
+          <p className="mt-5 rounded-xl bg-ink-50 px-4 py-3 text-sm text-ink-600">
+            Your {meta.label} plan is complimentary, with no billing. You still
+            pay only for Print &amp; Ship orders.
+          </p>
+        ) : (
+          <>
         <div className="mt-5 space-y-4">
           {!isPaid ? (
             <div className="flex flex-wrap items-center gap-2">
@@ -324,6 +357,29 @@ export default async function SettingsPage({
           Plan changes are prorated automatically. Card details and invoices are
           handled securely by Stripe.
         </p>
+          </>
+        )}
+
+        {!comp && (
+          <form
+            action={redeemPromo}
+            className="mt-4 border-t border-ink-100 pt-4"
+          >
+            <p className="mb-2 text-sm font-medium text-ink-700">
+              Have a promo code?
+            </p>
+            <div className="flex gap-2">
+              <input
+                name="promo"
+                placeholder="Enter code"
+                className="min-h-[40px] flex-1 rounded-xl border border-ink-200 px-3 text-sm text-ink-900"
+              />
+              <button className="inline-flex min-h-[40px] items-center justify-center rounded-xl border border-ink-200 px-4 text-sm font-semibold text-ink-800 hover:bg-ink-50">
+                Apply
+              </button>
+            </div>
+          </form>
+        )}
       </Card>
 
       {/* Session */}

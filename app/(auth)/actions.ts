@@ -3,6 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { sendEmail, adminRecipients } from "@/lib/email";
+import { applyPromo } from "@/lib/promo";
 
 export type AuthState = { error?: string } | undefined;
 
@@ -28,13 +31,30 @@ export async function signup(
 ): Promise<AuthState> {
   const email = String(formData.get("email") || "").trim();
   const password = String(formData.get("password") || "");
+  const promo = String(formData.get("promo") || "").trim();
   if (!email || !password) return { error: "Enter your email and password." };
   if (password.length < 8)
     return { error: "Use at least 8 characters for your password." };
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({ email, password });
+  const { data, error } = await supabase.auth.signUp({ email, password });
   if (error) return { error: error.message };
+
+  // Best-effort post-signup tasks; never block the user on these.
+  const newUserId = data.user?.id;
+  if (newUserId) {
+    const recipients = adminRecipients();
+    if (recipients.length) {
+      await sendEmail({
+        to: recipients,
+        subject: `New Traxxr signup: ${email}`,
+        html: `<p>A new account was just created on Traxxr.</p><p><strong>${email}</strong></p>`,
+      }).catch(() => {});
+    }
+    if (promo) {
+      await applyPromo(createAdminClient(), newUserId, promo).catch(() => {});
+    }
+  }
 
   // If email confirmation is on, there's no session yet — send them to login with a note.
   const {

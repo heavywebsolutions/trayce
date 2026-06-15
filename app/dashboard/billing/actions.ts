@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { stripe, PLAN_PRICES, stripeConfigured } from "@/lib/stripe";
+import { applyPromo } from "@/lib/promo";
 
 const APP_URL = (
   process.env.NEXT_PUBLIC_APP_URL || "https://traxxr.com"
@@ -217,6 +218,21 @@ export async function pauseSubscription(formData: FormData) {
 
   revalidatePath("/dashboard/settings");
   redirect("/dashboard/settings?billing=paused");
+}
+
+// Redeem a promo code for the current user's workspace (comped plan).
+export async function redeemPromo(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const code = String(formData.get("promo") || "");
+  const res = await applyPromo(createAdminClient(), user.id, code);
+  revalidatePath("/dashboard/settings");
+  redirect(
+    res.ok ? "/dashboard/settings?promo=ok" : "/dashboard/settings?promo=err"
+  );
 }
 
 // Resume a paused subscription right away.
