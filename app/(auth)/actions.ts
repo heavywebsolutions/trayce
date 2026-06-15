@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail, adminRecipients } from "@/lib/email";
 import { applyPromo } from "@/lib/promo";
 import { lifecycleEmail } from "@/lib/lifecycle";
+import { emailFlags, flowOn } from "@/lib/settings";
 
 export type AuthState = { error?: string } | undefined;
 
@@ -62,7 +63,8 @@ export async function signup(
       .select("id")
       .eq("owner_id", newUserId)
       .maybeSingle();
-    if (ws) {
+    const flags = await emailFlags(admin);
+    if (ws && flowOn(flags, "welcome")) {
       const tmpl = lifecycleEmail("welcome");
       const ok = await sendEmail({
         to: email,

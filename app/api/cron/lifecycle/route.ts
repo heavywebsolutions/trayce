@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail } from "@/lib/email";
 import { lifecycleEmail, type LifecycleKind } from "@/lib/lifecycle";
+import { emailFlags, flowOn } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -20,6 +21,7 @@ export async function GET(request: Request) {
   }
 
   const admin = createAdminClient();
+  const flags = await emailFlags(admin);
 
   const { data: usersData } = await admin.auth.admin.listUsers({
     page: 1,
@@ -56,6 +58,7 @@ export async function GET(request: Request) {
     else if (daysLeft <= 3) kind = "trial_ending";
     else if (daysOld >= 7) kind = "mid_trial";
     if (!kind) continue;
+    if (!flowOn(flags, kind)) continue;
 
     const { data: existing } = await admin
       .from("email_log")

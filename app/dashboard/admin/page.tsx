@@ -4,8 +4,46 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdmin } from "@/lib/admin";
 import { formatUsd } from "@/lib/print/catalog";
+import { emailFlags } from "@/lib/settings";
+import { setEmailFlag } from "./actions";
 
 export const dynamic = "force-dynamic";
+
+function FlagRow({
+  label,
+  flagKey,
+  on,
+  count,
+}: {
+  label: string;
+  flagKey: string;
+  on: boolean;
+  count?: number;
+}) {
+  return (
+    <li className="flex items-center justify-between py-2.5">
+      <span className="text-ink-700">
+        {label}
+        {typeof count === "number" && (
+          <span className="ml-2 text-xs text-ink-400">{count} sent (30d)</span>
+        )}
+      </span>
+      <form action={setEmailFlag}>
+        <input type="hidden" name="key" value={flagKey} />
+        <input type="hidden" name="enabled" value={on ? "false" : "true"} />
+        <button
+          className={`rounded-full px-3 py-1 text-xs font-semibold ${
+            on
+              ? "bg-emerald-50 text-emerald-700"
+              : "bg-ink-100 text-ink-500"
+          }`}
+        >
+          {on ? "On" : "Off"}
+        </button>
+      </form>
+    </li>
+  );
+}
 
 const PLAN_PRICE_CENTS: Record<string, number> = {
   starter: 995,
@@ -103,6 +141,7 @@ export default async function AdminMetricsPage() {
     const k = e.kind as string;
     emailCounts[k] = (emailCounts[k] ?? 0) + 1;
   }
+  const flags = await emailFlags(admin);
 
   const kpis = [
     { label: "Total accounts", value: totalUsers.toLocaleString() },
@@ -237,25 +276,43 @@ export default async function AdminMetricsPage() {
       </div>
 
       <div className="mt-6 rounded-2xl border border-ink-200 bg-white p-5">
-        <p className="mb-3 text-sm font-semibold text-ink-900">
-          Lifecycle emails (30 days)
+        <p className="mb-1 text-sm font-semibold text-ink-900">
+          Email automations
         </p>
-        <ul className="space-y-2 text-sm">
-          {(
-            [
-              ["welcome", "Welcome"],
-              ["mid_trial", "Mid-trial"],
-              ["trial_ending", "Trial ending"],
-              ["trial_ended", "Trial ended"],
-            ] as const
-          ).map(([k, label]) => (
-            <li key={k} className="flex justify-between">
-              <span className="text-ink-600">{label}</span>
-              <span className="font-medium tabular-nums text-ink-900">
-                {emailCounts[k] ?? 0}
-              </span>
-            </li>
-          ))}
+        <p className="mb-3 text-xs text-ink-400">
+          Toggle flows on or off. The master switch turns off all lifecycle
+          emails at once.
+        </p>
+        <ul className="divide-y divide-ink-100 text-sm">
+          <FlagRow
+            label="Master switch (all emails)"
+            flagKey="email_master"
+            on={flags["email_master"] !== false}
+          />
+          <FlagRow
+            label="Welcome"
+            flagKey="email_welcome"
+            on={flags["email_welcome"] !== false}
+            count={emailCounts.welcome ?? 0}
+          />
+          <FlagRow
+            label="Mid-trial"
+            flagKey="email_mid_trial"
+            on={flags["email_mid_trial"] !== false}
+            count={emailCounts.mid_trial ?? 0}
+          />
+          <FlagRow
+            label="Trial ending"
+            flagKey="email_trial_ending"
+            on={flags["email_trial_ending"] !== false}
+            count={emailCounts.trial_ending ?? 0}
+          />
+          <FlagRow
+            label="Trial ended"
+            flagKey="email_trial_ended"
+            on={flags["email_trial_ended"] !== false}
+            count={emailCounts.trial_ended ?? 0}
+          />
         </ul>
       </div>
     </div>
