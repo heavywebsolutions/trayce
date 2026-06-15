@@ -141,6 +141,32 @@ export const DECAL_TEMPLATES: DecalTemplate[] = [
       ctaPosition: "below",
     },
   },
+  {
+    key: "review_sign",
+    name: "Review sign",
+    decal: {
+      shape: "rounded",
+      bgColor: "#FFFFFF",
+      border: false,
+      borderColor: "#0A2540",
+      cta: "Scan to leave a review",
+      ctaPosition: "below",
+      showUrl: true,
+    },
+  },
+  {
+    key: "order_sign",
+    name: "Order online sign",
+    decal: {
+      shape: "rounded",
+      bgColor: "#FFFFFF",
+      border: false,
+      borderColor: "#2587DE",
+      cta: "Scan to order online",
+      ctaPosition: "below",
+      showUrl: true,
+    },
+  },
 ];
 
 function escapeXml(s: string): string {

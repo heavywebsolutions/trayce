@@ -88,6 +88,7 @@ export interface BioLink {
   title: string;
   url: string;
   thumbnail_url: string | null;
+  thumbnail_auto: boolean;
   config: BioLinkConfig;
   position: number;
   clicks: number;

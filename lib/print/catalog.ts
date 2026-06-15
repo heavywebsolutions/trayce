@@ -96,6 +96,32 @@ export const PRINT_PRODUCTS: PrintProduct[] = [
       { qty: 2500, unitPriceCents: 95 },
     ],
   },
+  {
+    key: "counter_sign",
+    name: "Countertop signs",
+    blurb:
+      "Rigid tabletop signs with a stand. Your logo, your code, and a clear call to action, ready for the counter, the table, or the front door.",
+    material: "Rigid PVC with a smooth print surface and a clear easel stand.",
+    durability: "Indoor, wipe-clean. Built to live on a counter or table.",
+    turnaround: "Made in 2 to 3 business days, ships in 3 to 5.",
+    sizes: [
+      { key: "5x7", label: '5 x 7"', widthIn: 5, heightIn: 7, mult: 1.0 },
+      { key: "6x9", label: '6 x 9"', widthIn: 6, heightIn: 9, mult: 1.4 },
+      { key: "8x10", label: '8 x 10"', widthIn: 8, heightIn: 10, mult: 1.9 },
+    ],
+    finishes: [
+      { key: "matte", label: "Matte", mult: 1.0 },
+      { key: "gloss", label: "Glossy", mult: 1.0 },
+    ],
+    tiers: [
+      { qty: 1, unitPriceCents: 1495 },
+      { qty: 3, unitPriceCents: 1195 },
+      { qty: 5, unitPriceCents: 995 },
+      { qty: 10, unitPriceCents: 850 },
+      { qty: 25, unitPriceCents: 695 },
+      { qty: 50, unitPriceCents: 595 },
+    ],
+  },
 ];
 
 // Enhancement & Vectorization add-on: our team cleans up, vectorizes, and

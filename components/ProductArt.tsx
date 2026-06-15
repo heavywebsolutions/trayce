@@ -106,6 +106,35 @@ export function ProductArt({ kind }: { kind: string }) {
     );
   }
 
+  if (kind === "counter_sign") {
+    return (
+      <svg
+        viewBox="0 0 320 150"
+        className="h-full w-full"
+        role="img"
+        aria-label="Countertop sign mockup"
+      >
+        {common}
+        {/* easel stand */}
+        <path d="M150 132 L138 150 L150 150 Z" fill="#c2cedd" />
+        <path d="M170 132 L182 150 L170 150 Z" fill="#c2cedd" />
+        {/* sign board (portrait) */}
+        <g filter="url(#pa-shadow)">
+          <rect x="120" y="10" width="80" height="124" rx="8" fill="#ffffff" />
+        </g>
+        {/* logo bar */}
+        <rect x="134" y="20" width="52" height="9" rx="3" fill="#2587DE" />
+        {/* QR */}
+        <QrMotif x={138} y={38} s={44} />
+        {/* headline lines */}
+        <rect x="132" y="92" width="56" height="7" rx="2" fill="#0A2540" />
+        <rect x="140" y="103" width="40" height="7" rx="2" fill="#0A2540" />
+        {/* URL pill */}
+        <rect x="134" y="118" width="52" height="9" rx="4.5" fill="#1f7a3d" />
+      </svg>
+    );
+  }
+
   // die_cut_decal (default)
   return (
     <svg

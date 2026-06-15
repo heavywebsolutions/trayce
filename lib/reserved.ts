@@ -24,6 +24,7 @@ export const RESERVED_HANDLES = new Set<string>([
   "contact",
   "terms",
   "privacy",
+  "report",
   "settings",
   "pricing",
   "blog",

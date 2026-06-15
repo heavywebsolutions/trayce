@@ -112,6 +112,31 @@ export default async function SettingsPage({
     { label: "Leads", value: leads.count ?? 0 },
   ];
 
+  // Payment method on file (captured by the Stripe webhook).
+  const hasCard = Boolean(ws?.card_last4);
+  const cardBrand = ws?.card_brand
+    ? String(ws.card_brand)[0].toUpperCase() + String(ws.card_brand).slice(1)
+    : "Card";
+  const cardExpLabel =
+    ws?.card_exp_month && ws?.card_exp_year
+      ? `${String(ws.card_exp_month).padStart(2, "0")}/${ws.card_exp_year}`
+      : null;
+  const pastDue =
+    ws?.subscription_status === "past_due" || Boolean(ws?.payment_failed_at);
+  let cardExpiringSoon = false;
+  if (ws?.card_exp_month && ws?.card_exp_year) {
+    const expEnd = new Date(
+      ws.card_exp_year as number,
+      ws.card_exp_month as number,
+      0,
+      23,
+      59,
+      59
+    ).getTime();
+    const days = Math.ceil((expEnd - Date.now()) / 86_400_000);
+    cardExpiringSoon = days <= 45 && days >= -3;
+  }
+
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-6">
@@ -402,6 +427,77 @@ export default async function SettingsPage({
           </form>
         )}
       </Card>
+
+      {/* Payment method */}
+      {!comp && isPaid && (
+        <Card className="mb-4 p-6">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-base font-semibold text-ink-900">
+              Payment method
+            </h2>
+            {pastDue ? (
+              <Badge tone="red">Action needed</Badge>
+            ) : cardExpiringSoon ? (
+              <Badge tone="amber">Expiring soon</Badge>
+            ) : hasCard ? (
+              <Badge tone="green">Active</Badge>
+            ) : null}
+          </div>
+
+          {hasCard ? (
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ink-200 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <span className="grid h-9 w-12 shrink-0 place-items-center rounded-md bg-ink-100 text-xs font-bold text-ink-600">
+                  {cardBrand.slice(0, 4).toUpperCase()}
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-ink-900">
+                    {cardBrand} ending {ws?.card_last4}
+                  </p>
+                  {cardExpLabel && (
+                    <p className="text-xs text-ink-400">
+                      Expires {cardExpLabel}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <form action={openBillingPortal}>
+                <button className="inline-flex min-h-[40px] items-center justify-center rounded-xl border border-ink-200 px-4 text-sm font-semibold text-ink-800 hover:bg-ink-50">
+                  Update card
+                </button>
+              </form>
+            </div>
+          ) : (
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm text-ink-500">
+                No card on file yet. Add one to keep your plan active.
+              </p>
+              <form action={openBillingPortal}>
+                <button className="inline-flex min-h-[40px] items-center justify-center rounded-xl border border-ink-200 px-4 text-sm font-semibold text-ink-800 hover:bg-ink-50">
+                  Add card
+                </button>
+              </form>
+            </div>
+          )}
+
+          {pastDue && (
+            <p className="mt-3 text-sm text-red-700">
+              Your last payment did not go through. Update your card to avoid
+              losing access.
+            </p>
+          )}
+          {!pastDue && cardExpiringSoon && (
+            <p className="mt-3 text-sm text-ink-600">
+              This card expires soon. Update it so your next renewal goes through
+              without a hitch.
+            </p>
+          )}
+          <p className="mt-3 text-xs text-ink-400">
+            Card details are stored securely by Stripe. Updating opens Stripe's
+            secure portal.
+          </p>
+        </Card>
+      )}
 
       {/* Session */}
       <Card className="p-6">

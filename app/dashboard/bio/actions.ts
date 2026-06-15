@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeUrl } from "@/lib/utils";
-import { SOCIAL_PLATFORMS } from "@/lib/bio";
+import { SOCIAL_PLATFORMS, faviconFor } from "@/lib/bio";
 import { productHandleFromInput, fetchShopifyProduct } from "@/lib/shopify";
 import { decryptSecret } from "@/lib/crypto";
 import { RESERVED_HANDLES } from "@/lib/reserved";
@@ -218,13 +218,18 @@ export async function addBioLink(formData: FormData): Promise<void> {
   const position = (last?.position ?? -1) + 1;
 
   const rawUrl = String(formData.get("url") || "").trim();
+  const url = kind === "header" ? "" : rawUrl ? normalizeUrl(rawUrl) : "";
+  // Auto-pull the destination favicon as the thumbnail for standard links, so
+  // pages look finished with no effort. The user can override it later.
+  const favicon = kind === "link" ? faviconFor(url) : null;
   await supabase.from("bio_links").insert({
     page_id: pageId,
     workspace_id: workspaceId,
     kind,
     title: String(formData.get("title") || "").slice(0, 120),
-    url: kind === "header" ? "" : rawUrl ? normalizeUrl(rawUrl) : "",
+    url,
     position,
+    ...(favicon ? { thumbnail_url: favicon, thumbnail_auto: true } : {}),
   });
   revalidatePath(`/dashboard/bio/${pageId}`);
 }
@@ -235,13 +240,30 @@ export async function updateBioLink(formData: FormData): Promise<void> {
   if (!id) return;
   const { supabase } = await currentWorkspace();
   const rawUrl = String(formData.get("url") || "").trim();
-  await supabase
+  const url = rawUrl ? normalizeUrl(rawUrl) : "";
+
+  const update: Record<string, unknown> = {
+    title: String(formData.get("title") || "").slice(0, 120),
+    url,
+  };
+
+  // Refresh the auto favicon when the URL changes, but never touch a thumbnail
+  // the user uploaded themselves.
+  const { data: existing } = await supabase
     .from("bio_links")
-    .update({
-      title: String(formData.get("title") || "").slice(0, 120),
-      url: rawUrl ? normalizeUrl(rawUrl) : "",
-    })
-    .eq("id", id);
+    .select("kind, thumbnail_auto, thumbnail_url")
+    .eq("id", id)
+    .maybeSingle();
+  if (
+    existing?.kind === "link" &&
+    (existing.thumbnail_auto || !existing.thumbnail_url)
+  ) {
+    const favicon = faviconFor(url);
+    update.thumbnail_url = favicon;
+    update.thumbnail_auto = Boolean(favicon);
+  }
+
+  await supabase.from("bio_links").update(update).eq("id", id);
   revalidatePath(`/dashboard/bio/${pageId}`);
 }
 
@@ -309,7 +331,25 @@ export async function setBioLinkThumbnail(formData: FormData): Promise<void> {
       ? raw
       : null;
   const { supabase } = await currentWorkspace();
-  await supabase.from("bio_links").update({ thumbnail_url: thumb }).eq("id", id);
+  if (thumb) {
+    // Manual upload: mark as user-set so URL edits don't overwrite it.
+    await supabase
+      .from("bio_links")
+      .update({ thumbnail_url: thumb, thumbnail_auto: false })
+      .eq("id", id);
+  } else {
+    // Cleared: fall back to the auto favicon for the link's URL.
+    const { data: row } = await supabase
+      .from("bio_links")
+      .select("url")
+      .eq("id", id)
+      .maybeSingle();
+    const favicon = faviconFor((row?.url as string) || "");
+    await supabase
+      .from("bio_links")
+      .update({ thumbnail_url: favicon, thumbnail_auto: Boolean(favicon) })
+      .eq("id", id);
+  }
   revalidatePath(`/dashboard/bio/${pageId}`);
 }
 

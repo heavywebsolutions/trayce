@@ -35,6 +35,22 @@ export function youtubeId(url: string): string | null {
   return null;
 }
 
+// Auto thumbnail for a link block: the destination site's favicon, served by
+// Google's favicon service. Returns null for empty, non-http, or unparseable
+// URLs so we never store a junk thumbnail.
+export function faviconFor(url: string): string | null {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(
+      u.hostname
+    )}&sz=128`;
+  } catch {
+    return null;
+  }
+}
+
 // Pick black or white text for readability on a hex background.
 export function readableOn(hex: string): string {
   const h = hex.replace("#", "");
