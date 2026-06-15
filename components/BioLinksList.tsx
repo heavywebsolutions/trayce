@@ -193,6 +193,7 @@ export function BioLinksList({
                 linkId={l.id}
                 pageId={pageId}
                 initial={l.thumbnail_url}
+                variant={l.kind === "image" ? "image" : "thumb"}
               />
             )}
 

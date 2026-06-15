@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Card, CardHeader, Button, Input } from "@/components/ui";
+import { Card, CardHeader, Button } from "@/components/ui";
 import { BioSettingsForm } from "@/components/BioSettingsForm";
 import { BioLinksList } from "@/components/BioLinksList";
 import { CopyUrlButton } from "@/components/CopyUrlButton";
-import { addBioLink } from "@/app/dashboard/bio/actions";
+import { BioBlockComposer } from "@/components/BioBlockComposer";
 import { formatNumber } from "@/lib/utils";
 import type { BioPage, BioLink } from "@/lib/types";
 
@@ -128,37 +128,7 @@ export default async function BioEditorPage({
             <BioSettingsForm page={page} />
           </Card>
 
-          <div className="rounded-2xl border-2 border-accent bg-accent-soft p-6 shadow-cardHover">
-            <h2 className="flex items-center gap-2 text-base font-semibold text-accent">
-              <span className="grid h-5 w-5 place-items-center rounded-full bg-accent text-xs font-bold leading-none text-white">
-                +
-              </span>
-              Add a block
-            </h2>
-            <p className="mt-1 text-xs text-ink-500">
-              Pick a type, fill it in, and add it to your page.
-            </p>
-            <form action={addBioLink} className="mt-3 space-y-2.5">
-              <input type="hidden" name="page_id" value={page.id} />
-              <select
-                name="kind"
-                defaultValue="link"
-                className="min-h-[44px] w-full rounded-xl border border-ink-200 bg-white px-3 text-sm text-ink-900"
-              >
-                <option value="link">Link button</option>
-                <option value="header">Section header</option>
-                <option value="video">YouTube video</option>
-                <option value="subscribe">Email subscribe</option>
-                <option value="text">Text</option>
-                <option value="image">Image</option>
-                <option value="form">Lead form</option>
-                <option value="product">Shopify product</option>
-              </select>
-              <Input name="title" placeholder="Title / text" />
-              <Input name="url" placeholder="https://… (URL or YouTube link)" />
-              <Button type="submit">Add block</Button>
-            </form>
-          </div>
+          <BioBlockComposer pageId={page.id} />
 
           <Card>
             <CardHeader

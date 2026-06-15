@@ -9,6 +9,39 @@ import { productHandleFromInput, fetchShopifyProduct } from "@/lib/shopify";
 import { decryptSecret } from "@/lib/crypto";
 import { RESERVED_HANDLES } from "@/lib/reserved";
 import { loadEntitlements } from "@/lib/plan";
+import { createAdminClient } from "@/lib/supabase/admin";
+
+const MEDIA_TYPES: Record<string, string> = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/webp": "webp",
+  "image/gif": "gif",
+  "image/svg+xml": "svg",
+};
+const MAX_MEDIA_BYTES = 5 * 1024 * 1024;
+
+// Upload an image to the bio-media bucket and return its public URL (or "" on
+// failure). Used by the add-block composer and per-block image uploader.
+export async function uploadBioMedia(formData: FormData): Promise<string> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return "";
+  const ext = MEDIA_TYPES[file.type];
+  if (!ext) return "";
+  if (file.size > MAX_MEDIA_BYTES) return "";
+
+  const { workspaceId } = await currentWorkspace();
+  const pageId = String(formData.get("page_id") || "misc");
+  const path = `${workspaceId}/${pageId}/${crypto.randomUUID()}.${ext}`;
+
+  const admin = createAdminClient();
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const { error } = await admin.storage
+    .from("bio-media")
+    .upload(path, bytes, { contentType: file.type, upsert: false });
+  if (error) return "";
+
+  return admin.storage.from("bio-media").getPublicUrl(path).data.publicUrl;
+}
 
 async function currentWorkspace() {
   const supabase = await createClient();
@@ -222,6 +255,10 @@ export async function addBioLink(formData: FormData): Promise<void> {
   // Auto-pull the destination favicon as the thumbnail for standard links, so
   // pages look finished with no effort. The user can override it later.
   const favicon = kind === "link" ? faviconFor(url) : null;
+  // Image blocks carry their uploaded image (a bio-media public URL) in
+  // thumbnail_url, which is what the public page renders.
+  const imageUrl =
+    kind === "image" ? String(formData.get("image_url") || "").trim() : "";
   await supabase.from("bio_links").insert({
     page_id: pageId,
     workspace_id: workspaceId,
@@ -230,6 +267,7 @@ export async function addBioLink(formData: FormData): Promise<void> {
     url,
     position,
     ...(favicon ? { thumbnail_url: favicon, thumbnail_auto: true } : {}),
+    ...(imageUrl ? { thumbnail_url: imageUrl } : {}),
   });
   revalidatePath(`/dashboard/bio/${pageId}`);
 }
@@ -324,10 +362,12 @@ export async function setBioLinkThumbnail(formData: FormData): Promise<void> {
   const pageId = String(formData.get("page_id") || "");
   if (!id) return;
   const raw = formData.get("thumbnail_url");
+  // Accept a legacy inline data URL, or a public URL from our own bio-media
+  // bucket (the new storage-backed upload path).
   const thumb =
     typeof raw === "string" &&
-    raw.startsWith("data:image/") &&
-    raw.length < 400_000
+    ((raw.startsWith("data:image/") && raw.length < 400_000) ||
+      raw.includes("/storage/v1/object/public/bio-media/"))
       ? raw
       : null;
   const { supabase } = await currentWorkspace();
