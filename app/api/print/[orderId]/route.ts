@@ -35,7 +35,7 @@ export async function GET(
   if (order.code_id) {
     const { data: code } = await admin
       .from("codes")
-      .select("type, slug, destination_url, design_svg")
+      .select("type, slug, destination_url, design_svg, content_type")
       .eq("id", order.code_id)
       .maybeSingle();
     if (code) {

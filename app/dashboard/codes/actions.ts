@@ -359,8 +359,10 @@ export async function saveLeadConfig(formData: FormData): Promise<void> {
   revalidatePath(`/dashboard/codes/${codeId}`);
 }
 
-// Upgrade a static code to dynamic (editable + tracked). Note: this changes what
-// the QR encodes, so it's only useful before the code has been printed.
+// Upgrade a static code to dynamic (editable + tracked). URL/app codes already
+// route through the /r/<slug> redirect even when static, so converting unlocks
+// editing without changing what a printed QR encodes — printed pieces keep
+// working and become re-pointable.
 export async function convertToDynamic(formData: FormData): Promise<void> {
   const codeId = String(formData.get("code_id") || "");
   if (!codeId) return;

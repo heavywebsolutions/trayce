@@ -15,7 +15,7 @@ export async function GET(
     const admin = createAdminClient();
     const { data: code } = await admin
       .from("codes")
-      .select("type, slug, destination_url")
+      .select("type, slug, destination_url, content_type")
       .eq("slug", slug)
       .maybeSingle();
     if (code) content = qrContentFor(code);

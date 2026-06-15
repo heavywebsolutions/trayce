@@ -32,7 +32,7 @@ export default async function ConfigurePrintPage({
   const { data: codeRows } = await supabase
     .from("codes")
     .select(
-      "id, title, slug, design_svg, type, destination_url, fg_color, bg_color, dot_style, corner_style, logo_url, frame_style, frame_color, frame_text"
+      "id, title, slug, design_svg, type, content_type, destination_url, fg_color, bg_color, dot_style, corner_style, logo_url, frame_style, frame_color, frame_text"
     )
     .eq("workspace_id", ws?.id ?? "")
     .order("created_at", { ascending: false })
@@ -48,6 +48,7 @@ export default async function ConfigurePrintPage({
       type: (c.type as string) ?? "dynamic",
       slug: c.slug as string,
       destination_url: (c.destination_url as string) ?? "",
+      content_type: (c.content_type as string) ?? "url",
     }),
     fg_color: (c.fg_color as string) ?? "#0A2540",
     bg_color: (c.bg_color as string) ?? "#FFFFFF",
