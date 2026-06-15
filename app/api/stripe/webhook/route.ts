@@ -1,7 +1,20 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type Stripe from "stripe";
-import { stripe, planFromPrice } from "@/lib/stripe";
+import { stripe, planFromPrice, getCardForCustomer } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendEmail } from "@/lib/email";
+import { lifecycleEmail } from "@/lib/lifecycle";
+import { emailFlags, flowOn } from "@/lib/settings";
+
+// Statuses where the customer still has paid access. past_due keeps access
+// during Stripe's retry (dunning) window so an expired card does not instantly
+// cut a paying customer off; only a real cancellation drops them to free.
+const ACCESS_STATUSES = new Set(["active", "trialing", "past_due"]);
+
+function cardLabel(brand: string | null, last4: string | null): string {
+  const b = brand ? brand[0].toUpperCase() + brand.slice(1) : "Your card";
+  return last4 ? `${b} ending ${last4}` : b;
+}
 
 // Stripe needs the raw request body to verify the signature, so this route
 // must run on the Node runtime and read the body as text.
@@ -42,6 +55,23 @@ export async function POST(request: NextRequest) {
       .from("workspaces")
       .update(fields)
       .eq("stripe_customer_id", customerId);
+  }
+
+  // Refresh the card-on-file details so the expiry banner + warnings stay
+  // accurate. Returns the fields to merge into a workspace update (empty if we
+  // could not read a card).
+  async function cardFields(
+    customerId: string | null
+  ): Promise<Record<string, unknown>> {
+    if (!customerId) return {};
+    const card = await getCardForCustomer(customerId);
+    if (!card) return {};
+    return {
+      card_brand: card.brand,
+      card_last4: card.last4,
+      card_exp_month: card.exp_month,
+      card_exp_year: card.exp_year,
+    };
   }
 
   try {
@@ -109,8 +139,10 @@ export async function POST(request: NextRequest) {
                 ? { stripe_subscription_id: subscriptionId }
                 : {}),
               ...(plan ? { plan } : {}),
+              ...(await cardFields(customerId)),
               subscription_status: "active",
               cancel_at_period_end: false,
+              payment_failed_at: null,
             })
             .eq("id", workspaceId);
         }
@@ -123,19 +155,76 @@ export async function POST(request: NextRequest) {
         const customerId =
           typeof sub.customer === "string" ? sub.customer : sub.customer.id;
         const priceId = sub.items.data[0]?.price?.id ?? null;
-        const active = sub.status === "active" || sub.status === "trialing";
+        // Keep the paid plan while active, trialing, OR past_due (grace period).
+        const keepAccess = ACCESS_STATUSES.has(sub.status);
         const pause = sub.pause_collection;
         const paused = Boolean(pause);
         const pausedUntil = pause?.resumes_at
           ? new Date(pause.resumes_at * 1000).toISOString()
           : null;
         await updateByCustomer(customerId, {
-          plan: active ? planFromPrice(priceId) : "free",
+          plan: keepAccess ? planFromPrice(priceId) : "free",
           subscription_status: paused ? "paused" : sub.status,
           current_period_end: periodEndISO(sub),
           stripe_subscription_id: sub.id,
           cancel_at_period_end: sub.cancel_at_period_end ?? false,
           paused_until: pausedUntil,
+        });
+        break;
+      }
+
+      case "invoice.payment_failed": {
+        // A renewal charge failed. Stay in the grace period (keep the plan),
+        // mark the failure, and email the customer once per failure episode.
+        const inv = event.data.object as Stripe.Invoice;
+        const customerId =
+          typeof inv.customer === "string"
+            ? inv.customer
+            : inv.customer?.id ?? null;
+        if (!customerId) break;
+
+        // Only the first failure of an episode emails; payment_failed_at is
+        // cleared on the next success, so a fresh failure can notify again.
+        const { data: ws } = await admin
+          .from("workspaces")
+          .select("id, payment_failed_at, card_brand, card_last4")
+          .eq("stripe_customer_id", customerId)
+          .maybeSingle();
+
+        await updateByCustomer(customerId, {
+          subscription_status: "past_due",
+          payment_failed_at: new Date().toISOString(),
+        });
+
+        const firstFailure = ws && !ws.payment_failed_at;
+        const to = inv.customer_email;
+        if (firstFailure && to) {
+          const flags = await emailFlags(admin);
+          if (flowOn(flags, "payment_failed")) {
+            const tmpl = lifecycleEmail("payment_failed", {
+              cardLabel: cardLabel(
+                (ws?.card_brand as string) ?? null,
+                (ws?.card_last4 as string) ?? null
+              ),
+            });
+            await sendEmail({ to, subject: tmpl.subject, html: tmpl.html });
+          }
+        }
+        break;
+      }
+
+      case "invoice.payment_succeeded": {
+        // Renewal (or recovery) cleared. Refresh the card on file and clear the
+        // failure marker. Status is reconciled by subscription.updated.
+        const inv = event.data.object as Stripe.Invoice;
+        const customerId =
+          typeof inv.customer === "string"
+            ? inv.customer
+            : inv.customer?.id ?? null;
+        if (!customerId) break;
+        await updateByCustomer(customerId, {
+          ...(await cardFields(customerId)),
+          payment_failed_at: null,
         });
         break;
       }
@@ -151,6 +240,7 @@ export async function POST(request: NextRequest) {
           stripe_subscription_id: null,
           cancel_at_period_end: false,
           paused_until: null,
+          payment_failed_at: null,
         });
         break;
       }

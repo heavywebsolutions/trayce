@@ -140,6 +140,11 @@ export default async function AdminMetricsPage() {
   for (const e of emailRows ?? []) {
     const k = e.kind as string;
     emailCounts[k] = (emailCounts[k] ?? 0) + 1;
+    // Card-expiry warnings are logged per period (card_expiring:YYYY-MM); roll
+    // them up under the base kind for the toggle's sent count.
+    if (k.startsWith("card_expiring:")) {
+      emailCounts.card_expiring = (emailCounts.card_expiring ?? 0) + 1;
+    }
   }
   const flags = await emailFlags(admin);
 
@@ -312,6 +317,17 @@ export default async function AdminMetricsPage() {
             flagKey="email_trial_ended"
             on={flags["email_trial_ended"] !== false}
             count={emailCounts.trial_ended ?? 0}
+          />
+          <FlagRow
+            label="Card expiring"
+            flagKey="email_card_expiring"
+            on={flags["email_card_expiring"] !== false}
+            count={emailCounts.card_expiring ?? 0}
+          />
+          <FlagRow
+            label="Payment failed"
+            flagKey="email_payment_failed"
+            on={flags["email_payment_failed"] !== false}
           />
         </ul>
       </div>

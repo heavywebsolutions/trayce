@@ -27,3 +27,47 @@ export function planFromPrice(priceId: string | null | undefined): string {
 export function stripeConfigured(): boolean {
   return Boolean(process.env.STRIPE_SECRET_KEY);
 }
+
+export type CardInfo = {
+  brand: string | null;
+  last4: string | null;
+  exp_month: number | null;
+  exp_year: number | null;
+};
+
+// Resolve the card a customer pays with: prefer the invoice default payment
+// method, fall back to their most recent saved card. Used by the webhook to
+// keep card-on-file details fresh for the expiry banner + warnings.
+export async function getCardForCustomer(
+  customerId: string
+): Promise<CardInfo | null> {
+  try {
+    const cust = await stripe.customers.retrieve(customerId, {
+      expand: ["invoice_settings.default_payment_method"],
+    });
+    if (!cust || (cust as { deleted?: boolean }).deleted) return null;
+
+    const pm = (cust as Stripe.Customer).invoice_settings
+      ?.default_payment_method as Stripe.PaymentMethod | null;
+    let card = pm?.card ?? null;
+
+    if (!card) {
+      const pms = await stripe.paymentMethods.list({
+        customer: customerId,
+        type: "card",
+        limit: 1,
+      });
+      card = pms.data[0]?.card ?? null;
+    }
+    if (!card) return null;
+
+    return {
+      brand: card.brand ?? null,
+      last4: card.last4 ?? null,
+      exp_month: card.exp_month ?? null,
+      exp_year: card.exp_year ?? null,
+    };
+  } catch {
+    return null;
+  }
+}

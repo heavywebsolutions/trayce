@@ -9,7 +9,9 @@ export type LifecycleKind =
   | "welcome"
   | "mid_trial"
   | "trial_ending"
-  | "trial_ended";
+  | "trial_ended"
+  | "card_expiring"
+  | "payment_failed";
 
 function shell(
   heading: string,
@@ -34,9 +36,15 @@ function shell(
 
 export function lifecycleEmail(
   kind: LifecycleKind,
-  opts?: { daysLeft?: number }
+  opts?: {
+    daysLeft?: number;
+    cardLabel?: string;
+    expLabel?: string;
+  }
 ): { subject: string; html: string } {
   const daysLeft = Math.max(1, opts?.daysLeft ?? 3);
+  const cardLabel = opts?.cardLabel || "the card on file";
+  const expLabel = opts?.expLabel || "soon";
   switch (kind) {
     case "welcome":
       return {
@@ -87,6 +95,32 @@ export function lifecycleEmail(
             "Re-unlock them anytime and pick up exactly where you left off.",
           ],
           "Re-unlock Traxxr",
+          `${APP_URL}/dashboard/settings`
+        ),
+      };
+    case "card_expiring":
+      return {
+        subject: "Your card on file is about to expire",
+        html: shell(
+          "Time to update your card",
+          [
+            `${cardLabel} expires ${expLabel}. Once it does, your next Traxxr renewal will fail and your plan will pause.`,
+            "Update it now and nothing changes, your codes, analytics, and pages keep running without a hitch.",
+          ],
+          "Update your card",
+          `${APP_URL}/dashboard/settings`
+        ),
+      };
+    case "payment_failed":
+      return {
+        subject: "We could not process your Traxxr payment",
+        html: shell(
+          "Your payment did not go through",
+          [
+            `We tried to charge ${cardLabel} for your renewal and it was declined. Your plan is still active for now while we retry.`,
+            "Update your card to avoid losing access. It takes less than a minute, and we will pick the charge back up automatically.",
+          ],
+          "Update your card",
           `${APP_URL}/dashboard/settings`
         ),
       };
