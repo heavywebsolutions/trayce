@@ -6,6 +6,7 @@ import { AnalyticsView } from "@/components/AnalyticsView";
 import { BioPageFilter } from "@/components/BioPageFilter";
 import { Card, Badge } from "@/components/ui";
 import { formatNumber, cn } from "@/lib/utils";
+import { loadEntitlements } from "@/lib/plan";
 import {
   resolveRange,
   bucketize,
@@ -64,6 +65,10 @@ export default async function AnalyticsPage({
     .single();
   const wsId = ws?.id ?? "";
 
+  // Free plan sees totals only; detail (location, device, history, ranges) locks.
+  const gate = await loadEntitlements();
+  const locked = gate ? !gate.ent.analyticsHistory : false;
+
   // Tab links keep the current date range (but not the per-page filter).
   const hrefFor = (key: string) => {
     const p = new URLSearchParams();
@@ -118,9 +123,10 @@ export default async function AnalyticsPage({
 
     content = (
       <>
-        <AnalyticsControls />
+        {!locked && <AnalyticsControls />}
         <AnalyticsView
           stats={stats}
+          locked={locked}
           buckets={bucketize(scans, range)}
           os={osBreakdown(scans)}
           locations={locationBreakdown(scans)}
@@ -209,9 +215,10 @@ export default async function AnalyticsPage({
       content = (
         <>
           <BioPageFilter pages={pageOptions} selected={selectedId} />
-          <AnalyticsControls />
+          {!locked && <AnalyticsControls />}
           <AnalyticsView
             stats={stats}
+          locked={locked}
             buckets={bucketize(clicks, range)}
             os={osBreakdown(clicks)}
             locations={locationBreakdown(clicks)}
@@ -283,9 +290,10 @@ export default async function AnalyticsPage({
       content = (
         <>
           <BioPageFilter pages={pageOptions} selected={null} />
-          <AnalyticsControls />
+          {!locked && <AnalyticsControls />}
           <AnalyticsView
             stats={stats}
+          locked={locked}
             buckets={bucketize(clicks, range)}
             os={osBreakdown(clicks)}
             locations={locationBreakdown(clicks)}

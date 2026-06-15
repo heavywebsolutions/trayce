@@ -13,6 +13,7 @@ import {
   locationBreakdown,
   type ScanLite,
 } from "@/lib/analytics";
+import { loadEntitlements } from "@/lib/plan";
 
 export const dynamic = "force-dynamic";
 
@@ -55,6 +56,9 @@ export default async function CodeAnalyticsPage({
     (s) => ({ ...s, code_title: code.title }) as ScanLite
   );
 
+  const gate = await loadEntitlements();
+  const locked = gate ? !gate.ent.analyticsHistory : false;
+
   const buckets = bucketize(scans, range);
   const unique = uniqueCount(scans);
 
@@ -81,13 +85,14 @@ export default async function CodeAnalyticsPage({
         <Badge tone="gray">/{code.slug}</Badge>
       </div>
 
-      <AnalyticsControls />
+      {!locked && <AnalyticsControls />}
 
       <AnalyticsView
         stats={stats}
         buckets={buckets}
         os={osBreakdown(scans)}
         locations={locationBreakdown(scans)}
+        locked={locked}
       />
     </div>
   );

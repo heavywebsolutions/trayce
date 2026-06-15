@@ -1,6 +1,27 @@
+import Link from "next/link";
 import { Card, CardHeader } from "@/components/ui";
 import { formatNumber } from "@/lib/utils";
 import type { Bucket } from "@/lib/analytics";
+
+function LockedTeaser({ noun }: { noun: string }) {
+  return (
+    <Card className="px-6 py-12 text-center">
+      <p className="text-base font-semibold text-ink-900">
+        See where these {noun}s came from
+      </p>
+      <p className="mx-auto mt-1 max-w-md text-sm text-ink-500">
+        Location, device, trends over time, and custom date ranges are part of
+        the paid plans. Your totals above stay free, always.
+      </p>
+      <Link
+        href="/dashboard/settings?upgrade=analytics"
+        className="mt-4 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-hover"
+      >
+        Unlock full analytics
+      </Link>
+    </Card>
+  );
+}
 
 function StatCard({
   label,
@@ -66,6 +87,7 @@ export function AnalyticsView({
   locations,
   topCodes,
   labels,
+  locked,
 }: {
   stats: { label: string; value: string; hint?: string }[];
   buckets: Bucket[];
@@ -79,6 +101,7 @@ export function AnalyticsView({
     topSubtitle?: string;
     locationsSubtitle?: string;
   };
+  locked?: boolean;
 }) {
   const maxTotal = Math.max(1, ...buckets.map((b) => b.total));
   const L = labels ?? {};
@@ -93,6 +116,10 @@ export function AnalyticsView({
         ))}
       </div>
 
+      {locked ? (
+        <LockedTeaser noun={noun} />
+      ) : (
+        <>
       {/* Scans over time: total vs unique */}
       <Card className="mb-5 p-6">
         <div className="mb-4 flex items-center justify-between">
@@ -161,6 +188,8 @@ export function AnalyticsView({
           />
           <BarList rows={topCodes} emptyText={empty} />
         </Card>
+      )}
+        </>
       )}
     </>
   );

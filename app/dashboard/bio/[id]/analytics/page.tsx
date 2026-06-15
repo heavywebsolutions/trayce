@@ -13,6 +13,7 @@ import {
   codeBreakdown,
   type ScanLite,
 } from "@/lib/analytics";
+import { loadEntitlements } from "@/lib/plan";
 
 export const dynamic = "force-dynamic";
 
@@ -80,6 +81,9 @@ export default async function BioAnalyticsPage({
     } as ScanLite;
   });
 
+  const gate = await loadEntitlements();
+  const locked = gate ? !gate.ent.analyticsHistory : false;
+
   const buckets = bucketize(clicks, range);
   const views = viewCount ?? 0;
   const clickCount = clicks.length;
@@ -108,7 +112,7 @@ export default async function BioAnalyticsPage({
         <Badge tone="gray">@{page.handle}</Badge>
       </div>
 
-      <AnalyticsControls />
+      {!locked && <AnalyticsControls />}
 
       <AnalyticsView
         stats={stats}
@@ -116,6 +120,7 @@ export default async function BioAnalyticsPage({
         os={osBreakdown(clicks)}
         locations={locationBreakdown(clicks)}
         topCodes={codeBreakdown(clicks)}
+        locked={locked}
         labels={{
           chartTitle: "Clicks over time",
           noun: "click",

@@ -51,6 +51,8 @@ const UPGRADE_MSG: Record<string, string> = {
     "Email sync is on Growth. Upgrade to auto-send new contacts to your email tool.",
   pages:
     "More bio pages are a paid feature. Upgrade to Starter for unlimited pages.",
+  analytics:
+    "Full analytics (location, device, history, date ranges) are on the paid plans. Upgrade to Starter to unlock them.",
 };
 
 export default async function SettingsPage({
