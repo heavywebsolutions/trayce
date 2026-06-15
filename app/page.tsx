@@ -113,9 +113,6 @@ const tiers = [
   },
 ];
 
-const chartPath =
-  "M0,95 L40,86 L80,90 L120,70 L160,74 L200,52 L240,58 L280,38 L320,44 L360,26 L400,30 L460,14";
-
 // Clean monoline icons for the toolkit grid (no emoji).
 function ToolIcon({ name }: { name: string }) {
   const p: Record<string, React.ReactNode> = {
@@ -288,48 +285,36 @@ export default async function Home() {
             </p>
           </div>
 
-          {/* dashboard mockup */}
-          <div className="border border-ink-200 bg-white shadow-cardHover">
-            <div className="flex items-center gap-2 border-b border-ink-200 bg-ink-50 px-3 py-2.5">
-              <span className="h-2.5 w-2.5 bg-ink-300" />
-              <span className="h-2.5 w-2.5 bg-ink-300" />
-              <span className="h-2.5 w-2.5 bg-ink-300" />
-              <span className="ml-2 flex-1 border border-ink-200 bg-white px-3 py-1 font-mono text-[11px] text-ink-400">
-                traxxr.com/dashboard
+          {/* hero visual: countertop sign + edit-after-print chips */}
+          <div className="relative mx-auto w-full max-w-md py-4">
+            <div
+              className="absolute inset-x-6 top-2 bottom-2 -z-10"
+              style={{
+                background:
+                  "radial-gradient(420px 300px at 70% 20%, #E9F2FC, transparent 70%)",
+              }}
+            />
+            <div className="mx-auto w-[290px] border border-ink-200 bg-white p-7 text-center shadow-cardHover sm:w-[320px]">
+              <p className="text-[12px] font-extrabold tracking-[0.12em] text-[#2587DE]">
+                YOUR LOGO
+              </p>
+              <QrMotif className="mx-auto my-5 h-[170px] w-[170px]" />
+              <p className="text-[28px] font-extrabold leading-[1.02] text-ink-900">
+                LEAVE US
+                <br />A REVIEW
+              </p>
+              <span className="mt-4 inline-block bg-[#1f7a3d] px-5 py-2 text-[12px] font-bold tracking-wide text-white">
+                yourbrand.com
               </span>
             </div>
-            <div className="bg-ink-50/50 p-4">
-              <div className="mb-3 grid grid-cols-3 gap-2.5">
-                <div className="border border-ink-200 bg-white px-3.5 py-3">
-                  <p className="text-[10px] uppercase tracking-wide text-ink-400">Scans</p>
-                  <p className="mt-1 text-2xl font-extrabold tabular-nums">1,240</p>
-                </div>
-                <div className="border border-ink-200 bg-white px-3.5 py-3">
-                  <p className="text-[10px] uppercase tracking-wide text-ink-400">Unique</p>
-                  <p className="mt-1 text-2xl font-extrabold tabular-nums">1,080</p>
-                </div>
-                <div className="border border-ink-200 bg-white px-3.5 py-3">
-                  <p className="text-[10px] uppercase tracking-wide text-ink-400">Leads</p>
-                  <p className="mt-1 text-2xl font-extrabold tabular-nums text-[#10B98A]">96</p>
-                </div>
-              </div>
-              <div className="border border-ink-200 bg-white p-3.5">
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-[13px] font-semibold text-ink-700">Scans over time</p>
-                  <p className="text-[11px] text-ink-400">last 30 days</p>
-                </div>
-                <svg viewBox="0 0 460 120" className="h-[110px] w-full" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="heroG" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0" stopColor="#2587DE" stopOpacity="0.38" />
-                      <stop offset="1" stopColor="#2587DE" stopOpacity="0" />
-                    </linearGradient>
-                  </defs>
-                  <path d={`${chartPath} L460,120 L0,120 Z`} fill="url(#heroG)" />
-                  <path d={chartPath} fill="none" stroke="#2587DE" strokeWidth="2.5" />
-                  <circle cx="360" cy="26" r="4" fill="#fff" stroke="#2587DE" strokeWidth="2.5" />
-                </svg>
-              </div>
+
+            <div className="absolute left-0 top-8 flex items-center gap-2 border border-ink-100 bg-white px-3 py-2 text-[12px] font-semibold text-ink-700 shadow-card">
+              <span className="grid h-4 w-4 place-items-center rounded-full bg-[#1f7a3d] text-[9px] text-white">✓</span>
+              Destination updated
+            </div>
+            <div className="absolute bottom-10 right-0 flex items-center gap-2 border border-ink-100 bg-white px-3 py-2 text-[12px] font-semibold text-ink-700 shadow-card">
+              <span className="grid h-4 w-4 place-items-center rounded-full bg-[#1f7a3d] text-[9px] text-white">✓</span>
+              1,248 scans this week
             </div>
           </div>
         </div>
