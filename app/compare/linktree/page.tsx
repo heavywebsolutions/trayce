@@ -4,9 +4,9 @@ import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Traxxr vs Linktree",
+  title: "TRAXXR vs Linktree",
   description:
-    "Linktree is a great bio link. Traxxr is a bio link plus trackable QR codes for your printed marketing, and it leaves every sale and every lead with you.",
+    "Linktree is a great bio link. TRAXXR is a bio link plus trackable QR codes for your printed marketing, and it leaves every sale and every lead with you.",
 };
 
 const rows = [
@@ -58,10 +58,10 @@ export default function CompareLinktreePage() {
             Comparison
           </p>
           <h1 className="mt-4 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
-            Traxxr vs Linktree
+            TRAXXR vs Linktree
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-ink-500">
-            Linktree is a great bio link. Traxxr is a bio link plus the trackable
+            Linktree is a great bio link. TRAXXR is a bio link plus the trackable
             QR codes that connect your printed marketing, and it leaves every sale
             and every lead with you.
           </p>
@@ -74,7 +74,7 @@ export default function CompareLinktreePage() {
           <div className="border border-ink-200">
             <div className="grid grid-cols-[1.2fr_1fr_1fr] bg-ink-900 text-xs font-bold uppercase tracking-wide text-white">
               <div className="px-4 py-3">Feature</div>
-              <div className="border-l border-white/15 px-4 py-3">Traxxr</div>
+              <div className="border-l border-white/15 px-4 py-3">TRAXXR</div>
               <div className="border-l border-white/15 px-4 py-3">Linktree</div>
             </div>
             {rows.map((r, i) => (
@@ -117,11 +117,11 @@ export default function CompareLinktreePage() {
           </div>
           <div>
             <h2 className="text-xl font-extrabold tracking-tight">
-              When Traxxr fits better
+              When TRAXXR fits better
             </h2>
             <p className="mt-3 text-base leading-relaxed text-ink-500">
               If you also print things, want to track scans, want to keep your
-              leads, or would rather not pay a fee on your sales, Traxxr covers
+              leads, or would rather not pay a fee on your sales, TRAXXR covers
               more ground for less.
             </p>
           </div>

@@ -351,13 +351,13 @@ export async function BioPageView({
             className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur transition hover:bg-white/25"
             style={{ color: contentColor }}
           >
-            <span
-              className="grid h-5 w-5 place-items-center rounded-md text-[11px] font-bold"
-              style={{ backgroundColor: p.accent_color, color: p.button_text_color }}
-            >
-              T
-            </span>
-            Create your own Traxxr page
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/traxxr-mark.png"
+              alt="TRAXXR"
+              className="h-5 w-5 rounded-md object-contain"
+            />
+            Create your own TRAXXR page
           </a>
         </div>
 
@@ -369,7 +369,7 @@ export async function BioPageView({
             rel="noopener noreferrer"
             className="font-semibold hover:underline"
           >
-            Traxxr
+            TRAXXR
           </a>
         </p>
 

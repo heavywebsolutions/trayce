@@ -78,7 +78,7 @@ export function DashboardNav({ admin = false }: { admin?: boolean }) {
       {/* Desktop sidebar */}
       <nav className="hidden w-60 shrink-0 flex-col gap-5 border-r border-ink-200 bg-white px-4 py-6 md:flex">
         <Link href="/dashboard" className="flex items-center px-2">
-          <img src="/traxxr-logo.png" alt="Traxxr" className="h-5 w-auto" />
+          <img src="/traxxr-logo.png" alt="TRAXXR" className="h-5 w-auto" />
         </Link>
 
         <div className="flex flex-col gap-5">

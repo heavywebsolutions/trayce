@@ -17,7 +17,7 @@ export default async function ReportPage({
           href="/"
           className="text-sm font-semibold text-accent hover:underline"
         >
-          Traxxr
+          TRAXXR
         </Link>
 
         {sent ? (

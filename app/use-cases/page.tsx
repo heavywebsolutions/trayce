@@ -4,9 +4,9 @@ import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Use cases | Traxxr",
+  title: "Use cases | TRAXXR",
   description:
-    "How restaurants, retail, real estate, events, local services, and online brands use Traxxr to track what their printed marketing does and capture leads they own.",
+    "How restaurants, retail, real estate, events, local services, and online brands use TRAXXR to track what their printed marketing does and capture leads they own.",
 };
 
 const cases = [
@@ -53,7 +53,7 @@ export default function UseCasesPage() {
             Use cases
           </p>
           <h1 className="mt-4 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
-            If you print it or post it, Traxxr can track it.
+            If you print it or post it, TRAXXR can track it.
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-ink-500">
             The product is the same across every business. What changes is what

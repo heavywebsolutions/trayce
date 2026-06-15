@@ -3,9 +3,9 @@ import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Traxxr",
+  title: "Privacy Policy | TRAXXR",
   description:
-    "What Traxxr collects, why, and what you can do about it, in plain language.",
+    "What TRAXXR collects, why, and what you can do about it, in plain language.",
 };
 
 const sections = [
@@ -13,7 +13,7 @@ const sections = [
     h: "Information we collect",
     body: [
       "Account details you give us, such as your name and email address.",
-      "Content you create in Traxxr, such as your codes, links, and pages.",
+      "Content you create in TRAXXR, such as your codes, links, and pages.",
       "Usage and scan data when someone scans a code or clicks a link, which includes the time, the device and browser type, an approximate location, and a hashed version of the IP address. We do not store the raw IP address.",
       "Leads your own visitors submit through your forms. We collect these on your behalf, and you control them.",
       "Credentials for the tools you connect, such as an email platform API key. These are encrypted before they are stored.",
@@ -39,7 +39,7 @@ const sections = [
   {
     h: "Data you collect from others",
     body: [
-      "If you use Traxxr to capture leads, you are responsible for those contacts. You confirm that you have the right to collect and message them, and that you will honor their requests.",
+      "If you use TRAXXR to capture leads, you are responsible for those contacts. You confirm that you have the right to collect and message them, and that you will honor their requests.",
     ],
   },
   {
@@ -83,7 +83,7 @@ export default function PrivacyPage() {
           </h1>
           <p className="mt-3 text-sm text-ink-400">Last updated June 12, 2026</p>
           <p className="mt-6 text-base leading-relaxed text-ink-500">
-            This policy explains what Traxxr collects, why we collect it, and the
+            This policy explains what TRAXXR collects, why we collect it, and the
             choices you have. We try to keep it in plain language instead of legal
             fog.
           </p>

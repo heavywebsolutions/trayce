@@ -3,8 +3,8 @@ import Link from "next/link";
 export function SiteNav() {
   return (
     <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-      <Link href="/" aria-label="Traxxr home">
-        <img src="/traxxr-logo.png" alt="Traxxr" className="h-7 w-auto" />
+      <Link href="/" aria-label="TRAXXR home">
+        <img src="/traxxr-logo.png" alt="TRAXXR" className="h-7 w-auto" />
       </Link>
       <nav className="flex items-center gap-6">
         <div className="hidden items-center gap-6 text-sm font-semibold text-ink-600 md:flex">
@@ -15,7 +15,7 @@ export function SiteNav() {
             Pricing
           </Link>
           <Link href="/why-traxxr" className="hover:text-ink-900">
-            Why Traxxr
+            Why TRAXXR
           </Link>
         </div>
         <div className="flex items-center gap-3">

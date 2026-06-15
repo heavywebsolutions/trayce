@@ -4,9 +4,9 @@ import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Traxxr vs standalone QR code tools",
+  title: "TRAXXR vs standalone QR code tools",
   description:
-    "Free QR generators give you a static image and nothing else. Pricey QR platforms add tracking but stop at the code. Traxxr gives you editable codes, real analytics, a bio page, and lead capture in one account.",
+    "Free QR generators give you a static image and nothing else. Pricey QR platforms add tracking but stop at the code. TRAXXR gives you editable codes, real analytics, a bio page, and lead capture in one account.",
 };
 
 const rows = [
@@ -58,11 +58,11 @@ export default function CompareQrPage() {
             Comparison
           </p>
           <h1 className="mt-4 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
-            Traxxr vs standalone QR tools
+            TRAXXR vs standalone QR tools
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-ink-500">
             Free QR generators give you a static image and nothing else. The
-            pricey platforms add tracking but stop at the code. Traxxr gives you
+            pricey platforms add tracking but stop at the code. TRAXXR gives you
             editable codes, real analytics, a bio page, and lead capture in one
             account.
           </p>
@@ -75,7 +75,7 @@ export default function CompareQrPage() {
           <div className="border border-ink-200">
             <div className="grid grid-cols-[1.2fr_1fr_1fr] bg-ink-900 text-xs font-bold uppercase tracking-wide text-white">
               <div className="px-4 py-3">Feature</div>
-              <div className="border-l border-white/15 px-4 py-3">Traxxr</div>
+              <div className="border-l border-white/15 px-4 py-3">TRAXXR</div>
               <div className="border-l border-white/15 px-4 py-3">QR tools</div>
             </div>
             {rows.map((r, i) => (
@@ -117,11 +117,11 @@ export default function CompareQrPage() {
           </div>
           <div>
             <h2 className="text-xl font-extrabold tracking-tight">
-              When Traxxr fits better
+              When TRAXXR fits better
             </h2>
             <p className="mt-3 text-base leading-relaxed text-ink-500">
               The moment you want to change a code after printing, see your scans,
-              capture leads, or run a bio page next to your codes, one Traxxr
+              capture leads, or run a bio page next to your codes, one TRAXXR
               account replaces the pile of separate tools.
             </p>
           </div>

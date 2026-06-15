@@ -109,7 +109,7 @@ export default async function Home() {
               <span className="text-[#1C6FBE]">yours to keep.</span>
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-ink-500">
-              Put a Traxxr code on anything you print, packaging, flyers,
+              Put a TRAXXR code on anything you print, packaging, flyers,
               signage, business cards, and a smart link in every bio. Track
               every scan and click, capture leads you own, and sync them straight
               to your email list. Editable anytime. No reprints.
@@ -530,7 +530,7 @@ export default async function Home() {
       <section className="bg-ink-900 text-white">
         <div className="mx-auto max-w-3xl px-6 py-20 text-center">
           <p className="text-xl font-medium leading-relaxed sm:text-2xl">
-            “We put a Traxxr code on every wrap we print. For the first time we
+            “We put a TRAXXR code on every wrap we print. For the first time we
             can see which designs actually drive people back to the site, and the
             leads land in our email tool automatically.”
           </p>

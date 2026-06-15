@@ -30,7 +30,7 @@ function shell(
     <p style="margin:20px 0 8px">
       <a href="${ctaHref}" style="display:inline-block;background:#2587DE;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:12px 22px;border-radius:10px">${ctaText}</a>
     </p>
-    <p style="font-size:12px;color:#8792A2;margin-top:24px">Traxxr</p>
+    <p style="font-size:12px;color:#8792A2;margin-top:24px">TRAXXR</p>
   </div>`;
 }
 
@@ -48,9 +48,9 @@ export function lifecycleEmail(
   switch (kind) {
     case "welcome":
       return {
-        subject: "Welcome to Traxxr",
+        subject: "Welcome to TRAXXR",
         html: shell(
-          "Welcome to Traxxr",
+          "Welcome to TRAXXR",
           [
             "You are on a 14-day Growth trial, no card needed. Editable codes, full analytics, and lead capture are all unlocked.",
             "Print a code, point it anywhere, and watch the scans roll in.",
@@ -94,7 +94,7 @@ export function lifecycleEmail(
             "Your printed codes still redirect, nothing broke. Editing, full analytics, and lead capture are paused.",
             "Re-unlock them anytime and pick up exactly where you left off.",
           ],
-          "Re-unlock Traxxr",
+          "Re-unlock TRAXXR",
           `${APP_URL}/dashboard/settings`
         ),
       };
@@ -104,7 +104,7 @@ export function lifecycleEmail(
         html: shell(
           "Time to update your card",
           [
-            `${cardLabel} expires ${expLabel}. Once it does, your next Traxxr renewal will fail and your plan will pause.`,
+            `${cardLabel} expires ${expLabel}. Once it does, your next TRAXXR renewal will fail and your plan will pause.`,
             "Update it now and nothing changes, your codes, analytics, and pages keep running without a hitch.",
           ],
           "Update your card",
@@ -113,7 +113,7 @@ export function lifecycleEmail(
       };
     case "payment_failed":
       return {
-        subject: "We could not process your Traxxr payment",
+        subject: "We could not process your TRAXXR payment",
         html: shell(
           "Your payment did not go through",
           [

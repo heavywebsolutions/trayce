@@ -4,7 +4,7 @@ import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Pricing | Traxxr",
+  title: "Pricing | TRAXXR",
   description:
     "Start free and stay free for as long as you like. Upgrade when you want editable codes, scan history, and lead capture. No contracts, and we never take a cut of your sales.",
 };
@@ -77,7 +77,7 @@ const faqs = [
   },
   {
     q: "Do you take a percentage of my sales?",
-    a: "No. Zero. Linktree charges a fee on sales made through its links. Traxxr does not take a cent of what you sell.",
+    a: "No. Zero. Linktree charges a fee on sales made through its links. TRAXXR does not take a cent of what you sell.",
   },
   {
     q: "Who owns the leads I collect?",

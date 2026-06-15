@@ -57,7 +57,7 @@ export default async function LeadFormPage({
             rel="noopener noreferrer"
             className="font-semibold hover:underline"
           >
-            Traxxr
+            TRAXXR
           </a>
         </p>
       </div>

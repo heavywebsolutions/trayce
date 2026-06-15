@@ -12,7 +12,7 @@ export default function AuthLayout({
           href="/"
           className="mb-8 flex items-center justify-center text-ink-900"
         >
-          <img src="/traxxr-logo.png" alt="Traxxr" className="h-7 w-auto" />
+          <img src="/traxxr-logo.png" alt="TRAXXR" className="h-7 w-auto" />
         </Link>
         {children}
       </div>

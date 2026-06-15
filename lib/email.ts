@@ -17,7 +17,7 @@ export async function sendEmail({
 }: SendArgs): Promise<boolean> {
   const key = process.env.RESEND_API_KEY;
   if (!key) return false;
-  const sender = from || process.env.EMAIL_FROM || "Traxxr <hello@traxxr.com>";
+  const sender = from || process.env.EMAIL_FROM || "TRAXXR <hello@traxxr.com>";
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",

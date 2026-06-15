@@ -215,7 +215,7 @@ export default async function DashboardPage() {
       {!hasCodes && (
         <div className="mb-5 rounded-2xl border-2 border-accent-ring bg-accent-soft p-6">
           <h2 className="text-base font-semibold text-ink-900">
-            Welcome to Traxxr.
+            Welcome to TRAXXR.
           </h2>
           <p className="mt-1 text-sm text-ink-600">
             Three steps to your first tracked scan:

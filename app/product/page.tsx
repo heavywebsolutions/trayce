@@ -4,7 +4,7 @@ import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Product | Traxxr",
+  title: "Product | TRAXXR",
   description:
     "Dynamic QR codes, link-in-bio pages, scan analytics, lead capture, and email sync in one account. The thing you print and the link you post finally report to the same dashboard.",
 };
@@ -62,7 +62,7 @@ export default function ProductPage() {
             One place for your codes, your links, and the leads they bring in.
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-ink-500">
-            Traxxr replaces a QR generator and a separate link-in-bio tool with a
+            TRAXXR replaces a QR generator and a separate link-in-bio tool with a
             single account. The thing you print and the link you post finally
             report to the same dashboard.
           </p>

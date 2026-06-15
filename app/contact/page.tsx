@@ -4,9 +4,9 @@ import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Contact | Traxxr",
+  title: "Contact | TRAXXR",
   description:
-    "Reach the Traxxr team for support, agency and reseller questions, or anything else.",
+    "Reach the TRAXXR team for support, agency and reseller questions, or anything else.",
 };
 
 const reasons = [
@@ -22,7 +22,7 @@ const reasons = [
   },
   {
     h: "Press and partnerships",
-    p: "Writing about Traxxr or want to work together? Send the details and we will get back to you.",
+    p: "Writing about TRAXXR or want to work together? Send the details and we will get back to you.",
     email: "hello@traxxr.com",
   },
 ];
@@ -72,7 +72,7 @@ export default function ContactPage() {
             Or just try it.
           </h2>
           <p className="mx-auto mt-4 max-w-md text-white/60">
-            The fastest way to see if Traxxr fits is to make a code. It is free
+            The fastest way to see if TRAXXR fits is to make a code. It is free
             and takes about a minute.
           </p>
           <Link

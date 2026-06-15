@@ -11,7 +11,7 @@ export default function Error({
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-white px-6 text-center">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/traxxr-logo.png" alt="Traxxr" className="h-7 w-auto" />
+      <img src="/traxxr-logo.png" alt="TRAXXR" className="h-7 w-auto" />
       <p className="mt-10 text-sm font-bold uppercase tracking-[0.16em] text-[#1C6FBE]">
         Something broke
       </p>

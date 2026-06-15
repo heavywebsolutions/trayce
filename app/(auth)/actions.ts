@@ -50,8 +50,8 @@ export async function signup(
     if (recipients.length) {
       await sendEmail({
         to: recipients,
-        subject: `New Traxxr signup: ${email}`,
-        html: `<p>A new account was just created on Traxxr.</p><p><strong>${email}</strong></p>`,
+        subject: `New TRAXXR signup: ${email}`,
+        html: `<p>A new account was just created on TRAXXR.</p><p><strong>${email}</strong></p>`,
       }).catch(() => {});
     }
     if (promo) {

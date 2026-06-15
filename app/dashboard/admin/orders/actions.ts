@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdmin } from "@/lib/admin";
+import { sendEmail } from "@/lib/email";
+import { shippedEmail } from "@/lib/print/emails";
 
 async function assertAdmin() {
   const supabase = await createClient();
@@ -30,7 +32,8 @@ export async function markShipped(formData: FormData) {
   const tracking = String(formData.get("tracking") || "").slice(0, 120) || null;
   const trackingUrl =
     String(formData.get("tracking_url") || "").slice(0, 300) || null;
-  await createAdminClient()
+  const admin = createAdminClient();
+  const { data: order } = await admin
     .from("print_orders")
     .update({
       status: "shipped",
@@ -38,6 +41,23 @@ export async function markShipped(formData: FormData) {
       tracking_url: trackingUrl,
       shipped_at: new Date().toISOString(),
     })
-    .eq("id", id);
+    .eq("id", id)
+    .select("id, product_name, customer_email")
+    .maybeSingle();
+
+  // Let the customer know it shipped, with tracking if we have it.
+  if (order?.customer_email) {
+    const tmpl = shippedEmail({
+      orderId: order.id as string,
+      productName: (order.product_name as string) ?? "order",
+      tracking,
+      trackingUrl,
+    });
+    await sendEmail({
+      to: order.customer_email as string,
+      subject: tmpl.subject,
+      html: tmpl.html,
+    }).catch(() => {});
+  }
   revalidatePath("/dashboard/admin/orders");
 }

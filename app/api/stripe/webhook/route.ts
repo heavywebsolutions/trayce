@@ -4,6 +4,7 @@ import { stripe, planFromPrice, getCardForCustomer } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail } from "@/lib/email";
 import { lifecycleEmail } from "@/lib/lifecycle";
+import { proofReadyEmail } from "@/lib/print/emails";
 import { emailFlags, flowOn } from "@/lib/settings";
 
 // Statuses where the customer still has paid access. past_due keeps access
@@ -101,7 +102,9 @@ export async function POST(request: NextRequest) {
               name?: string | null;
               address?: unknown;
             } | null;
-            await admin
+            const buyerEmail =
+              s.customer_details?.email ?? s.customer_email ?? null;
+            const { data: order } = await admin
               .from("print_orders")
               .update({
                 status: "proof_ready",
@@ -112,9 +115,25 @@ export async function POST(request: NextRequest) {
                       address: shipObj.address ?? null,
                     }
                   : null,
+                ...(buyerEmail ? { customer_email: buyerEmail } : {}),
                 paid_at: new Date().toISOString(),
               })
-              .eq("id", orderId);
+              .eq("id", orderId)
+              .select("id, product_name")
+              .maybeSingle();
+
+            // Tell the customer their proof is ready to review.
+            if (buyerEmail && order) {
+              const tmpl = proofReadyEmail({
+                orderId: order.id as string,
+                productName: (order.product_name as string) ?? "order",
+              });
+              await sendEmail({
+                to: buyerEmail,
+                subject: tmpl.subject,
+                html: tmpl.html,
+              }).catch(() => {});
+            }
           }
           break;
         }

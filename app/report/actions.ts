@@ -11,7 +11,7 @@ const REASONS = new Set([
   "other",
 ]);
 
-// Public abuse report for a bio page. Emails the Traxxr admins. Never throws at
+// Public abuse report for a bio page. Emails the TRAXXR admins. Never throws at
 // the reporter, always lands them on a thank-you state.
 export async function submitReport(formData: FormData): Promise<void> {
   const handle = String(formData.get("handle") || "").slice(0, 60);
@@ -25,7 +25,7 @@ export async function submitReport(formData: FormData): Promise<void> {
     await sendEmail({
       to: recipients,
       subject: `Bio page reported: @${handle || "unknown"}`,
-      html: `<p>A bio page was reported on Traxxr.</p>
+      html: `<p>A bio page was reported on TRAXXR.</p>
         <p><strong>Page:</strong> @${handle || "unknown"}</p>
         <p><strong>Reason:</strong> ${reason}</p>
         <p><strong>Details:</strong> ${details || "(none)"}</p>

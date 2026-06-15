@@ -503,7 +503,7 @@ export default async function SettingsPage({
       <Card className="p-6">
         <h2 className="text-base font-semibold text-ink-900">Session</h2>
         <p className="mt-0.5 text-sm text-ink-500">
-          Sign out of Traxxr on this device.
+          Sign out of TRAXXR on this device.
         </p>
         <form action="/api/auth/signout" method="post" className="mt-4">
           <Button variant="secondary">Sign out</Button>

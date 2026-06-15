@@ -4,9 +4,9 @@ import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "About | Traxxr",
+  title: "About | TRAXXR",
   description:
-    "Online marketing has counted every click for years. The flyer, the sign, and the sticker have been flying blind. We built Traxxr to fix that.",
+    "Online marketing has counted every click for years. The flyer, the sign, and the sticker have been flying blind. We built TRAXXR to fix that.",
 };
 
 const beliefs = [
@@ -40,7 +40,7 @@ export default function AboutPage() {
             About
           </p>
           <h1 className="mt-4 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
-            We built Traxxr because offline marketing deserved better than a
+            We built TRAXXR because offline marketing deserved better than a
             guess.
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-ink-500">
@@ -106,7 +106,7 @@ export default function AboutPage() {
             Where we are now
           </h2>
           <p className="mt-3 text-base leading-relaxed text-ink-500">
-            Traxxr is young and growing, shaped day by day by the businesses using
+            TRAXXR is young and growing, shaped day by day by the businesses using
             it right now. If you have a feature you need or a rough edge to report,
             we want to hear it. The roadmap is built from what real operators ask
             for, not what sounds good in a pitch.
