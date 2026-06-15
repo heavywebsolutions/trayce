@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail, adminRecipients } from "@/lib/email";
 import { applyPromo } from "@/lib/promo";
+import { lifecycleEmail } from "@/lib/lifecycle";
 
 export type AuthState = { error?: string } | undefined;
 
@@ -43,6 +44,7 @@ export async function signup(
   // Best-effort post-signup tasks; never block the user on these.
   const newUserId = data.user?.id;
   if (newUserId) {
+    const admin = createAdminClient();
     const recipients = adminRecipients();
     if (recipients.length) {
       await sendEmail({
@@ -52,7 +54,30 @@ export async function signup(
       }).catch(() => {});
     }
     if (promo) {
-      await applyPromo(createAdminClient(), newUserId, promo).catch(() => {});
+      await applyPromo(admin, newUserId, promo).catch(() => {});
+    }
+    // Instant welcome email + log it so the daily cron never repeats it.
+    const { data: ws } = await admin
+      .from("workspaces")
+      .select("id")
+      .eq("owner_id", newUserId)
+      .maybeSingle();
+    if (ws) {
+      const tmpl = lifecycleEmail("welcome");
+      const ok = await sendEmail({
+        to: email,
+        subject: tmpl.subject,
+        html: tmpl.html,
+      }).catch(() => false);
+      if (ok) {
+        await admin
+          .from("email_log")
+          .insert({ workspace_id: ws.id, email, kind: "welcome" })
+          .then(
+            () => {},
+            () => {}
+          );
+      }
     }
   }
 

@@ -93,6 +93,17 @@ export default async function AdminMetricsPage() {
     )
     .slice(0, 12);
 
+  const since30 = new Date(now - 30 * DAY).toISOString();
+  const { data: emailRows } = await admin
+    .from("email_log")
+    .select("kind, sent_at")
+    .gte("sent_at", since30);
+  const emailCounts: Record<string, number> = {};
+  for (const e of emailRows ?? []) {
+    const k = e.kind as string;
+    emailCounts[k] = (emailCounts[k] ?? 0) + 1;
+  }
+
   const kpis = [
     { label: "Total accounts", value: totalUsers.toLocaleString() },
     { label: "New (7 days)", value: last7.toLocaleString() },
@@ -223,6 +234,29 @@ export default async function AdminMetricsPage() {
             ))
           )}
         </div>
+      </div>
+
+      <div className="mt-6 rounded-2xl border border-ink-200 bg-white p-5">
+        <p className="mb-3 text-sm font-semibold text-ink-900">
+          Lifecycle emails (30 days)
+        </p>
+        <ul className="space-y-2 text-sm">
+          {(
+            [
+              ["welcome", "Welcome"],
+              ["mid_trial", "Mid-trial"],
+              ["trial_ending", "Trial ending"],
+              ["trial_ended", "Trial ended"],
+            ] as const
+          ).map(([k, label]) => (
+            <li key={k} className="flex justify-between">
+              <span className="text-ink-600">{label}</span>
+              <span className="font-medium tabular-nums text-ink-900">
+                {emailCounts[k] ?? 0}
+              </span>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
