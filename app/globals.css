@@ -12,7 +12,9 @@ body {
   color: #0a2540;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  overflow-x: hidden;
+  /* clip (not hidden) prevents horizontal scroll without creating a scroll
+     container, which would otherwise break position: sticky everywhere. */
+  overflow-x: clip;
   max-width: 100%;
 }
 
