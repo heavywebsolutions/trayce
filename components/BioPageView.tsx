@@ -78,38 +78,67 @@ export async function BioPageView({
     .order("position", { ascending: true });
   const links = (linkRows ?? []) as BioLink[];
 
-  // Count the visit, but never while rendering the editor's live preview.
+  // Count the visit, but never in the editor preview, and skip obvious bots
+  // (crawlers, link unfurlers, uptime checks) plus rapid repeat loads from the
+  // same visitor, so the numbers stay honest. All best-effort: any failure here
+  // never blocks the page render.
   if (!preview)
     try {
-    await admin.rpc("increment_bio_view", { p_page_id: p.id });
-    const h = await headers();
-    const ua = h.get("user-agent") || "";
-    const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || "";
-    const ipHash = ip
-      ? createHash("sha256").update(ip).digest("hex").slice(0, 32)
-      : null;
-    const decode = (v: string | null) => {
-      if (!v) return null;
-      try {
-        return decodeURIComponent(v);
-      } catch {
-        return v;
+      const h = await headers();
+      const ua = h.get("user-agent") || "";
+      const isBot =
+        /bot|crawl|spider|slurp|bingpreview|facebookexternalhit|embedly|whatsapp|telegram|slackbot|discordbot|preview|monitor|uptime|headless|lighthouse|pingdom|curl|wget|python-requests|axios|go-http|node-fetch/i.test(
+          ua
+        );
+      if (!isBot) {
+        const ip =
+          h.get("x-forwarded-for")?.split(",")[0]?.trim() || "";
+        const ipHash = ip
+          ? createHash("sha256").update(ip).digest("hex").slice(0, 32)
+          : null;
+
+        // De-dupe: the same hashed IP counts at most once per 30 minutes.
+        let repeat = false;
+        if (ipHash) {
+          const since = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+          const { data: recent } = await admin
+            .from("bio_events")
+            .select("id")
+            .eq("page_id", p.id)
+            .eq("type", "view")
+            .eq("ip_hash", ipHash)
+            .gte("created_at", since)
+            .limit(1)
+            .maybeSingle();
+          repeat = Boolean(recent);
+        }
+
+        if (!repeat) {
+          const decode = (v: string | null) => {
+            if (!v) return null;
+            try {
+              return decodeURIComponent(v);
+            } catch {
+              return v;
+            }
+          };
+          await admin.rpc("increment_bio_view", { p_page_id: p.id });
+          await admin.from("bio_events").insert({
+            page_id: p.id,
+            workspace_id: p.workspace_id,
+            type: "view",
+            device_type: /mobile/i.test(ua) ? "mobile" : "desktop",
+            ip_hash: ipHash,
+            user_agent: ua.slice(0, 500),
+            country: h.get("x-vercel-ip-country"),
+            region: decode(h.get("x-vercel-ip-country-region")),
+            city: decode(h.get("x-vercel-ip-city")),
+          });
+        }
       }
-    };
-    await admin.from("bio_events").insert({
-      page_id: p.id,
-      workspace_id: p.workspace_id,
-      type: "view",
-      device_type: /mobile/i.test(ua) ? "mobile" : "desktop",
-      ip_hash: ipHash,
-      user_agent: ua.slice(0, 500),
-      country: h.get("x-vercel-ip-country"),
-      region: decode(h.get("x-vercel-ip-country-region")),
-      city: decode(h.get("x-vercel-ip-city")),
-    });
-  } catch {
-    /* ignore */
-  }
+    } catch {
+      /* ignore */
+    }
 
   const onBg = readableOn(p.bg_color);
   const socials = p.socials || {};
