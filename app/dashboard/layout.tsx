@@ -16,9 +16,11 @@ export default async function DashboardLayout({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const admin = isAdmin(user.email);
+
   return (
     <div className="flex min-h-screen bg-ink-50">
-      <DashboardNav />
+      <DashboardNav admin={admin} />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-14 items-center justify-between border-b border-ink-200 bg-white px-5">
           <img src="/traxxr-logo.png" alt="Traxxr" className="h-5 w-auto md:hidden" />
@@ -26,14 +28,6 @@ export default async function DashboardLayout({
             <span className="hidden text-sm text-ink-500 sm:inline">
               {user.email}
             </span>
-            {isAdmin(user.email) && (
-              <Link
-                href="/dashboard/admin"
-                className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-accent hover:bg-ink-100"
-              >
-                Admin
-              </Link>
-            )}
             <Link
               href="/dashboard/settings"
               aria-label="Settings"

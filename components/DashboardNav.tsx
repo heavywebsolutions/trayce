@@ -42,6 +42,25 @@ const groups: { label: string; items: NavItem[] }[] = [
   },
 ];
 
+const ADMIN_GROUP: { label: string; items: NavItem[] } = {
+  label: "Admin",
+  items: [
+    { href: "/dashboard/admin", label: "Overview", icon: "◆", desktopOnly: true },
+    {
+      href: "/dashboard/admin/promos",
+      label: "Promo codes",
+      icon: "%",
+      desktopOnly: true,
+    },
+    {
+      href: "/dashboard/admin/orders",
+      label: "Fulfillment",
+      icon: "✦",
+      desktopOnly: true,
+    },
+  ],
+};
+
 const flat = groups.flatMap((g) => g.items).filter((i) => !i.desktopOnly);
 
 function isActive(pathname: string, href: string) {
@@ -50,8 +69,9 @@ function isActive(pathname: string, href: string) {
 }
 
 // Desktop: left rail grouped by plain function. Mobile: thumb-reachable bottom tab bar.
-export function DashboardNav() {
+export function DashboardNav({ admin = false }: { admin?: boolean }) {
   const pathname = usePathname();
+  const navGroups = admin ? [...groups, ADMIN_GROUP] : groups;
 
   return (
     <>
@@ -62,7 +82,7 @@ export function DashboardNav() {
         </Link>
 
         <div className="flex flex-col gap-5">
-          {groups.map((group) => (
+          {navGroups.map((group) => (
             <div key={group.label || "home"}>
               {group.label && (
                 <p className="mb-1.5 px-3 text-xs font-semibold uppercase tracking-wide text-ink-400">
