@@ -1,7 +1,9 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createHash } from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { effectivePlan, entitlementsFor } from "@/lib/plan";
+import { activeBioPageIds } from "@/lib/bioLimit";
 import { SOCIAL_PLATFORMS, youtubeId, readableOn, fontStack } from "@/lib/bio";
 import { ShareButton } from "@/components/ShareButton";
 import { BioSubscribeBlock } from "@/components/BioSubscribeBlock";
@@ -35,6 +37,38 @@ export async function BioPageView({
   // In preview mode (the editor's iframe) we render even an unpublished draft.
   if (!page.published && !preview) notFound();
   const p = page as BioPage;
+
+  // Freemium enforcement: a free workspace over its page limit keeps one page
+  // live. Visits to a parked page bounce to the active one. Paid/trial/comp
+  // plans have an unlimited limit, so this whole block is skipped for them.
+  // Never enforce inside the editor preview.
+  if (!preview) {
+    const { data: ws } = await admin
+      .from("workspaces")
+      .select("plan, comp, trial_ends_at")
+      .eq("id", p.workspace_id)
+      .maybeSingle();
+    const limit = entitlementsFor(effectivePlan(ws).key).bioPageLimit;
+    if (isFinite(limit)) {
+      const { data: sib } = await admin
+        .from("bio_pages")
+        .select("id, handle, created_at, paused")
+        .eq("workspace_id", p.workspace_id);
+      const siblings = sib ?? [];
+      const live = activeBioPageIds(siblings, limit);
+      if (!live.has(p.id)) {
+        const target = siblings
+          .filter((x) => live.has(x.id))
+          .sort(
+            (a, b) =>
+              new Date(a.created_at).getTime() -
+              new Date(b.created_at).getTime()
+          )[0];
+        if (target?.handle) redirect(`/@${target.handle}`);
+        notFound();
+      }
+    }
+  }
 
   const { data: linkRows } = await admin
     .from("bio_links")

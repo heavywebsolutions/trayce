@@ -83,6 +83,36 @@ export async function createBioPage(
   redirect(`/dashboard/bio/${page.id}`);
 }
 
+// Free plan over its page limit: keep one page live, park the rest. Visits to a
+// parked page redirect to the kept one. Upgrading lifts the limit and the
+// paused flag is ignored, so parked pages light back up automatically.
+export async function chooseActiveBioPage(formData: FormData): Promise<void> {
+  const keepId = String(formData.get("page_id") || "");
+  if (!keepId) return;
+  const { supabase, workspaceId } = await currentWorkspace();
+
+  // Make sure the chosen page belongs to this workspace before touching state.
+  const { data: keep } = await supabase
+    .from("bio_pages")
+    .select("id")
+    .eq("id", keepId)
+    .eq("workspace_id", workspaceId)
+    .maybeSingle();
+  if (!keep) return;
+
+  await supabase
+    .from("bio_pages")
+    .update({ paused: true })
+    .eq("workspace_id", workspaceId)
+    .neq("id", keepId);
+  await supabase
+    .from("bio_pages")
+    .update({ paused: false })
+    .eq("id", keepId);
+
+  revalidatePath("/dashboard/bio");
+}
+
 export async function updateBioPage(formData: FormData): Promise<void> {
   const pageId = String(formData.get("page_id") || "");
   if (!pageId) return;

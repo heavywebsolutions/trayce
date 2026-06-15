@@ -58,6 +58,7 @@ export interface BioPage {
   socials: Record<string, string>;
   views: number;
   published: boolean;
+  paused: boolean;
   created_at: string;
   updated_at: string;
 }
