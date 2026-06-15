@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PROVIDERS } from "@/lib/integrations";
 import { encryptSecret } from "@/lib/crypto";
+import { loadEntitlements } from "@/lib/plan";
 
 async function currentWorkspace() {
   const supabase = await createClient();
@@ -24,6 +25,10 @@ async function currentWorkspace() {
 }
 
 export async function saveIntegration(formData: FormData): Promise<void> {
+  const gate = await loadEntitlements();
+  if (gate && !gate.ent.emailSync) {
+    redirect("/dashboard/settings?upgrade=email");
+  }
   const provider = String(formData.get("provider") || "");
   if (!PROVIDERS.some((p) => p.key === provider)) return;
 

@@ -8,6 +8,7 @@ import { SOCIAL_PLATFORMS } from "@/lib/bio";
 import { productHandleFromInput, fetchShopifyProduct } from "@/lib/shopify";
 import { decryptSecret } from "@/lib/crypto";
 import { RESERVED_HANDLES } from "@/lib/reserved";
+import { loadEntitlements } from "@/lib/plan";
 
 async function currentWorkspace() {
   const supabase = await createClient();
@@ -48,6 +49,21 @@ export async function createBioPage(
   const display_name = String(formData.get("display_name") || "").trim() || handle;
 
   const { supabase, workspaceId } = await currentWorkspace();
+
+  // Bio page count limit (free = 1).
+  const gate = await loadEntitlements();
+  if (gate && gate.ent.bioPageLimit !== Infinity) {
+    const { count } = await supabase
+      .from("bio_pages")
+      .select("id", { count: "exact", head: true })
+      .eq("workspace_id", workspaceId);
+    if ((count ?? 0) >= gate.ent.bioPageLimit) {
+      return {
+        error:
+          "Your plan includes one bio page. Upgrade to Starter for unlimited pages.",
+      };
+    }
+  }
 
   const { data: existing } = await supabase
     .from("bio_pages")
@@ -148,6 +164,17 @@ export async function addBioLink(formData: FormData): Promise<void> {
     ? String(formData.get("kind"))
     : "link";
   if (!pageId) return;
+
+  // Gate premium block types.
+  if (kind === "product" || kind === "form") {
+    const gate = await loadEntitlements();
+    if (kind === "product" && gate && !gate.ent.shopifyBlocks) {
+      redirect("/dashboard/settings?upgrade=shopify");
+    }
+    if (kind === "form" && gate && !gate.ent.leadCapture) {
+      redirect("/dashboard/settings?upgrade=leads");
+    }
+  }
 
   const { supabase, workspaceId } = await currentWorkspace();
 

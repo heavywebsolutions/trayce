@@ -11,6 +11,7 @@ import {
   buildPayload,
   hasRequired,
 } from "@/lib/codeContent";
+import { loadEntitlements } from "@/lib/plan";
 
 async function currentWorkspaceId() {
   const supabase = await createClient();
@@ -69,6 +70,17 @@ export async function createCode(
 
   const destination = buildPayload(contentType, content);
   if (!destination) return { error: "Couldn't build this code's content." };
+
+  // Edit-after-print wall: dynamic codes are a paid capability.
+  if (type === "dynamic") {
+    const gate = await loadEntitlements();
+    if (gate && !gate.ent.dynamicCodes) {
+      return {
+        error:
+          "Editable (dynamic) codes are a paid feature. Static codes are always free, or upgrade to Starter to make this one editable and trackable.",
+      };
+    }
+  }
 
   const { supabase, workspaceId } = await currentWorkspaceId();
 
@@ -150,6 +162,11 @@ export async function updateDestination(formData: FormData): Promise<void> {
   const rawUrl = String(formData.get("destination_url") || "");
   if (!codeId || !isValidUrl(rawUrl)) return;
   const destination = normalizeUrl(rawUrl);
+
+  const gate = await loadEntitlements();
+  if (gate && !gate.ent.dynamicCodes) {
+    redirect("/dashboard/settings?upgrade=dynamic");
+  }
 
   const { supabase, userId } = await currentWorkspaceId();
 
@@ -317,6 +334,10 @@ export async function setActionType(formData: FormData): Promise<void> {
 export async function saveLeadConfig(formData: FormData): Promise<void> {
   const codeId = String(formData.get("code_id") || "");
   if (!codeId) return;
+  const gate = await loadEntitlements();
+  if (gate && !gate.ent.leadCapture) {
+    redirect("/dashboard/settings?upgrade=leads");
+  }
   const str = (k: string, fallback: string, max = 200) =>
     (String(formData.get(k) || "").trim() || fallback).slice(0, max);
   const { supabase } = await currentWorkspaceId();
@@ -343,6 +364,10 @@ export async function saveLeadConfig(formData: FormData): Promise<void> {
 export async function convertToDynamic(formData: FormData): Promise<void> {
   const codeId = String(formData.get("code_id") || "");
   if (!codeId) return;
+  const gate = await loadEntitlements();
+  if (gate && !gate.ent.dynamicCodes) {
+    redirect("/dashboard/settings?upgrade=dynamic");
+  }
   const { supabase } = await currentWorkspaceId();
   await supabase.from("codes").update({ type: "dynamic" }).eq("id", codeId);
   revalidatePath(`/dashboard/codes/${codeId}`);

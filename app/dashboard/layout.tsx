@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardNav } from "@/components/DashboardNav";
+import { TrialBanner } from "@/components/TrialBanner";
 import { isAdmin } from "@/lib/admin";
 
 export default async function DashboardLayout({
@@ -47,7 +48,10 @@ export default async function DashboardLayout({
             </form>
           </div>
         </header>
-        <main className="flex-1 px-5 py-6 pb-24 md:px-8 md:pb-8">{children}</main>
+        <main className="flex-1 px-5 py-6 pb-24 md:px-8 md:pb-8">
+          <TrialBanner />
+          {children}
+        </main>
       </div>
     </div>
   );

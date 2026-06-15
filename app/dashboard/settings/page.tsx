@@ -41,6 +41,18 @@ const PLAN_META: Record<
 
 const PLAN_ORDER = { free: 0, starter: 1, growth: 2, agency: 3 } as const;
 
+const UPGRADE_MSG: Record<string, string> = {
+  dynamic:
+    "Editable, trackable codes are a paid feature. Upgrade to Starter to change where a code points after it is printed.",
+  leads: "Lead capture is on Growth. Upgrade to collect and own your contacts.",
+  shopify:
+    "Shopify product blocks are on Growth. Upgrade to add shoppable blocks.",
+  email:
+    "Email sync is on Growth. Upgrade to auto-send new contacts to your email tool.",
+  pages:
+    "More bio pages are a paid feature. Upgrade to Starter for unlimited pages.",
+};
+
 export default async function SettingsPage({
   searchParams,
 }: {
@@ -48,9 +60,10 @@ export default async function SettingsPage({
     saved?: string;
     billing?: string;
     promo?: string;
+    upgrade?: string;
   }>;
 }) {
-  const { saved, billing, promo } = await searchParams;
+  const { saved, billing, promo, upgrade } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -124,6 +137,12 @@ export default async function SettingsPage({
       {promo === "err" && (
         <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           That promo code could not be applied. Check the code and try again.
+        </div>
+      )}
+      {upgrade && (
+        <div className="mb-4 rounded-xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm text-accent">
+          {UPGRADE_MSG[upgrade] ??
+            "That feature is on a paid plan. Upgrade below to unlock it."}
         </div>
       )}
 
