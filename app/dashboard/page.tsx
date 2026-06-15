@@ -96,7 +96,7 @@ export default async function DashboardPage() {
       .limit(20000),
     supabase
       .from("bio_events")
-      .select("created_at, type")
+      .select("created_at, type, bio_links(title)")
       .eq("workspace_id", wsId)
       .gte("created_at", d14)
       .limit(20000),
@@ -173,6 +173,17 @@ export default async function DashboardPage() {
 
   const topCodes = topCodesRes.data ?? [];
   const topPages = topPagesRes.data ?? [];
+
+  // Most-clicked bio links across all pages (last 14 days).
+  const linkCounts = new Map<string, number>();
+  for (const r of clickRows) {
+    const link = Array.isArray(r.bio_links) ? r.bio_links[0] : r.bio_links;
+    const title = (link as { title?: string } | null)?.title;
+    if (title) linkCounts.set(title, (linkCounts.get(title) ?? 0) + 1);
+  }
+  const topLinks = [...linkCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
   const recent = recentRes.data ?? [];
   const hasCodes = topCodes.length > 0;
   const totalLeads = leadsTotalRes.count ?? 0;
@@ -287,7 +298,7 @@ export default async function DashboardPage() {
       </Card>
 
       {/* Top performers */}
-      <div className="mb-5 grid gap-5 lg:grid-cols-2">
+      <div className="mb-5 grid gap-5 lg:grid-cols-3">
         <Card>
           <div className="flex items-center justify-between border-b border-ink-100 px-6 py-4">
             <h2 className="text-base font-semibold text-ink-900">Top codes</h2>
@@ -362,6 +373,42 @@ export default async function DashboardPage() {
           ) : (
             <p className="px-6 py-8 text-center text-sm text-ink-500">
               No bio pages yet.
+            </p>
+          )}
+        </Card>
+
+        <Card>
+          <div className="flex items-center justify-between border-b border-ink-100 px-6 py-4">
+            <h2 className="text-base font-semibold text-ink-900">Top links</h2>
+            <Link
+              href="/dashboard/analytics?tab=bio"
+              className="text-xs font-medium text-accent hover:underline"
+            >
+              Bio analytics
+            </Link>
+          </div>
+          {topLinks.length > 0 ? (
+            <ul className="divide-y divide-ink-100">
+              {topLinks.map(([title, count]) => (
+                <li
+                  key={title}
+                  className="flex items-center justify-between gap-4 px-6 py-3"
+                >
+                  <span className="min-w-0 truncate text-sm font-medium text-ink-800">
+                    {title}
+                  </span>
+                  <span className="tabular shrink-0 text-sm font-semibold text-ink-900">
+                    {formatNumber(count)}
+                    <span className="ml-1 text-xs font-normal text-ink-400">
+                      clicks
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="px-6 py-8 text-center text-sm text-ink-500">
+              No link clicks yet.
             </p>
           )}
         </Card>
