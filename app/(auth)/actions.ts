@@ -31,6 +31,11 @@ export async function signup(
   _prev: AuthState,
   formData: FormData
 ): Promise<AuthState> {
+  // Honeypot: a hidden field only bots fill. Reject without creating an account.
+  if (String(formData.get("company_url") || "").trim() !== "") {
+    return { error: "Something went wrong. Please try again." };
+  }
+
   const email = String(formData.get("email") || "").trim();
   const password = String(formData.get("password") || "");
   const promo = String(formData.get("promo") || "").trim();

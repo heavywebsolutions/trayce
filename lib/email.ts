@@ -7,6 +7,7 @@ type SendArgs = {
   subject: string;
   html: string;
   from?: string;
+  replyTo?: string;
 };
 
 export async function sendEmail({
@@ -14,6 +15,7 @@ export async function sendEmail({
   subject,
   html,
   from,
+  replyTo,
 }: SendArgs): Promise<boolean> {
   const key = process.env.RESEND_API_KEY;
   if (!key) return false;
@@ -30,6 +32,7 @@ export async function sendEmail({
         to: Array.isArray(to) ? to : [to],
         subject,
         html,
+        ...(replyTo ? { reply_to: replyTo } : {}),
       }),
     });
     return res.ok;

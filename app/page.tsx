@@ -104,8 +104,8 @@ const tiers = [
     tagline: "Teams & resellers",
     features: [
       "Everything in Growth",
-      "Bulk code generation",
-      "Multiple workspaces",
+      "Bulk code generation (coming soon)",
+      "Multiple workspaces (coming soon)",
       "Priority support",
     ],
     cta: "Talk to us",

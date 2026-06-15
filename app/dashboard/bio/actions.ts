@@ -208,6 +208,13 @@ export async function updateBioPage(formData: FormData): Promise<void> {
   if (avatar !== undefined) update.avatar_url = avatar;
   if (bgImage !== undefined) update.bg_image_url = bgImage;
 
+  // Custom domain is a paid feature (Starter+). Free plans cannot set or change
+  // it, so drop the field from the update for them.
+  const gate = await loadEntitlements();
+  if (gate && !gate.ent.customDomain) {
+    delete update.custom_domain;
+  }
+
   await supabase.from("bio_pages").update(update).eq("id", pageId);
   revalidatePath(`/dashboard/bio/${pageId}`);
 }
@@ -269,6 +276,31 @@ export async function addBioLink(formData: FormData): Promise<void> {
     ...(favicon ? { thumbnail_url: favicon, thumbnail_auto: true } : {}),
     ...(imageUrl ? { thumbnail_url: imageUrl } : {}),
   });
+  revalidatePath(`/dashboard/bio/${pageId}`);
+}
+
+// One-time backfill: pull favicons for existing link blocks that don't have a
+// thumbnail yet (links created before auto-thumbnails shipped). Never touches a
+// thumbnail the user uploaded.
+export async function backfillBioFavicons(formData: FormData): Promise<void> {
+  const pageId = String(formData.get("page_id") || "");
+  if (!pageId) return;
+  const { supabase } = await currentWorkspace();
+  const { data: links } = await supabase
+    .from("bio_links")
+    .select("id, url, thumbnail_url, thumbnail_auto")
+    .eq("page_id", pageId)
+    .eq("kind", "link");
+  for (const l of links ?? []) {
+    // Skip manual uploads (have a thumbnail that wasn't auto-set).
+    if (l.thumbnail_url && !l.thumbnail_auto) continue;
+    const favicon = faviconFor((l.url as string) || "");
+    if (!favicon || favicon === l.thumbnail_url) continue;
+    await supabase
+      .from("bio_links")
+      .update({ thumbnail_url: favicon, thumbnail_auto: true })
+      .eq("id", l.id);
+  }
   revalidatePath(`/dashboard/bio/${pageId}`);
 }
 

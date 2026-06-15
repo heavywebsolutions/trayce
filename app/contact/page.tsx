@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
+import { ContactForm } from "@/components/ContactForm";
 
 export const metadata: Metadata = {
   title: "Contact | TRAXXR",
@@ -62,6 +63,17 @@ export default function ContactPage() {
                 </a>
               </div>
             ))}
+          </div>
+
+          {/* Contact form */}
+          <div className="mx-auto mt-12 max-w-2xl border border-ink-200 bg-white p-7 shadow-cardHover">
+            <h2 className="text-2xl font-extrabold tracking-tight">
+              Send us a message
+            </h2>
+            <p className="mb-6 mt-1 text-sm text-ink-500">
+              Fill this in and it lands straight in our inbox.
+            </p>
+            <ContactForm />
           </div>
         </div>
       </section>

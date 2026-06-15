@@ -6,6 +6,7 @@ import { BioSettingsForm } from "@/components/BioSettingsForm";
 import { BioLinksList } from "@/components/BioLinksList";
 import { CopyUrlButton } from "@/components/CopyUrlButton";
 import { BioBlockComposer } from "@/components/BioBlockComposer";
+import { backfillBioFavicons } from "@/app/dashboard/bio/actions";
 import { formatNumber } from "@/lib/utils";
 import type { BioPage, BioLink } from "@/lib/types";
 
@@ -134,6 +135,14 @@ export default async function BioEditorPage({
             <CardHeader
               title="Blocks"
               subtitle={`${links.length} on the page · drag to reorder`}
+              action={
+                <form action={backfillBioFavicons}>
+                  <input type="hidden" name="page_id" value={page.id} />
+                  <button className="shrink-0 text-xs font-medium text-accent hover:underline">
+                    Pull missing link icons
+                  </button>
+                </form>
+              }
             />
             <BioLinksList
               key={links

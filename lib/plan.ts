@@ -20,6 +20,7 @@ export type Entitlements = {
   leadCapture: boolean; // lead forms on codes + bio pages
   emailSync: boolean; // integrations
   shopifyBlocks: boolean; // shoppable bio blocks
+  customDomain: boolean; // custom domain on bio pages (Starter+)
   bulk: boolean; // bulk generation / multiple workspaces
 };
 
@@ -32,6 +33,7 @@ export function entitlementsFor(key: PlanKey): Entitlements {
     leadCapture: r >= 2,
     emailSync: r >= 2,
     shopifyBlocks: r >= 2,
+    customDomain: r >= 1,
     bulk: r >= 3,
   };
 }

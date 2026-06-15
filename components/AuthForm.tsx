@@ -24,6 +24,15 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const isLogin = mode === "login";
   return (
     <form action={formAction} className="space-y-4">
+      {/* Honeypot: hidden from people, bait for bots. */}
+      <div aria-hidden="true" className="absolute left-[-9999px] h-0 w-0 overflow-hidden">
+        <input
+          type="text"
+          name="company_url"
+          tabIndex={-1}
+          autoComplete="off"
+        />
+      </div>
       <div>
         <Label htmlFor="email">Work email</Label>
         <Input
