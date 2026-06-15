@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import Link from "next/link";
 import { Button, Input, Label } from "@/components/ui";
@@ -20,6 +21,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     action,
     undefined
   );
+  const [showPromo, setShowPromo] = useState(false);
 
   const isLogin = mode === "login";
   return (
@@ -56,17 +58,26 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         />
       </div>
 
-      {!isLogin && (
-        <div>
-          <Label htmlFor="promo">Promo code (optional)</Label>
-          <Input
-            id="promo"
-            name="promo"
-            placeholder="Ambassador or early-access code"
-            autoCapitalize="characters"
-          />
-        </div>
-      )}
+      {!isLogin &&
+        (showPromo ? (
+          <div>
+            <Label htmlFor="promo">Promo code</Label>
+            <Input
+              id="promo"
+              name="promo"
+              autoCapitalize="characters"
+              autoFocus
+            />
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowPromo(true)}
+            className="text-sm font-medium text-accent hover:underline"
+          >
+            Have a promo code?
+          </button>
+        ))}
 
       {isLogin && (
         <div className="-mt-1 text-right">
