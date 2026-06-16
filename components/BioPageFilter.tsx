@@ -27,7 +27,7 @@ export function BioPageFilter({
       <select
         value={selected ?? ""}
         onChange={(e) => onChange(e.target.value)}
-        className="min-h-[40px] rounded-xl border border-ink-200 bg-white px-3 text-sm font-medium text-ink-800"
+        className="min-h-[46px] rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm font-medium text-ink-800"
       >
         <option value="">All bio pages</option>
         {pages.map((p) => (

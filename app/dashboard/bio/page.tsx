@@ -65,7 +65,7 @@ export default async function BioListPage() {
         </div>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-[340px_1fr]">
+      <div className="grid gap-5 lg:grid-cols-[340px_minmax(0,1fr)]">
         <Card className="h-fit p-6">
           <h2 className="text-base font-semibold text-ink-900">New page</h2>
           <p className="mb-5 mt-0.5 text-sm text-ink-500">Pick a handle.</p>

@@ -54,7 +54,7 @@ export default async function ReportPage({
                 </label>
                 <select
                   name="reason"
-                  className="min-h-[44px] w-full rounded-xl border border-ink-200 px-3 text-sm text-ink-900"
+                  className="min-h-[48px] w-full rounded-xl border border-ink-200 px-3 py-2.5 text-sm text-ink-900"
                   defaultValue="spam"
                 >
                   <option value="spam">Spam or scam</option>
@@ -85,7 +85,7 @@ export default async function ReportPage({
                   name="reporter"
                   type="email"
                   placeholder="So we can follow up if needed"
-                  className="min-h-[44px] w-full rounded-xl border border-ink-200 px-3 text-sm text-ink-900"
+                  className="min-h-[48px] w-full rounded-xl border border-ink-200 px-3 py-2.5 text-sm text-ink-900"
                 />
               </div>
 

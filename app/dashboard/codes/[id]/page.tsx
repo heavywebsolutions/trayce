@@ -219,7 +219,7 @@ export default async function CodeDetailPage({
         </div>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[340px_1fr]">
+      <div className="grid gap-5 lg:grid-cols-[340px_minmax(0,1fr)]">
         {/* QR designer + link */}
         <Card className="p-6">
           <QrDesigner

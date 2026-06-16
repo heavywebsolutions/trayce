@@ -34,8 +34,8 @@ export default async function CodesPage() {
         </p>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[340px_1fr]">
-        <Card className="h-fit p-6">
+      <div className="grid gap-5 lg:grid-cols-[340px_minmax(0,1fr)]">
+        <Card className="h-fit min-w-0 p-6">
           <h2 className="text-base font-semibold text-ink-900">New code</h2>
           <p className="mb-5 mt-0.5 text-sm text-ink-500">
             Takes about ten seconds.
@@ -43,7 +43,7 @@ export default async function CodesPage() {
           <CreateCodeForm />
         </Card>
 
-        <Card>
+        <Card className="min-w-0">
           <CardHeader
             title="Your codes"
             subtitle={`${list.length} ${list.length === 1 ? "code" : "codes"}`}

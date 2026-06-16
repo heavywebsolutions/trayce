@@ -383,7 +383,7 @@ export function PrintConfigurePanel({
                   setCta(v);
                 }
               }}
-              className="min-h-[40px] w-full rounded-xl border border-ink-200 bg-white px-3 text-sm text-ink-900"
+              className="min-h-[48px] w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm text-ink-900"
             >
               <option value="">None</option>
               {CTA_PRESETS.map((p) => (
@@ -428,7 +428,7 @@ export function PrintConfigurePanel({
             <select
               value={font}
               onChange={(e) => setFont(e.target.value)}
-              className="min-h-[40px] w-full rounded-xl border border-ink-200 bg-white px-3 text-sm text-ink-900"
+              className="min-h-[48px] w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm text-ink-900"
             >
               {FONT_OPTIONS.map((f) => (
                 <option key={f.key} value={f.key}>

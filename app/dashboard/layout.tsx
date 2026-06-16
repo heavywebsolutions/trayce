@@ -45,7 +45,7 @@ export default async function DashboardLayout({
             </form>
           </div>
         </header>
-        <main className="flex-1 px-5 py-6 pb-24 md:px-8 md:pb-8">
+        <main className="flex-1 overflow-x-hidden px-5 py-6 pb-24 md:px-8 md:pb-8">
           <BillingBanner />
           <TrialBanner />
           {children}

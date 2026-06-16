@@ -40,7 +40,7 @@ export function ContentFields({
                 id={f.name}
                 value={value[f.name] ?? f.options?.[0]?.v ?? ""}
                 onChange={(e) => onChange(f.name, e.target.value)}
-                className="min-h-[44px] w-full rounded-xl border border-ink-200 bg-white px-3 text-sm text-ink-900 outline-none focus:border-accent-ring focus:ring-2 focus:ring-accent-ring/30"
+                className="min-h-[48px] w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm text-ink-900 outline-none focus:border-accent-ring focus:ring-2 focus:ring-accent-ring/30"
               >
                 {f.options?.map((o) => (
                   <option key={o.v} value={o.v}>

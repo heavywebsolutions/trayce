@@ -142,7 +142,7 @@ export function BioSettingsForm({ page }: { page: BioPage }) {
           id="font_family"
           name="font_family"
           defaultValue={page.font_family}
-          className="min-h-[44px] w-full rounded-xl border border-ink-200 bg-white px-3 text-sm text-ink-900"
+          className="min-h-[48px] w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm text-ink-900"
         >
           {FONTS.map((f) => (
             <option key={f.key} value={f.key}>
@@ -200,7 +200,7 @@ export function BioSettingsForm({ page }: { page: BioPage }) {
             id="bg_fit"
             name="bg_fit"
             defaultValue={page.bg_fit}
-            className="min-h-[44px] w-full rounded-xl border border-ink-200 bg-white px-3 text-sm text-ink-900"
+            className="min-h-[48px] w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm text-ink-900"
           >
             <option value="cover">Cover (fill)</option>
             <option value="tile">Tile (repeat)</option>
