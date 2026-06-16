@@ -14,11 +14,14 @@ export async function applyPromo(
 
   const { data: promo } = await admin
     .from("promo_codes")
-    .select("id, plan, active, max_redemptions, redeemed_count")
+    .select("id, plan, active, max_redemptions, redeemed_count, expires_at")
     .eq("code", code)
     .maybeSingle();
   if (!promo || !promo.active) {
     return { ok: false, error: "That code is not valid." };
+  }
+  if (promo.expires_at && new Date(promo.expires_at as string) < new Date()) {
+    return { ok: false, error: "That code has expired." };
   }
   if (
     promo.max_redemptions != null &&

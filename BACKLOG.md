@@ -3,6 +3,13 @@
 Parked ideas and pre-launch items. Not in priority order.
 
 ## Product ideas (future)
+- **Revenue attribution (the "Revenue" Analytics tab, currently "Soon").** Tie
+  scans and clicks to real sales, per code AND per bio link. Touch side already
+  captured (attribution_events on scan, /l click tracking); needs the conversion
+  side: a conversions table, tracked-param matching on /r and /l, and Shopify
+  Half B (Admin API + orders/create webhook, a separate token from the read-only
+  Storefront product-display integration). Full build spec:
+  Downloads/traxxr/TRAXXR-revenue-attribution-spec.md.
 - **Portrait countertop sign layout.** A true full-bleed portrait artwork for the
   Countertop signs product (logo top, large QR, big headline, colored URL pill at
   the bottom), like the pizza-shop reference. Today signs reuse the square decal
