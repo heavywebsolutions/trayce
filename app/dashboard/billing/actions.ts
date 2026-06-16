@@ -96,7 +96,10 @@ export async function startCheckout(formData: FormData) {
     customer_email: ws.stripe_customer_id ? undefined : user.email ?? undefined,
     client_reference_id: ws.id,
     metadata: { workspace_id: ws.id, plan },
-    subscription_data: { metadata: { workspace_id: ws.id } },
+    // Stamp the plan onto the subscription itself so the webhook resolves the
+    // tier from metadata, not from matching the Price ID. This keeps plan
+    // resolution correct across future price increases / grandfathered Prices.
+    subscription_data: { metadata: { workspace_id: ws.id, plan } },
     ...(discounts ? { discounts } : {}),
     success_url: `${APP_URL}/dashboard/settings?billing=success`,
     cancel_url: `${APP_URL}/dashboard/settings?billing=cancelled`,

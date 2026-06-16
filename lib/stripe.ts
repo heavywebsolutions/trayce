@@ -15,13 +15,32 @@ export const PLAN_PRICES: Record<string, string | undefined> = {
 };
 
 // Reverse lookup used by the webhook: given the price the customer is on,
-// figure out which plan to record on the workspace.
+// figure out which plan to record on the workspace. Used only as a fallback for
+// legacy subscriptions created before we stamped the plan into metadata.
 export function planFromPrice(priceId: string | null | undefined): string {
   if (!priceId) return "free";
   for (const [plan, id] of Object.entries(PLAN_PRICES)) {
     if (id && id === priceId) return plan;
   }
   return "free";
+}
+
+// Resolve a subscription's plan tier. We stamp the plan onto subscription
+// metadata at checkout / plan change, so we read that first. This makes Price
+// changes safe: we can create new Prices (e.g. a price increase) and even
+// grandfather existing customers on old Prices without the plan resolution
+// breaking, because the plan no longer depends on matching a Price ID. We fall
+// back to matching the Price ID only for older subscriptions that predate the
+// metadata stamp.
+export function planFromSubscription(sub: {
+  metadata?: Record<string, string> | null;
+  items?: { data?: { price?: { id?: string | null } | null }[] } | null;
+}): string {
+  const metaPlan = sub.metadata?.plan;
+  if (metaPlan && Object.prototype.hasOwnProperty.call(PLAN_PRICES, metaPlan)) {
+    return metaPlan;
+  }
+  return planFromPrice(sub.items?.data?.[0]?.price?.id ?? null);
 }
 
 export function stripeConfigured(): boolean {

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type Stripe from "stripe";
-import { stripe, planFromPrice, getCardForCustomer } from "@/lib/stripe";
+import { stripe, planFromSubscription, getCardForCustomer } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail } from "@/lib/email";
 import { lifecycleEmail } from "@/lib/lifecycle";
@@ -195,8 +195,9 @@ export async function POST(request: NextRequest) {
         const sub = event.data.object as Stripe.Subscription;
         const customerId =
           typeof sub.customer === "string" ? sub.customer : sub.customer.id;
-        const priceId = sub.items.data[0]?.price?.id ?? null;
-        // Keep the paid plan while active, trialing, OR past_due (grace period).
+        // Resolve the tier from the subscription's metadata (stamped at
+        // checkout / plan change), falling back to the Price ID for legacy subs.
+        // This keeps plan resolution correct across price increases.
         const keepAccess = ACCESS_STATUSES.has(sub.status);
         const pause = sub.pause_collection;
         const paused = Boolean(pause);
@@ -204,7 +205,7 @@ export async function POST(request: NextRequest) {
           ? new Date(pause.resumes_at * 1000).toISOString()
           : null;
         await updateByCustomer(customerId, {
-          plan: keepAccess ? planFromPrice(priceId) : "free",
+          plan: keepAccess ? planFromSubscription(sub) : "free",
           subscription_status: paused ? "paused" : sub.status,
           current_period_end: periodEndISO(sub),
           stripe_subscription_id: sub.id,
