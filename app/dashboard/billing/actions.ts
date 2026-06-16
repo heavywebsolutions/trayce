@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { stripe, PLAN_PRICES, stripeConfigured } from "@/lib/stripe";
-import { applyPromo } from "@/lib/promo";
+import { applyPromo, resolveDiscount } from "@/lib/promo";
 
 const APP_URL = (
   process.env.NEXT_PUBLIC_APP_URL || "https://traxxr.com"
@@ -72,6 +72,21 @@ export async function startCheckout(formData: FormData) {
     .maybeSingle();
   if (!ws) redirect("/dashboard/settings");
 
+  // Optional discount code, validated as a subscription-domain code for this
+  // plan. We attach the specific promotion code ourselves (allow_promotion_codes
+  // is off) so a print or comp code can never be used here.
+  const promo = String(formData.get("promo") || "").trim();
+  let discounts: { promotion_code: string }[] | undefined;
+  if (promo) {
+    const res = await resolveDiscount(createAdminClient(), promo, "subscription", plan);
+    if (!res.ok) {
+      redirect(
+        `/dashboard/settings?billing=promo_invalid&plan=${plan}`
+      );
+    }
+    discounts = [{ promotion_code: res.promotionCodeId as string }];
+  }
+
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     line_items: [{ price: priceId, quantity: 1 }],
@@ -82,7 +97,7 @@ export async function startCheckout(formData: FormData) {
     client_reference_id: ws.id,
     metadata: { workspace_id: ws.id, plan },
     subscription_data: { metadata: { workspace_id: ws.id } },
-    allow_promotion_codes: true,
+    ...(discounts ? { discounts } : {}),
     success_url: `${APP_URL}/dashboard/settings?billing=success`,
     cancel_url: `${APP_URL}/dashboard/settings?billing=cancelled`,
   });

@@ -3,14 +3,23 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdmin } from "@/lib/admin";
-import { createPromoCode, togglePromoCode, updatePromoCode } from "./actions";
+import { togglePromoCode, updatePromoCode } from "./actions";
+import { PromoCreateForm } from "@/components/PromoCreateForm";
 
 export const dynamic = "force-dynamic";
 
 type Promo = {
   id: string;
   code: string;
-  plan: string;
+  kind: string;
+  domain: string;
+  plan: string | null;
+  comp_plans: string[] | null;
+  percent_off: number | null;
+  amount_off_cents: number | null;
+  duration: string | null;
+  duration_months: number | null;
+  applies_to_plans: string[] | null;
   label: string | null;
   max_redemptions: number | null;
   redeemed_count: number;
@@ -19,12 +28,39 @@ type Promo = {
   created_at: string;
 };
 
-const selectCls =
-  "min-h-[44px] w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm text-ink-900";
-const inputCls =
+const lbl = "mb-1 block text-xs font-medium uppercase tracking-wide text-ink-400";
+const inp =
   "min-h-[44px] w-full rounded-xl border border-ink-200 px-3 py-2.5 text-sm text-ink-900";
-const lblCls =
-  "mb-1 block text-xs font-medium uppercase tracking-wide text-ink-400";
+const PLANS = ["starter", "growth", "agency"];
+
+function cap(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function describe(p: Promo): string {
+  if (p.kind === "comp") {
+    const tiers = p.comp_plans?.length ? p.comp_plans : p.plan ? [p.plan] : [];
+    return `Free access · ${tiers.map(cap).join(", ") || "Growth"}`;
+  }
+  const val =
+    p.kind === "percent"
+      ? `${p.percent_off}% off`
+      : `$${((p.amount_off_cents ?? 0) / 100).toFixed(2)} off`;
+  const dom = p.domain === "print" ? "Print & Ship" : "Subscription";
+  const dur =
+    p.domain === "print"
+      ? ""
+      : p.duration === "forever"
+        ? " · forever"
+        : p.duration === "repeating"
+          ? ` · ${p.duration_months} mo`
+          : " · first payment";
+  const scope =
+    p.domain === "subscription" && p.applies_to_plans?.length
+      ? ` · ${p.applies_to_plans.map(cap).join("/")}`
+      : "";
+  return `${val} · ${dom}${dur}${scope}`;
+}
 
 export default async function AdminPromosPage({
   searchParams,
@@ -46,14 +82,12 @@ export default async function AdminPromosPage({
     .order("created_at", { ascending: false });
   const promos = (rows ?? []) as Promo[];
 
-  // Usage + attribution: who redeemed each code.
+  // Usage + attribution.
   const { data: reds } = await admin
     .from("promo_redemptions")
     .select("code, workspace_id, redeemed_at")
     .order("redeemed_at", { ascending: false });
-  const { data: wsRows } = await admin
-    .from("workspaces")
-    .select("id, owner_id");
+  const { data: wsRows } = await admin.from("workspaces").select("id, owner_id");
   const ownerByWs = new Map(
     (wsRows ?? []).map((w) => [w.id as string, w.owner_id as string])
   );
@@ -80,6 +114,14 @@ export default async function AdminPromosPage({
       year: "numeric",
     });
 
+  const errMsg: Record<string, string> = {
+    dupe: "That code already exists. Pick a different one.",
+    code: "Enter a code.",
+    plans: "Pick at least one tier for the comp code.",
+    value: "Enter a discount value.",
+    stripe: "Could not create the discount in Stripe. Check your Stripe keys.",
+  };
+
   return (
     <div className="mx-auto max-w-3xl">
       <Link
@@ -94,9 +136,9 @@ export default async function AdminPromosPage({
           Promo codes
         </h1>
         <p className="mt-0.5 text-sm text-ink-500">
-          Grant a free, comped plan to ambassadors and early adopters. For
-          percentage or dollar discounts on paid plans, create promotion codes in
-          Stripe, they apply automatically at checkout.
+          Comp codes grant free access. Percent/amount codes discount a
+          subscription or a Print &amp; Ship order, a code only works on the
+          product it&apos;s scoped to.
         </p>
       </div>
 
@@ -107,67 +149,12 @@ export default async function AdminPromosPage({
       )}
       {err && (
         <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          {err === "dupe"
-            ? "That code already exists. Pick a different one."
-            : "Enter a code."}
+          {errMsg[err] ?? "Something went wrong."}
         </div>
       )}
 
-      {/* Create */}
-      <div className="mb-6 rounded-2xl border border-ink-200 bg-white p-6">
-        <h2 className="mb-3 text-base font-semibold text-ink-900">
-          Create a code
-        </h2>
-        <form action={createPromoCode} className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <label className={lblCls}>Code</label>
-            <input
-              name="code"
-              required
-              placeholder="AMBASSADOR25"
-              autoCapitalize="characters"
-              className={inputCls}
-            />
-          </div>
-          <div>
-            <label className={lblCls}>Grants plan</label>
-            <select name="plan" defaultValue="growth" className={selectCls}>
-              <option value="starter">Starter</option>
-              <option value="growth">Growth</option>
-              <option value="agency">Agency</option>
-            </select>
-          </div>
-          <div>
-            <label className={lblCls}>Label (optional)</label>
-            <input
-              name="label"
-              placeholder="Founding ambassadors"
-              className={inputCls}
-            />
-          </div>
-          <div>
-            <label className={lblCls}>Max redemptions (blank = unlimited)</label>
-            <input
-              name="max_redemptions"
-              type="number"
-              min={1}
-              placeholder="Unlimited"
-              className={inputCls}
-            />
-          </div>
-          <div>
-            <label className={lblCls}>Expires (optional)</label>
-            <input name="expires_at" type="date" className={inputCls} />
-          </div>
-          <div className="flex items-end sm:col-span-2">
-            <button className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-accent px-4 text-sm font-semibold text-white transition hover:bg-accent-hover">
-              Create code
-            </button>
-          </div>
-        </form>
-      </div>
+      <PromoCreateForm />
 
-      {/* List */}
       {promos.length === 0 ? (
         <p className="text-sm text-ink-500">No codes yet.</p>
       ) : (
@@ -176,20 +163,24 @@ export default async function AdminPromosPage({
             const used = redsByCode.get(p.code) ?? [];
             const expired =
               p.expires_at != null && new Date(p.expires_at) < new Date();
+            const compPlans = p.comp_plans?.length
+              ? p.comp_plans
+              : p.plan
+                ? [p.plan]
+                : [];
             return (
               <div
                 key={p.id}
                 className="rounded-xl border border-ink-200 bg-white px-4 py-3"
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
+                  <div className="min-w-0">
                     <p className="font-mono text-sm font-semibold text-ink-900">
                       {p.code}
                     </p>
                     <p className="text-xs text-ink-500">
                       {p.label ? `${p.label} · ` : ""}
-                      <span className="capitalize">{p.plan}</span> · used{" "}
-                      {p.redeemed_count}
+                      {describe(p)} · used {p.redeemed_count}
                       {p.max_redemptions != null ? ` / ${p.max_redemptions}` : ""}
                       {p.expires_at
                         ? ` · ${expired ? "expired" : "expires"} ${fmt(p.expires_at)}`
@@ -225,65 +216,78 @@ export default async function AdminPromosPage({
                     Edit &amp; usage
                   </summary>
 
-                  {/* Edit */}
-                  <form
-                    action={updatePromoCode}
-                    className="mt-3 grid gap-3 sm:grid-cols-2"
-                  >
+                  <form action={updatePromoCode} className="mt-3 space-y-3">
                     <input type="hidden" name="id" value={p.id} />
                     <div>
-                      <label className={lblCls}>Grants plan</label>
-                      <select
-                        name="plan"
-                        defaultValue={p.plan}
-                        className={selectCls}
-                      >
-                        <option value="starter">Starter</option>
-                        <option value="growth">Growth</option>
-                        <option value="agency">Agency</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className={lblCls}>Label</label>
+                      <label className={lbl}>Label</label>
                       <input
                         name="label"
                         defaultValue={p.label ?? ""}
-                        className={inputCls}
+                        className={inp}
                       />
                     </div>
-                    <div>
-                      <label className={lblCls}>
-                        Max redemptions (blank = unlimited)
-                      </label>
-                      <input
-                        name="max_redemptions"
-                        type="number"
-                        min={1}
-                        defaultValue={p.max_redemptions ?? ""}
-                        className={inputCls}
-                      />
-                    </div>
-                    <div>
-                      <label className={lblCls}>Expires (blank = never)</label>
-                      <input
-                        name="expires_at"
-                        type="date"
-                        defaultValue={
-                          p.expires_at ? p.expires_at.slice(0, 10) : ""
-                        }
-                        className={inputCls}
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <button className="inline-flex min-h-[40px] items-center justify-center rounded-xl border border-ink-200 px-4 text-sm font-semibold text-ink-800 hover:bg-ink-50">
-                        Save changes
-                      </button>
-                    </div>
+
+                    {p.kind === "comp" ? (
+                      <>
+                        <div>
+                          <label className={lbl}>Grants free access to</label>
+                          <div className="flex flex-wrap gap-3">
+                            {PLANS.map((pl) => (
+                              <label
+                                key={pl}
+                                className="flex items-center gap-2 rounded-xl border border-ink-200 px-3 py-2 text-sm text-ink-700"
+                              >
+                                <input
+                                  type="checkbox"
+                                  name="comp_plans"
+                                  value={pl}
+                                  defaultChecked={compPlans.includes(pl)}
+                                  className="accent-[#2587DE]"
+                                />
+                                {cap(pl)}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <div>
+                            <label className={lbl}>Max redemptions</label>
+                            <input
+                              name="max_redemptions"
+                              type="number"
+                              min={1}
+                              defaultValue={p.max_redemptions ?? ""}
+                              className={inp}
+                            />
+                          </div>
+                          <div>
+                            <label className={lbl}>Expires</label>
+                            <input
+                              name="expires_at"
+                              type="date"
+                              defaultValue={
+                                p.expires_at ? p.expires_at.slice(0, 10) : ""
+                              }
+                              className={inp}
+                            />
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-xs text-ink-400">
+                        Discount value, duration, expiry, and limit are fixed in
+                        Stripe once created. To change those, disable this code
+                        and create a new one. (Label is editable here.)
+                      </p>
+                    )}
+
+                    <button className="inline-flex min-h-[40px] items-center justify-center rounded-xl border border-ink-200 px-4 text-sm font-semibold text-ink-800 hover:bg-ink-50">
+                      Save changes
+                    </button>
                   </form>
 
-                  {/* Usage / attribution */}
                   <div className="mt-3">
-                    <p className={lblCls}>
+                    <p className={lbl}>
                       Used by {used.length}{" "}
                       {used.length === 1 ? "account" : "accounts"}
                     </p>

@@ -689,6 +689,17 @@ export function PrintConfigurePanel({
               name="logo_prep"
               value={logoPrep ? "true" : "false"}
             />
+            <div className="mb-3">
+              <label className="mb-1 block text-xs font-medium text-ink-400">
+                Discount code (optional)
+              </label>
+              <input
+                name="promo"
+                placeholder="Enter a code"
+                autoCapitalize="characters"
+                className="min-h-[40px] w-full rounded-xl border border-ink-200 px-3 text-sm text-ink-900"
+              />
+            </div>
             <button
               disabled={!price || !codeId}
               className="inline-flex min-h-[44px] w-full items-center justify-center rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"

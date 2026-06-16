@@ -28,6 +28,60 @@ export function stripeConfigured(): boolean {
   return Boolean(process.env.STRIPE_SECRET_KEY);
 }
 
+// Create a Stripe coupon + promotion code for a discount promo. Stripe enforces
+// the math, duration, expiry, and redemption cap. Returns the ids to store, or
+// null if Stripe isn't configured. Domain/plan scoping is enforced by us at
+// checkout (we only attach the code on the matching session), not via the coupon.
+export async function createPromoDiscount(opts: {
+  code: string;
+  percentOff?: number | null;
+  amountOffCents?: number | null;
+  duration: "once" | "repeating" | "forever";
+  durationMonths?: number | null;
+  maxRedemptions?: number | null;
+  expiresAt?: string | null; // ISO
+}): Promise<{ couponId: string; promotionCodeId: string } | null> {
+  if (!stripeConfigured()) return null;
+
+  const coupon = await stripe.coupons.create({
+    name: opts.code,
+    duration: opts.duration,
+    ...(opts.duration === "repeating" && opts.durationMonths
+      ? { duration_in_months: opts.durationMonths }
+      : {}),
+    ...(opts.percentOff != null
+      ? { percent_off: opts.percentOff }
+      : { amount_off: opts.amountOffCents ?? 0, currency: "usd" }),
+  });
+
+  const promoParams: Stripe.PromotionCodeCreateParams = {
+    promotion: { type: "coupon", coupon: coupon.id },
+    code: opts.code,
+  };
+  if (opts.maxRedemptions) promoParams.max_redemptions = opts.maxRedemptions;
+  if (opts.expiresAt) {
+    promoParams.expires_at = Math.floor(
+      new Date(opts.expiresAt).getTime() / 1000
+    );
+  }
+  const promo = await stripe.promotionCodes.create(promoParams);
+
+  return { couponId: coupon.id, promotionCodeId: promo.id };
+}
+
+// Toggle a Stripe promotion code on/off (used when enabling/disabling our code).
+export async function setPromoCodeActive(
+  promotionCodeId: string,
+  active: boolean
+): Promise<void> {
+  if (!stripeConfigured() || !promotionCodeId) return;
+  try {
+    await stripe.promotionCodes.update(promotionCodeId, { active });
+  } catch {
+    /* ignore */
+  }
+}
+
 export type CardInfo = {
   brand: string | null;
   last4: string | null;

@@ -4,12 +4,12 @@ import { Card, Badge, Button, Input, Label } from "@/components/ui";
 import { updateProfile, updatePassword } from "./actions";
 import Link from "next/link";
 import {
-  startCheckout,
   openBillingPortal,
   resumeSubscription,
   resumeNow,
   redeemPromo,
 } from "@/app/dashboard/billing/actions";
+import { UpgradePlans } from "@/components/UpgradePlans";
 
 export const dynamic = "force-dynamic";
 
@@ -205,6 +205,12 @@ export default async function SettingsPage({
           automatically, or you can resume any time.
         </div>
       )}
+      {billing === "promo_invalid" && (
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          That discount code isn&apos;t valid for this plan. You can upgrade
+          without it, or double-check the code.
+        </div>
+      )}
       {(billing === "unavailable" || billing === "nocustomer") && (
         <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           {billing === "nocustomer"
@@ -334,16 +340,7 @@ export default async function SettingsPage({
           <>
         <div className="mt-5 space-y-4">
           {!isPaid ? (
-            <div className="flex flex-wrap items-center gap-2">
-              {(["starter", "growth", "agency"] as const).map((p) => (
-                <form key={p} action={startCheckout}>
-                  <input type="hidden" name="plan" value={p} />
-                  <button className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-ink-200 px-4 py-2.5 text-sm font-semibold text-ink-800 transition hover:border-ink-300 hover:bg-ink-50">
-                    Upgrade to {PLAN_META[p].label} · {PLAN_META[p].price}/mo
-                  </button>
-                </form>
-              ))}
-            </div>
+            <UpgradePlans />
           ) : paused ? (
             <form action={resumeNow}>
               <button className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover">

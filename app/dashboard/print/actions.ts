@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { stripe, stripeConfigured } from "@/lib/stripe";
+import { resolveDiscount } from "@/lib/promo";
 import {
   getPrintProduct,
   priceFor,
@@ -27,10 +28,12 @@ async function createPrintStripeSession(params: {
   orderId: string;
   productKey: string;
   userEmail?: string | null;
+  discounts?: { promotion_code: string }[];
 }) {
   const { product, price, logoPrep, workspaceId, orderId, productKey } = params;
   return stripe.checkout.sessions.create({
     mode: "payment",
+    ...(params.discounts ? { discounts: params.discounts } : {}),
     line_items: [
       {
         price_data: {
@@ -171,10 +174,21 @@ export async function createPrintCheckout(formData: FormData) {
 
   const goodsTotal = price.totalCents + (logoPrep ? LOGO_PREP_CENTS : 0);
 
+  const admin = createAdminClient();
+
+  // Optional discount code, validated as a print-domain code (a subscription or
+  // comp code is rejected here, so it can't be used to get free stickers).
+  const promo = String(formData.get("promo") || "").trim();
+  let discounts: { promotion_code: string }[] | undefined;
+  if (promo) {
+    const res = await resolveDiscount(admin, promo, "print");
+    if (!res.ok) redirect(`/dashboard/print/${productKey}?err=promo`);
+    discounts = [{ promotion_code: res.promotionCodeId as string }];
+  }
+
   // Create a draft order up front so the full design (including an uploaded
   // logo, which is too large for Stripe metadata) is persisted. The webhook
   // flips it to proof_ready after payment.
-  const admin = createAdminClient();
   const { data: order } = await admin
     .from("print_orders")
     .insert({
@@ -201,6 +215,7 @@ export async function createPrintCheckout(formData: FormData) {
     orderId: order.id as string,
     productKey,
     userEmail: user.email,
+    discounts,
   });
 
   if (session.url) redirect(session.url);

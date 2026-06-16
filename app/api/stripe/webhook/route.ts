@@ -5,6 +5,14 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail } from "@/lib/email";
 import { lifecycleEmail } from "@/lib/lifecycle";
 import { proofReadyEmail } from "@/lib/print/emails";
+import { recordDiscountRedemption } from "@/lib/promo";
+
+// Pull the applied promotion-code id off a completed checkout session, if any.
+function promoCodeIdFrom(s: Stripe.Checkout.Session): string | null {
+  const raw = s.discounts?.[0]?.promotion_code;
+  if (!raw) return null;
+  return typeof raw === "string" ? raw : raw.id;
+}
 import { emailFlags, flowOn } from "@/lib/settings";
 
 // Statuses where the customer still has paid access. past_due keeps access
@@ -135,6 +143,13 @@ export async function POST(request: NextRequest) {
               }).catch(() => {});
             }
           }
+          // Count a print-domain discount redemption, if one was used.
+          const printPromo = promoCodeIdFrom(s);
+          if (printPromo) {
+            await recordDiscountRedemption(admin, printPromo, workspaceId).catch(
+              () => {}
+            );
+          }
           break;
         }
 
@@ -164,6 +179,13 @@ export async function POST(request: NextRequest) {
               payment_failed_at: null,
             })
             .eq("id", workspaceId);
+        }
+        // Count a subscription-domain discount redemption, if one was used.
+        const subPromo = promoCodeIdFrom(s);
+        if (subPromo) {
+          await recordDiscountRedemption(admin, subPromo, workspaceId).catch(
+            () => {}
+          );
         }
         break;
       }
