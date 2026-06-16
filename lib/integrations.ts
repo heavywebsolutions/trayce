@@ -81,11 +81,11 @@ const nameParts = (n?: string | null) => {
   return { first: first || "", last: rest.join(" ") };
 };
 
-async function klaviyo(i: Integration, c: Contact) {
-  if (!i.api_key || !i.list_id) return;
+async function klaviyo(i: Integration, c: Contact): Promise<Response | null> {
+  if (!i.api_key || !i.list_id) return null;
   const { first, last } = nameParts(c.name);
   const phone = c.phone && /^\+\d{7,15}$/.test(c.phone) ? c.phone : undefined;
-  await fetch(
+  return fetch(
     "https://a.klaviyo.com/api/profile-subscription-bulk-create-jobs",
     {
       method: "POST",
@@ -122,13 +122,13 @@ async function klaviyo(i: Integration, c: Contact) {
   );
 }
 
-async function mailchimp(i: Integration, c: Contact) {
-  if (!i.api_key || !i.list_id) return;
+async function mailchimp(i: Integration, c: Contact): Promise<Response | null> {
+  if (!i.api_key || !i.list_id) return null;
   const dc = i.api_key.split("-")[1];
-  if (!dc) return;
+  if (!dc) return null;
   const hash = createHash("md5").update(c.email.toLowerCase()).digest("hex");
   const { first, last } = nameParts(c.name);
-  await fetch(
+  return fetch(
     `https://${dc}.api.mailchimp.com/3.0/lists/${i.list_id}/members/${hash}`,
     {
       method: "PUT",
@@ -146,10 +146,10 @@ async function mailchimp(i: Integration, c: Contact) {
   );
 }
 
-async function convertkit(i: Integration, c: Contact) {
-  if (!i.api_key || !i.list_id) return;
+async function convertkit(i: Integration, c: Contact): Promise<Response | null> {
+  if (!i.api_key || !i.list_id) return null;
   const { first } = nameParts(c.name);
-  await fetch(`https://api.convertkit.com/v3/forms/${i.list_id}/subscribe`, {
+  return fetch(`https://api.convertkit.com/v3/forms/${i.list_id}/subscribe`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
@@ -161,10 +161,10 @@ async function convertkit(i: Integration, c: Contact) {
   });
 }
 
-async function brevo(i: Integration, c: Contact) {
-  if (!i.api_key) return;
+async function brevo(i: Integration, c: Contact): Promise<Response | null> {
+  if (!i.api_key) return null;
   const { first, last } = nameParts(c.name);
-  await fetch("https://api.brevo.com/v3/contacts", {
+  return fetch("https://api.brevo.com/v3/contacts", {
     method: "POST",
     headers: {
       "api-key": i.api_key,
@@ -185,9 +185,9 @@ async function brevo(i: Integration, c: Contact) {
   });
 }
 
-async function webhook(i: Integration, c: Contact) {
-  if (!i.endpoint) return;
-  await fetch(i.endpoint, {
+async function webhook(i: Integration, c: Contact): Promise<Response | null> {
+  if (!i.endpoint) return null;
+  return fetch(i.endpoint, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(c),
@@ -195,7 +195,7 @@ async function webhook(i: Integration, c: Contact) {
   });
 }
 
-function dispatch(i: Integration, c: Contact): Promise<void> {
+function dispatch(i: Integration, c: Contact): Promise<Response | null> {
   switch (i.provider) {
     case "klaviyo":
       return klaviyo(i, c);
@@ -208,7 +208,72 @@ function dispatch(i: Integration, c: Contact): Promise<void> {
     case "webhook":
       return webhook(i, c);
     default:
-      return Promise.resolve();
+      return Promise.resolve(null);
+  }
+}
+
+// Send a single test contact to one integration and report the outcome, so the
+// settings UI can show a real pass/fail instead of leaving the user guessing.
+export async function testIntegration(
+  workspaceId: string,
+  provider: string,
+  email: string
+): Promise<{ ok: boolean; message: string }> {
+  let admin;
+  try {
+    admin = createAdminClient();
+  } catch {
+    return { ok: false, message: "Server is not configured for this." };
+  }
+  const { data: row } = await admin
+    .from("integrations")
+    .select("provider, enabled, api_key, list_id, endpoint")
+    .eq("workspace_id", workspaceId)
+    .eq("provider", provider)
+    .maybeSingle();
+  if (!row) {
+    return { ok: false, message: "Connect and save this integration first." };
+  }
+
+  const i: Integration = {
+    ...(row as Integration),
+    api_key: decryptSecret((row as Integration).api_key),
+  };
+  const contact: Contact = {
+    email,
+    name: "TRAXXR Test",
+    source: "TRAXXR connection test",
+  };
+
+  try {
+    const res = await dispatch(i, contact);
+    if (!res) {
+      return {
+        ok: false,
+        message: "Missing API key or list/endpoint. Re-check the fields.",
+      };
+    }
+    if (res.ok) {
+      return {
+        ok: true,
+        message: `Success. Look for ${email} in ${provider} in a few seconds.`,
+      };
+    }
+    let detail = "";
+    try {
+      detail = (await res.text()).slice(0, 180);
+    } catch {
+      /* ignore */
+    }
+    return {
+      ok: false,
+      message: `${provider} rejected it (HTTP ${res.status}). ${detail}`.trim(),
+    };
+  } catch {
+    return {
+      ok: false,
+      message: "Could not reach the provider (timed out or network error).",
+    };
   }
 }
 

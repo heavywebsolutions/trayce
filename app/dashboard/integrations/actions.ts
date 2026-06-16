@@ -3,9 +3,34 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { PROVIDERS } from "@/lib/integrations";
+import { PROVIDERS, testIntegration } from "@/lib/integrations";
 import { encryptSecret } from "@/lib/crypto";
 import { loadEntitlements } from "@/lib/plan";
+
+export type TestState = { ok?: boolean; message?: string } | undefined;
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Send a test contact to a connected integration and report pass/fail inline.
+export async function sendTestContact(
+  _prev: TestState,
+  formData: FormData
+): Promise<TestState> {
+  const gate = await loadEntitlements();
+  if (gate && !gate.ent.emailSync) {
+    return { ok: false, message: "Email sync is a Growth feature." };
+  }
+  const provider = String(formData.get("provider") || "");
+  if (!PROVIDERS.some((p) => p.key === provider)) {
+    return { ok: false, message: "Unknown integration." };
+  }
+  const email = String(formData.get("email") || "").trim();
+  if (!EMAIL_RE.test(email)) {
+    return { ok: false, message: "Enter a valid email to test with." };
+  }
+  const { workspaceId } = await currentWorkspace();
+  return testIntegration(workspaceId, provider, email);
+}
 
 async function currentWorkspace() {
   const supabase = await createClient();

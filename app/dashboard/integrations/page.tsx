@@ -5,6 +5,7 @@ import { Card, Badge, Button, Input, Label } from "@/components/ui";
 import { PROVIDERS } from "@/lib/integrations";
 import { encryptionConfigured } from "@/lib/crypto";
 import { saveIntegration, deleteIntegration } from "./actions";
+import { IntegrationTest } from "@/components/IntegrationTest";
 
 export const dynamic = "force-dynamic";
 
@@ -140,6 +141,13 @@ export default async function IntegrationsPage() {
                   )}
                 </div>
               </form>
+
+              {connected && p.category === "email" && (
+                <IntegrationTest
+                  provider={p.key}
+                  defaultEmail={user.email ?? ""}
+                />
+              )}
               </Card>
             </Fragment>
           );
