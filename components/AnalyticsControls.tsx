@@ -73,28 +73,36 @@ export function AnalyticsControls() {
       </div>
 
       {/* Custom range */}
-      <div className="flex items-center gap-1.5">
-        <input
-          type="date"
-          defaultValue={from}
-          onChange={(e) => {
-            const v = e.target.value;
-            if (v && to) push({ from: v, to });
-            else if (v) push({ from: v, to: v });
-          }}
-          className="rounded-lg border border-ink-200 bg-white px-2 py-1.5 text-sm text-ink-700"
-        />
-        <span className="text-ink-400">–</span>
-        <input
-          type="date"
-          defaultValue={to}
-          onChange={(e) => {
-            const v = e.target.value;
-            if (from && v) push({ from, to: v });
-            else if (v) push({ from: v, to: v });
-          }}
-          className="rounded-lg border border-ink-200 bg-white px-2 py-1.5 text-sm text-ink-700"
-        />
+      <div className="flex items-end gap-2">
+        <label className="flex flex-col">
+          <span className="mb-1 text-[11px] font-medium text-ink-400">From</span>
+          <input
+            type="date"
+            aria-label="Custom range start date"
+            defaultValue={from}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v && to) push({ from: v, to });
+              else if (v) push({ from: v, to: v });
+            }}
+            className="min-h-[40px] rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm text-ink-700"
+          />
+        </label>
+        <span className="pb-2.5 text-ink-400">–</span>
+        <label className="flex flex-col">
+          <span className="mb-1 text-[11px] font-medium text-ink-400">To</span>
+          <input
+            type="date"
+            aria-label="Custom range end date"
+            defaultValue={to}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (from && v) push({ from, to: v });
+              else if (v) push({ from: v, to: v });
+            }}
+            className="min-h-[40px] rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm text-ink-700"
+          />
+        </label>
       </div>
     </div>
   );

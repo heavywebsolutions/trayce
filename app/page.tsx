@@ -308,11 +308,11 @@ export default async function Home() {
               </span>
             </div>
 
-            <div className="absolute left-0 top-8 flex items-center gap-2 border border-ink-100 bg-white px-3 py-2 text-[12px] font-semibold text-ink-700 shadow-card">
+            <div className="absolute left-0 top-8 hidden items-center gap-2 border border-ink-100 bg-white px-3 py-2 text-[12px] font-semibold text-ink-700 shadow-card sm:flex">
               <span className="grid h-4 w-4 place-items-center rounded-full bg-[#1f7a3d] text-[9px] text-white">✓</span>
               Destination updated
             </div>
-            <div className="absolute bottom-10 right-0 flex items-center gap-2 border border-ink-100 bg-white px-3 py-2 text-[12px] font-semibold text-ink-700 shadow-card">
+            <div className="absolute bottom-10 right-0 hidden items-center gap-2 border border-ink-100 bg-white px-3 py-2 text-[12px] font-semibold text-ink-700 shadow-card sm:flex">
               <span className="grid h-4 w-4 place-items-center rounded-full bg-[#1f7a3d] text-[9px] text-white">✓</span>
               1,248 scans this week
             </div>

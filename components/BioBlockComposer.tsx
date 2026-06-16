@@ -104,7 +104,7 @@ export function BioBlockComposer({ pageId }: { pageId: string }) {
             setKind(e.target.value);
             setError(null);
           }}
-          className="min-h-[44px] w-full rounded-xl border border-ink-200 bg-white px-3 text-sm text-ink-900"
+          className="min-h-[48px] w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm text-ink-900"
         >
           {TYPES.map((t) => (
             <option key={t.value} value={t.value}>

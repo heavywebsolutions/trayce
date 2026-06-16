@@ -230,7 +230,7 @@ export function PrintConfigurePanel({
           <select
             value={codeId}
             onChange={(e) => setCodeId(e.target.value)}
-            className="min-h-[44px] w-full rounded-xl border border-ink-200 bg-white px-3 text-sm text-ink-900"
+            className="min-h-[48px] w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm text-ink-900"
           >
             {codes.map((c) => (
               <option key={c.id} value={c.id}>

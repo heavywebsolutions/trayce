@@ -24,7 +24,9 @@ export default async function DashboardLayout({
       <DashboardNav admin={admin} />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-14 items-center justify-between border-b border-ink-200 bg-white px-5">
-          <img src="/traxxr-logo.png" alt="TRAXXR" className="h-5 w-auto md:hidden" />
+          <Link href="/dashboard" className="md:hidden" aria-label="TRAXXR home">
+            <img src="/traxxr-logo.png" alt="TRAXXR" className="h-5 w-auto" />
+          </Link>
           <div className="ml-auto flex items-center gap-3">
             <span className="hidden text-sm text-ink-500 sm:inline">
               {user.email}
