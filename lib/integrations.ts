@@ -85,6 +85,35 @@ async function klaviyo(i: Integration, c: Contact): Promise<Response | null> {
   if (!i.api_key || !i.list_id) return null;
   const { first, last } = nameParts(c.name);
   const phone = c.phone && /^\+\d{7,15}$/.test(c.phone) ? c.phone : undefined;
+
+  // Step 1: create/update the profile (this is where name + phone belong).
+  // Best-effort; a failure here shouldn't block the subscription below.
+  if (first || last || phone) {
+    await fetch("https://a.klaviyo.com/api/profile-import", {
+      method: "POST",
+      headers: {
+        Authorization: `Klaviyo-API-Key ${i.api_key}`,
+        revision: "2024-10-15",
+        "content-type": "application/json",
+        accept: "application/json",
+      },
+      body: JSON.stringify({
+        data: {
+          type: "profile",
+          attributes: {
+            email: c.email,
+            ...(phone ? { phone_number: phone } : {}),
+            ...(first ? { first_name: first } : {}),
+            ...(last ? { last_name: last } : {}),
+          },
+        },
+      }),
+      signal: timeout(),
+    }).catch(() => {});
+  }
+
+  // Step 2: subscribe to the list. This endpoint only accepts email/phone +
+  // subscription consent (no name fields), so we keep it minimal.
   return fetch(
     "https://a.klaviyo.com/api/profile-subscription-bulk-create-jobs",
     {
@@ -106,8 +135,6 @@ async function klaviyo(i: Integration, c: Contact): Promise<Response | null> {
                   attributes: {
                     email: c.email,
                     ...(phone ? { phone_number: phone } : {}),
-                    ...(first ? { first_name: first } : {}),
-                    ...(last ? { last_name: last } : {}),
                     subscriptions: { email: { marketing: { consent: "SUBSCRIBED" } } },
                   },
                 },
