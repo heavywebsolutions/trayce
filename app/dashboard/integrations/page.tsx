@@ -111,19 +111,24 @@ export default async function IntegrationsPage() {
                   </div>
                 ))}
 
-                <label className="flex items-center gap-2 text-sm text-ink-700">
-                  <input
-                    type="checkbox"
-                    name="enabled"
-                    defaultChecked={connected ? enabled : true}
-                    className="accent-[#2587DE]"
-                  />
-                  Enabled
-                </label>
+                {connected ? (
+                  <label className="flex items-center gap-2 text-sm text-ink-700">
+                    <input
+                      type="checkbox"
+                      name="enabled"
+                      defaultChecked={enabled}
+                      className="accent-[#2587DE]"
+                    />
+                    Enabled, uncheck to pause syncing, then Update
+                  </label>
+                ) : (
+                  // New connection: connecting it turns it on.
+                  <input type="hidden" name="enabled" value="on" />
+                )}
 
                 <div className="flex items-center gap-2">
                   <Button type="submit">
-                    {connected ? "Update" : "Connect"}
+                    {connected ? "Save changes" : "Connect"}
                   </Button>
                   {connected && (
                     <button
