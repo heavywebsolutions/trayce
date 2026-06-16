@@ -659,9 +659,9 @@ export default async function Home() {
       <section className="bg-ink-900 text-white">
         <div className="mx-auto max-w-3xl px-6 py-20 text-center">
           <p className="text-xl font-medium leading-relaxed sm:text-2xl">
-            &ldquo;We put a TRAXXR code on every wrap we print. For the first time
-            we can see which designs actually drive people back to the site, and
-            the leads land in our email tool automatically.&rdquo;
+            &ldquo;We take our TRAXXR codes with us to every industry trade show
+            and let them go to work. Thousands of scans and email signups each
+            season. Big TRAXXR fans here.&rdquo;
           </p>
           <p className="mt-5 text-sm text-white/60">Customer · Deviant Ink</p>
         </div>

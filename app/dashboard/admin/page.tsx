@@ -14,33 +14,51 @@ function FlagRow({
   flagKey,
   on,
   count,
+  mutedByMaster,
 }: {
   label: string;
   flagKey: string;
   on: boolean;
   count?: number;
+  mutedByMaster?: boolean;
 }) {
+  // When the master switch is off, every flow is effectively off no matter what
+  // its own flag says. Show that clearly and disable the per-flow toggle so the
+  // UI never claims "On" while nothing is actually sending.
   return (
-    <li className="flex items-center justify-between py-2.5">
+    <li
+      className={`flex items-center justify-between py-2.5 ${
+        mutedByMaster ? "opacity-50" : ""
+      }`}
+    >
       <span className="text-ink-700">
         {label}
         {typeof count === "number" && (
           <span className="ml-2 text-xs text-ink-400">{count} sent (30d)</span>
         )}
+        {mutedByMaster && (
+          <span className="ml-2 text-xs italic text-ink-400">
+            paused by master
+          </span>
+        )}
       </span>
-      <form action={setEmailFlag}>
-        <input type="hidden" name="key" value={flagKey} />
-        <input type="hidden" name="enabled" value={on ? "false" : "true"} />
-        <button
-          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-            on
-              ? "bg-emerald-50 text-emerald-700"
-              : "bg-ink-100 text-ink-500"
-          }`}
-        >
-          {on ? "On" : "Off"}
-        </button>
-      </form>
+      {mutedByMaster ? (
+        <span className="rounded-full bg-ink-100 px-3 py-1 text-xs font-semibold text-ink-500">
+          Off
+        </span>
+      ) : (
+        <form action={setEmailFlag}>
+          <input type="hidden" name="key" value={flagKey} />
+          <input type="hidden" name="enabled" value={on ? "false" : "true"} />
+          <button
+            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+              on ? "bg-emerald-50 text-emerald-700" : "bg-ink-100 text-ink-500"
+            }`}
+          >
+            {on ? "On" : "Off"}
+          </button>
+        </form>
+      )}
     </li>
   );
 }
@@ -147,6 +165,7 @@ export default async function AdminMetricsPage() {
     }
   }
   const flags = await emailFlags(admin);
+  const masterOff = flags["email_master"] === false;
 
   const kpis = [
     { label: "Total accounts", value: totalUsers.toLocaleString() },
@@ -299,35 +318,41 @@ export default async function AdminMetricsPage() {
             flagKey="email_welcome"
             on={flags["email_welcome"] !== false}
             count={emailCounts.welcome ?? 0}
+            mutedByMaster={masterOff}
           />
           <FlagRow
             label="Mid-trial"
             flagKey="email_mid_trial"
             on={flags["email_mid_trial"] !== false}
             count={emailCounts.mid_trial ?? 0}
+            mutedByMaster={masterOff}
           />
           <FlagRow
             label="Trial ending"
             flagKey="email_trial_ending"
             on={flags["email_trial_ending"] !== false}
             count={emailCounts.trial_ending ?? 0}
+            mutedByMaster={masterOff}
           />
           <FlagRow
             label="Trial ended"
             flagKey="email_trial_ended"
             on={flags["email_trial_ended"] !== false}
             count={emailCounts.trial_ended ?? 0}
+            mutedByMaster={masterOff}
           />
           <FlagRow
             label="Card expiring"
             flagKey="email_card_expiring"
             on={flags["email_card_expiring"] !== false}
             count={emailCounts.card_expiring ?? 0}
+            mutedByMaster={masterOff}
           />
           <FlagRow
             label="Payment failed"
             flagKey="email_payment_failed"
             on={flags["email_payment_failed"] !== false}
+            mutedByMaster={masterOff}
           />
         </ul>
       </div>
