@@ -75,7 +75,7 @@ export default async function SettingsPage({
 
   const { data: ws } = await supabase
     .from("workspaces")
-    .select("id, name, plan, subscription_status, current_period_end, stripe_customer_id, cancel_at_period_end, paused_until, comp, card_brand, card_last4, card_exp_month, card_exp_year, payment_failed_at")
+    .select("id, name, plan, subscription_status, current_period_end, stripe_customer_id, cancel_at_period_end, paused_until, comp, trial_ends_at, card_brand, card_last4, card_exp_month, card_exp_year, payment_failed_at")
     .eq("owner_id", user.id)
     .maybeSingle();
 
