@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import Link from "next/link";
 import { Button, Input, Label } from "@/components/ui";
+import { Turnstile } from "@/components/Turnstile";
 import { login, signup, type AuthState } from "@/app/(auth)/actions";
 
 function SubmitButton({ label }: { label: string }) {
@@ -86,6 +87,9 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           </Link>
         </div>
       )}
+
+      {/* Bot protection on signup. Renders only when a Turnstile site key is set. */}
+      {!isLogin && <Turnstile />}
 
       {state?.error && (
         <p className="rounded-xl border border-rose-100 bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700">

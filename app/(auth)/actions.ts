@@ -2,12 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail, adminRecipients } from "@/lib/email";
 import { applyPromo } from "@/lib/promo";
 import { lifecycleEmail } from "@/lib/lifecycle";
 import { emailFlags, flowOn } from "@/lib/settings";
+import { verifyTurnstile } from "@/lib/turnstile";
 
 export type AuthState = { error?: string } | undefined;
 
@@ -34,6 +36,18 @@ export async function signup(
   // Honeypot: a hidden field only bots fill. Reject without creating an account.
   if (String(formData.get("company_url") || "").trim() !== "") {
     return { error: "Something went wrong. Please try again." };
+  }
+
+  // Bot protection: verify the Cloudflare Turnstile token. Inert (always passes)
+  // until TURNSTILE_SECRET_KEY is configured, so this is safe to ship early.
+  const h = await headers();
+  const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
+  const captchaOk = await verifyTurnstile(
+    String(formData.get("cf-turnstile-response") || ""),
+    ip
+  );
+  if (!captchaOk) {
+    return { error: "Please complete the verification and try again." };
   }
 
   const email = String(formData.get("email") || "").trim();
