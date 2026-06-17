@@ -238,6 +238,48 @@ export async function pauseSubscription(formData: FormData) {
   redirect("/dashboard/settings?billing=paused");
 }
 
+// Unified code entry for the upgrade UI: one field handles both kinds.
+// A free-access (comp) code is redeemed immediately and upgrades the account.
+// A percent/dollar discount code is only validated here; it's carried to Stripe
+// Checkout when the user picks a plan. Returns a small result the client uses to
+// show the right message and (for discounts) keep the code for checkout.
+export async function applyCode(
+  codeRaw: string
+): Promise<{ ok: boolean; kind?: "comp" | "discount"; error?: string }> {
+  const code = codeRaw.trim();
+  if (!code) return { ok: false, error: "Enter a code." };
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Please sign in again." };
+
+  const admin = createAdminClient();
+  const { data: promo } = await admin
+    .from("promo_codes")
+    .select("kind")
+    .eq("code", code.toUpperCase())
+    .maybeSingle();
+  if (!promo) return { ok: false, error: "That code is not valid." };
+
+  const kind = (promo.kind as string) || "comp";
+  if (kind === "comp") {
+    const res = await applyPromo(admin, user.id, code);
+    if (res.ok) {
+      revalidatePath("/dashboard/settings");
+      return { ok: true, kind: "comp" };
+    }
+    return { ok: false, error: res.error };
+  }
+
+  // Discount: validate (domain + status + expiry). Plan-specific scope is
+  // re-checked at checkout once a plan is chosen.
+  const res = await resolveDiscount(admin, code, "subscription");
+  if (res.ok) return { ok: true, kind: "discount" };
+  return { ok: false, error: res.error };
+}
+
 // Redeem a promo code for the current user's workspace (comped plan).
 export async function redeemPromo(formData: FormData) {
   const supabase = await createClient();

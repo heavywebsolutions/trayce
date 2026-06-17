@@ -10,6 +10,7 @@ import {
   redeemPromo,
 } from "@/app/dashboard/billing/actions";
 import { UpgradePlans } from "@/components/UpgradePlans";
+import { effectivePlan } from "@/lib/plan";
 
 export const dynamic = "force-dynamic";
 
@@ -82,6 +83,12 @@ export default async function SettingsPage({
   const meta = PLAN_META[plan] ?? PLAN_META.free;
   const isPaid = plan !== "free";
   const comp = Boolean(ws?.comp);
+  // During the 14-day reverse trial the raw plan is still "free" but the account
+  // effectively has Growth. Reflect that here so Settings doesn't mislabel a
+  // trialing account as "Free".
+  const eff = effectivePlan(ws);
+  const trialing = eff.trialing;
+  const trialDaysLeft = eff.daysLeft;
   const canceling = Boolean(ws?.cancel_at_period_end);
   const paused = ws?.subscription_status === "paused";
   const pausedUntil = ws?.paused_until
@@ -290,19 +297,33 @@ export default async function SettingsPage({
           <h2 className="text-base font-semibold text-ink-900">
             Plan and billing
           </h2>
-          <Badge tone="indigo">{meta.label}</Badge>
+          <Badge tone="indigo">{trialing ? "Growth trial" : meta.label}</Badge>
         </div>
-        <p className="mt-2 text-sm text-ink-600">
-          <span className="font-semibold">{meta.label} plan</span>
-          {comp ? (
-            <span className="text-ink-400"> · complimentary</span>
-          ) : (
-            meta.price !== "$0" && (
-              <span className="text-ink-400"> · {meta.price}/mo</span>
-            )
-          )}
+        {trialing ? (
+          <p className="mt-2 text-sm text-ink-600">
+            <span className="font-semibold">Growth trial</span>
+            <span className="text-ink-400">
+              {" "}
+              · {trialDaysLeft} day{trialDaysLeft === 1 ? "" : "s"} left
+            </span>
+          </p>
+        ) : (
+          <p className="mt-2 text-sm text-ink-600">
+            <span className="font-semibold">{meta.label} plan</span>
+            {comp ? (
+              <span className="text-ink-400"> · complimentary</span>
+            ) : (
+              meta.price !== "$0" && (
+                <span className="text-ink-400"> · {meta.price}/mo</span>
+              )
+            )}
+          </p>
+        )}
+        <p className="mt-1 text-sm text-ink-500">
+          {trialing
+            ? "You have full Growth features during your trial — editable codes, full analytics, and lead capture. Pick a plan below to keep them when your trial ends."
+            : meta.blurb}
         </p>
-        <p className="mt-1 text-sm text-ink-500">{meta.blurb}</p>
         {comp && (
           <p className="mt-1 text-sm text-ink-500">
             This plan is complimentary. You will never be billed for it.
@@ -403,13 +424,13 @@ export default async function SettingsPage({
           </>
         )}
 
-        {!comp && (
+        {!comp && isPaid && (
           <form
             action={redeemPromo}
             className="mt-4 border-t border-ink-100 pt-4"
           >
             <p className="mb-2 text-sm font-medium text-ink-700">
-              Have a promo code?
+              Have a free-access code?
             </p>
             <div className="flex gap-2">
               <input
