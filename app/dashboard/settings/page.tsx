@@ -430,7 +430,7 @@ export default async function SettingsPage({
             className="mt-4 border-t border-ink-100 pt-4"
           >
             <p className="mb-2 text-sm font-medium text-ink-700">
-              Have a free-access code?
+              Have a promo code?
             </p>
             <div className="flex gap-2">
               <input

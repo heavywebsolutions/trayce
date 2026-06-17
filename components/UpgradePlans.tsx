@@ -100,8 +100,7 @@ export function UpgradePlans() {
           </p>
         )}
         <p className="mt-1 text-[11px] text-ink-400">
-          Free-access codes upgrade you instantly. Discount codes come off at
-          checkout.
+          Have a code? Enter it and we&apos;ll apply it.
         </p>
       </div>
 

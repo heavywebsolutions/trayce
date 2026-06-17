@@ -129,7 +129,7 @@ export async function resolveDiscount(
   if (kind === "comp") {
     return {
       ok: false,
-      error: "That's a free-access code, redeem it in your account settings.",
+      error: "That code can't be applied here.",
     };
   }
   if ((promo.domain as string) !== domain) {
