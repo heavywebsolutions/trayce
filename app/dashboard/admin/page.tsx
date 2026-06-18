@@ -110,9 +110,15 @@ export default async function AdminMetricsPage() {
   const users = usersData?.users ?? [];
   const totalUsers = users.length;
 
+  // Admin-owned workspaces are excluded from revenue + subscriber metrics so
+  // your own testing never inflates MRR, paid count, or comp count.
+  const adminIds = new Set(
+    users.filter((u) => isAdmin(u.email)).map((u) => u.id)
+  );
+
   const { data: wsRows } = await admin
     .from("workspaces")
-    .select("plan, comp");
+    .select("plan, comp, owner_id");
   const workspaces = wsRows ?? [];
   const planCounts: Record<string, number> = {
     free: 0,
@@ -123,6 +129,7 @@ export default async function AdminMetricsPage() {
   let mrr = 0;
   let compCount = 0;
   for (const w of workspaces) {
+    if (adminIds.has(w.owner_id as string)) continue; // skip your own test accounts
     const p = (w.plan as string) ?? "free";
     planCounts[p] = (planCounts[p] ?? 0) + 1;
     if (w.comp) compCount++;
