@@ -40,4 +40,6 @@ export const RESERVED_HANDLES = new Set<string>([
   "compare",
   "use-cases",
   "vip-access",
+  "deviant-ambassadors",
+  "ambassadors",
 ]);
