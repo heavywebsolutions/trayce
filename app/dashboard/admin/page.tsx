@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdmin } from "@/lib/admin";
 import { formatUsd } from "@/lib/print/catalog";
 import { emailFlags } from "@/lib/settings";
-import { setEmailFlag } from "./actions";
+import { setEmailFlag, startImpersonation } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -312,17 +312,27 @@ export default async function AdminMetricsPage() {
             recent.map((u) => (
               <div
                 key={u.id}
-                className="flex items-center justify-between py-2 text-sm"
+                className="flex items-center justify-between gap-3 py-2 text-sm"
               >
-                <span className="text-ink-800">{u.email}</span>
-                <span className="text-xs text-ink-400">
-                  {new Date(u.created_at).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })}
-                </span>
+                <span className="min-w-0 truncate text-ink-800">{u.email}</span>
+                <div className="flex shrink-0 items-center gap-3">
+                  <span className="text-xs text-ink-400">
+                    {new Date(u.created_at).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                  {!adminIds.has(u.id) && (
+                    <form action={startImpersonation}>
+                      <input type="hidden" name="user_id" value={u.id} />
+                      <button className="rounded-lg border border-ink-200 px-2.5 py-1 text-xs font-medium text-accent transition hover:bg-ink-50">
+                        Log in as
+                      </button>
+                    </form>
+                  )}
+                </div>
               </div>
             ))
           )}

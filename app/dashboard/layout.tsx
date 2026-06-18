@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { DashboardNav } from "@/components/DashboardNav";
 import { TrialBanner } from "@/components/TrialBanner";
 import { BillingBanner } from "@/components/BillingBanner";
+import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import { isAdmin } from "@/lib/admin";
 
 export default async function DashboardLayout({
@@ -46,6 +47,7 @@ export default async function DashboardLayout({
           </div>
         </header>
         <main className="flex-1 overflow-x-hidden px-5 py-6 pb-24 md:px-8 md:pb-8">
+          <ImpersonationBanner />
           <BillingBanner />
           <TrialBanner />
           {children}
