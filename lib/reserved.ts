@@ -34,4 +34,10 @@ export const RESERVED_HANDLES = new Set<string>([
   "public",
   "assets",
   "traxxr",
+  // Marketing / content routes (static pages that live at the root).
+  "product",
+  "why-traxxr",
+  "compare",
+  "use-cases",
+  "vip-access",
 ]);
