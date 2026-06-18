@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Card, Button, Badge } from "@/components/ui";
+import { OnboardingChecklist } from "@/components/OnboardingChecklist";
 import { formatNumber, timeAgo } from "@/lib/utils";
 import { formatLocation, deviceLabel } from "@/lib/geo";
 
@@ -189,6 +190,12 @@ export default async function DashboardPage() {
   const totalLeads = leadsTotalRes.count ?? 0;
   const activeCodes = activeCodesRes.count ?? 0;
 
+  // Activation milestones for the onboarding checklist. topCodes is ordered by
+  // scan_count desc, so the first one having scans means at least one scan exists.
+  const hasFirstScan = (topCodes[0]?.scan_count ?? 0) > 0;
+  const hasBioPage = topPages.length > 0;
+  const hasLead = totalLeads > 0;
+
   return (
     <div className="mx-auto max-w-5xl">
       {/* Header */}
@@ -211,25 +218,13 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* First-run nudge */}
-      {!hasCodes && (
-        <div className="mb-5 rounded-2xl border-2 border-accent-ring bg-accent-soft p-6">
-          <h2 className="text-base font-semibold text-ink-900">
-            Welcome to TRAXXR.
-          </h2>
-          <p className="mt-1 text-sm text-ink-600">
-            Three steps to your first tracked scan:
-          </p>
-          <ol className="mt-3 space-y-1.5 text-sm text-ink-600">
-            <li>1. Create a code, or build a link-in-bio page.</li>
-            <li>2. Print it on something, or drop it in your social bio.</li>
-            <li>3. Watch scans, clicks, and leads land here in real time.</li>
-          </ol>
-          <Link href="/dashboard/codes" className="mt-4 inline-block">
-            <Button>Create your first code</Button>
-          </Link>
-        </div>
-      )}
+      {/* First-run activation checklist (auto-hides once activated) */}
+      <OnboardingChecklist
+        hasCode={hasCodes}
+        hasScan={hasFirstScan}
+        hasBio={hasBioPage}
+        hasLead={hasLead}
+      />
 
       {/* KPIs */}
       <div className="mb-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
