@@ -224,6 +224,12 @@ export default async function AdminMetricsPage() {
         </div>
         <div className="flex gap-2 text-sm font-medium">
           <Link
+            href="/dashboard/admin/users"
+            className="rounded-xl border border-ink-200 px-3 py-2 text-ink-700 hover:bg-ink-50"
+          >
+            Users
+          </Link>
+          <Link
             href="/dashboard/admin/promos"
             className="rounded-xl border border-ink-200 px-3 py-2 text-ink-700 hover:bg-ink-50"
           >
@@ -304,7 +310,15 @@ export default async function AdminMetricsPage() {
       </div>
 
       <div className="mt-6 rounded-2xl border border-ink-200 bg-white p-5">
-        <p className="mb-3 text-sm font-semibold text-ink-900">Recent signups</p>
+        <div className="mb-3 flex items-center justify-between">
+          <p className="text-sm font-semibold text-ink-900">Recent signups</p>
+          <Link
+            href="/dashboard/admin/users"
+            className="text-xs font-medium text-accent hover:underline"
+          >
+            Search all users →
+          </Link>
+        </div>
         <div className="divide-y divide-ink-100">
           {recent.length === 0 ? (
             <p className="text-sm text-ink-500">No accounts yet.</p>
