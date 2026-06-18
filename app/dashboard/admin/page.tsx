@@ -75,6 +75,17 @@ function FlagRow({
   );
 }
 
+function EditEmailRow({ label, href }: { label: string; href: string }) {
+  return (
+    <li className="flex items-center justify-between py-2.5">
+      <span className="text-ink-700">{label}</span>
+      <Link href={href} className="text-xs font-medium text-accent hover:underline">
+        Edit copy
+      </Link>
+    </li>
+  );
+}
+
 const PLAN_PRICE_CENTS: Record<string, number> = {
   starter: 995,
   growth: 1995,
@@ -374,6 +385,24 @@ export default async function AdminMetricsPage() {
             editHref="/dashboard/admin/emails/payment_failed"
           />
         </ul>
+
+        <div className="mt-5 border-t border-ink-100 pt-4">
+          <p className="mb-1 text-sm font-semibold text-ink-900">
+            Order &amp; system emails
+          </p>
+          <p className="mb-2 text-xs text-ink-400">
+            These always send (order receipts and your signup alert). Edit the
+            wording here.
+          </p>
+          <ul className="divide-y divide-ink-100 text-sm">
+            <EditEmailRow label="Proof ready" href="/dashboard/admin/emails/proof_ready" />
+            <EditEmailRow label="Order shipped" href="/dashboard/admin/emails/shipped" />
+            <EditEmailRow
+              label="New signup alert (to you)"
+              href="/dashboard/admin/emails/new_signup"
+            />
+          </ul>
+        </div>
       </div>
     </div>
   );

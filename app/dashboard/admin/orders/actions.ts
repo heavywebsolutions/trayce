@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdmin } from "@/lib/admin";
 import { sendEmail } from "@/lib/email";
-import { shippedEmail } from "@/lib/print/emails";
+import { renderEmail } from "@/lib/lifecycle";
 
 async function assertAdmin() {
   const supabase = await createClient();
@@ -47,7 +47,7 @@ export async function markShipped(formData: FormData) {
 
   // Let the customer know it shipped, with tracking if we have it.
   if (order?.customer_email) {
-    const tmpl = shippedEmail({
+    const tmpl = await renderEmail(admin, "shipped", {
       orderId: order.id as string,
       productName: (order.product_name as string) ?? "order",
       tracking,

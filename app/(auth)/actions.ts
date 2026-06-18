@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail, adminRecipients } from "@/lib/email";
 import { applyPromo } from "@/lib/promo";
-import { renderLifecycleEmail } from "@/lib/lifecycle";
+import { renderEmail } from "@/lib/lifecycle";
 import { emailFlags, flowOn } from "@/lib/settings";
 import { verifyTurnstile } from "@/lib/turnstile";
 
@@ -67,10 +67,11 @@ export async function signup(
     const admin = createAdminClient();
     const recipients = adminRecipients();
     if (recipients.length) {
+      const alert = await renderEmail(admin, "new_signup", { email });
       await sendEmail({
         to: recipients,
-        subject: `New TRAXXR signup: ${email}`,
-        html: `<p>A new account was just created on TRAXXR.</p><p><strong>${email}</strong></p>`,
+        subject: alert.subject,
+        html: alert.html,
       }).catch(() => {});
     }
     if (promo) {
@@ -84,7 +85,7 @@ export async function signup(
       .maybeSingle();
     const flags = await emailFlags(admin);
     if (ws && flowOn(flags, "welcome")) {
-      const tmpl = await renderLifecycleEmail(admin, "welcome");
+      const tmpl = await renderEmail(admin, "welcome");
       const ok = await sendEmail({
         to: email,
         subject: tmpl.subject,

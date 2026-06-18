@@ -5,18 +5,15 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdmin } from "@/lib/admin";
 import { Card, Button, Input, Label } from "@/components/ui";
 import {
-  LIFECYCLE_DEFAULTS,
-  LIFECYCLE_LABELS,
-  LIFECYCLE_VARS,
+  EMAILS,
+  EMAIL_KINDS,
   ctaHrefFor,
-  renderLifecycleEmail,
-  type LifecycleKind,
+  renderEmail,
+  type EmailKind,
 } from "@/lib/lifecycle";
 import { saveEmailTemplate, resetEmailTemplate } from "../actions";
 
 export const dynamic = "force-dynamic";
-
-const KINDS = Object.keys(LIFECYCLE_DEFAULTS) as LifecycleKind[];
 
 export default async function EmailEditor({
   params,
@@ -27,8 +24,9 @@ export default async function EmailEditor({
 }) {
   const { kind: kindRaw } = await params;
   const sp = await searchParams;
-  if (!KINDS.includes(kindRaw as LifecycleKind)) notFound();
-  const kind = kindRaw as LifecycleKind;
+  if (!EMAIL_KINDS.includes(kindRaw as EmailKind)) notFound();
+  const kind = kindRaw as EmailKind;
+  const meta = EMAILS[kind];
 
   const supabase = await createClient();
   const {
@@ -44,23 +42,27 @@ export default async function EmailEditor({
     .eq("kind", kind)
     .maybeSingle();
 
-  const def = LIFECYCLE_DEFAULTS[kind];
   const cur = override
     ? {
         subject: override.subject as string,
         heading: override.heading as string,
         body: override.body as string,
-        ctaText: override.cta_text as string,
+        ctaText: (override.cta_text as string) ?? "",
       }
-    : def;
+    : meta.defaults;
   const customized = Boolean(override);
-  const vars = LIFECYCLE_VARS[kind];
+  const vars = meta.vars;
 
   // Live preview = exactly what would send right now (with sample merge values).
-  const preview = await renderLifecycleEmail(admin, kind, {
+  const preview = await renderEmail(admin, kind, {
     daysLeft: 3,
     cardLabel: "Visa ending 4242",
     expLabel: "08/2026",
+    productName: "Holographic decals",
+    orderId: "ord_demo123",
+    email: "newuser@example.com",
+    tracking: "1Z999AA10123456784",
+    trackingUrl: "https://example.com/track",
   });
 
   return (
@@ -74,7 +76,7 @@ export default async function EmailEditor({
         </Link>
         <div className="mt-2 flex items-center gap-3">
           <h1 className="text-2xl font-semibold tracking-tight text-ink-900">
-            {LIFECYCLE_LABELS[kind]} email
+            {meta.label} email
           </h1>
           <span
             className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${
@@ -94,7 +96,7 @@ export default async function EmailEditor({
 
       {sp.saved && (
         <div className="mb-4 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          Saved. This copy is now live for the {LIFECYCLE_LABELS[kind].toLowerCase()} email.
+          Saved. This copy is now live for the {meta.label.toLowerCase()} email.
         </div>
       )}
       {sp.reset && (
@@ -133,15 +135,23 @@ export default async function EmailEditor({
               Separate paragraphs with a blank line.
             </p>
           </div>
-          <div>
-            <Label htmlFor="cta_text">Button text</Label>
-            <Input id="cta_text" name="cta_text" defaultValue={cur.ctaText} required />
-            <p className="mt-1 text-xs text-ink-400">
-              Button links to{" "}
-              <span className="font-mono text-ink-500">{ctaHrefFor(kind)}</span>{" "}
-              (fixed, so it can&apos;t break).
+          {meta.hasCta ? (
+            <div>
+              <Label htmlFor="cta_text">Button text</Label>
+              <Input id="cta_text" name="cta_text" defaultValue={cur.ctaText} required />
+              <p className="mt-1 text-xs text-ink-400">
+                Button links to{" "}
+                <span className="font-mono text-ink-500">
+                  {ctaHrefFor(kind, { orderId: "{orderId}" })}
+                </span>{" "}
+                (fixed, so it can&apos;t break).
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs text-ink-400">
+              This email has no button. It is a plain notification.
             </p>
-          </div>
+          )}
 
           {vars.length > 0 && (
             <div className="rounded-xl border border-ink-100 bg-ink-50 px-4 py-3">

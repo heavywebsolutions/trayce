@@ -3,8 +3,7 @@ import type Stripe from "stripe";
 import { stripe, planFromSubscription, getCardForCustomer } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail } from "@/lib/email";
-import { renderLifecycleEmail } from "@/lib/lifecycle";
-import { proofReadyEmail } from "@/lib/print/emails";
+import { renderEmail } from "@/lib/lifecycle";
 import { recordDiscountRedemption } from "@/lib/promo";
 
 // Pull the applied promotion-code id off a completed checkout session, if any.
@@ -132,7 +131,7 @@ export async function POST(request: NextRequest) {
 
             // Tell the customer their proof is ready to review.
             if (buyerEmail && order) {
-              const tmpl = proofReadyEmail({
+              const tmpl = await renderEmail(admin, "proof_ready", {
                 orderId: order.id as string,
                 productName: (order.product_name as string) ?? "order",
               });
@@ -243,7 +242,7 @@ export async function POST(request: NextRequest) {
         if (firstFailure && to) {
           const flags = await emailFlags(admin);
           if (flowOn(flags, "payment_failed")) {
-            const tmpl = await renderLifecycleEmail(admin, "payment_failed", {
+            const tmpl = await renderEmail(admin, "payment_failed", {
               cardLabel: cardLabel(
                 (ws?.card_brand as string) ?? null,
                 (ws?.card_last4 as string) ?? null

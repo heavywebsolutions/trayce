@@ -1,9 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  lifecycleEmail,
-  LIFECYCLE_DEFAULTS,
-  type LifecycleKind,
-} from "@/lib/lifecycle";
+import { lifecycleEmail, EMAILS, type EmailKind } from "@/lib/lifecycle";
 
 describe("lifecycleEmail rendering", () => {
   it("fills {daysLeft} with correct pluralization", () => {
@@ -30,15 +26,22 @@ describe("lifecycleEmail rendering", () => {
   });
 
   it("every kind renders a non-empty subject + html with no leftover tokens", () => {
-    for (const kind of Object.keys(LIFECYCLE_DEFAULTS) as LifecycleKind[]) {
+    for (const kind of Object.keys(EMAILS) as EmailKind[]) {
       const out = lifecycleEmail(kind, {
         daysLeft: 2,
         cardLabel: "Visa ending 1111",
         expLabel: "01/2027",
+        productName: "Holographic decals",
+        orderId: "ord_1",
+        email: "a@b.com",
+        tracking: "1Z999",
       });
       expect(out.subject.length).toBeGreaterThan(0);
-      expect(out.html).toContain("<a href=");
-      expect(out.subject + out.html).not.toMatch(/\{(daysLeft|cardLabel|expLabel)\}/);
+      // CTA only on emails that have a button.
+      if (EMAILS[kind].hasCta) expect(out.html).toContain("<a href=");
+      expect(out.subject + out.html).not.toMatch(
+        /\{(daysLeft|cardLabel|expLabel|productName|email|tracking|orderId)\}/
+      );
     }
   });
 });

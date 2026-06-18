@@ -5,9 +5,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdmin } from "@/lib/admin";
-import { LIFECYCLE_DEFAULTS, type LifecycleKind } from "@/lib/lifecycle";
+import { EMAILS, EMAIL_KINDS, type EmailKind } from "@/lib/lifecycle";
 
-const KINDS = Object.keys(LIFECYCLE_DEFAULTS) as LifecycleKind[];
+const KINDS = EMAIL_KINDS;
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -20,14 +20,15 @@ async function requireAdmin() {
 // Save (upsert) an edited email template. Admin-only.
 export async function saveEmailTemplate(formData: FormData) {
   await requireAdmin();
-  const kind = String(formData.get("kind") || "") as LifecycleKind;
+  const kind = String(formData.get("kind") || "") as EmailKind;
   if (!KINDS.includes(kind)) return;
 
   const subject = String(formData.get("subject") || "").trim();
   const heading = String(formData.get("heading") || "").trim();
   const body = String(formData.get("body") || "").trim();
   const cta_text = String(formData.get("cta_text") || "").trim();
-  if (!subject || !heading || !body || !cta_text) {
+  const needsCta = EMAILS[kind].hasCta;
+  if (!subject || !heading || !body || (needsCta && !cta_text)) {
     redirect(`/dashboard/admin/emails/${kind}?err=1`);
   }
 
@@ -45,7 +46,7 @@ export async function saveEmailTemplate(formData: FormData) {
 // Reset an email back to the built-in default (deletes the override row).
 export async function resetEmailTemplate(formData: FormData) {
   await requireAdmin();
-  const kind = String(formData.get("kind") || "") as LifecycleKind;
+  const kind = String(formData.get("kind") || "") as EmailKind;
   if (!KINDS.includes(kind)) return;
 
   await createAdminClient().from("email_templates").delete().eq("kind", kind);
