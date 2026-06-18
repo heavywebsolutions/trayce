@@ -46,6 +46,7 @@ const ADMIN_GROUP: { label: string; items: NavItem[] } = {
   label: "Admin",
   items: [
     { href: "/dashboard/admin", label: "Overview", icon: "overview", desktopOnly: true },
+    { href: "/dashboard/admin/users", label: "Users", icon: "users", desktopOnly: true },
     { href: "/dashboard/admin/promos", label: "Promo codes", icon: "promos", desktopOnly: true },
     { href: "/dashboard/admin/orders", label: "Fulfillment", icon: "fulfillment", desktopOnly: true },
   ],
@@ -115,6 +116,14 @@ const ICONS: Record<string, React.ReactNode> = {
       <path d="M12 2 4 5v6c0 5 3.4 8 8 9 4.6-1 8-4 8-9V5l-8-3z" />
     </>
   ),
+  users: (
+    <>
+      <circle cx="9" cy="8" r="3.2" />
+      <path d="M3.5 20a5.5 5.5 0 0 1 11 0" />
+      <path d="M16 5.3a3.2 3.2 0 0 1 0 5.4" />
+      <path d="M17.5 14.4a5.5 5.5 0 0 1 3 5.1" />
+    </>
+  ),
   promos: (
     <>
       <path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.83 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z" />
@@ -148,7 +157,11 @@ function NavIcon({ name, className }: { name: string; className?: string }) {
 }
 
 function isActive(pathname: string, href: string) {
-  if (href === "/dashboard") return pathname === "/dashboard";
+  // Exact-match the section roots so they don't stay highlighted on sub-pages
+  // (e.g. Admin "Overview" shouldn't light up on /dashboard/admin/users).
+  if (href === "/dashboard" || href === "/dashboard/admin") {
+    return pathname === href;
+  }
   return pathname.startsWith(href);
 }
 
