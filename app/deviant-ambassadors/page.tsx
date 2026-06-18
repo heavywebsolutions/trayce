@@ -46,7 +46,7 @@ const css = `
     color:#EAF0FF;border-radius:0 0 28px 28px;padding:26px 22px 38px;text-align:center;
     box-shadow:0 20px 50px rgba(10,17,36,.28);
   }
-  .traxxr-amb .logo-img{height:28px;width:auto;display:inline-block}
+  .traxxr-amb .logo-img{height:19px;width:auto;display:inline-block}
   .traxxr-amb .vipline{display:inline-flex;align-items:center;gap:10px;margin:18px 0 4px;font-size:11px;letter-spacing:2.4px;text-transform:uppercase;color:var(--gold);font-weight:700}
   .traxxr-amb .vipline::before,.traxxr-amb .vipline::after{content:"";width:26px;height:1px;background:var(--gold);opacity:.7}
   .traxxr-amb .seal{display:inline-block;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#0A1124;background:linear-gradient(135deg,#F0D6A6,var(--gold));border-radius:999px;padding:7px 16px;margin:10px 0 16px}
