@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail } from "@/lib/email";
-import { lifecycleEmail, type LifecycleKind } from "@/lib/lifecycle";
+import { renderLifecycleEmail, type LifecycleKind } from "@/lib/lifecycle";
 import { emailFlags, flowOn } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
@@ -68,7 +68,7 @@ export async function GET(request: Request) {
       .maybeSingle();
     if (existing) continue;
 
-    const tmpl = lifecycleEmail(kind, { daysLeft });
+    const tmpl = await renderLifecycleEmail(admin, kind, { daysLeft });
     const ok = await sendEmail({
       to: email,
       subject: tmpl.subject,
@@ -118,7 +118,7 @@ export async function GET(request: Request) {
         .maybeSingle();
       if (already) continue;
 
-      const tmpl = lifecycleEmail("card_expiring", {
+      const tmpl = await renderLifecycleEmail(admin, "card_expiring", {
         cardLabel:
           (w.card_brand
             ? String(w.card_brand)[0].toUpperCase() +

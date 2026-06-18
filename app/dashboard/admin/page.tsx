@@ -15,12 +15,14 @@ function FlagRow({
   on,
   count,
   mutedByMaster,
+  editHref,
 }: {
   label: string;
   flagKey: string;
   on: boolean;
   count?: number;
   mutedByMaster?: boolean;
+  editHref?: string;
 }) {
   // When the master switch is off, every flow is effectively off no matter what
   // its own flag says. Show that clearly and disable the per-flow toggle so the
@@ -42,23 +44,33 @@ function FlagRow({
           </span>
         )}
       </span>
-      {mutedByMaster ? (
-        <span className="rounded-full bg-ink-100 px-3 py-1 text-xs font-semibold text-ink-500">
-          Off
-        </span>
-      ) : (
-        <form action={setEmailFlag}>
-          <input type="hidden" name="key" value={flagKey} />
-          <input type="hidden" name="enabled" value={on ? "false" : "true"} />
-          <button
-            className={`rounded-full px-3 py-1 text-xs font-semibold ${
-              on ? "bg-emerald-50 text-emerald-700" : "bg-ink-100 text-ink-500"
-            }`}
+      <div className="flex items-center gap-3">
+        {editHref && (
+          <Link
+            href={editHref}
+            className="text-xs font-medium text-accent hover:underline"
           >
-            {on ? "On" : "Off"}
-          </button>
-        </form>
-      )}
+            Edit copy
+          </Link>
+        )}
+        {mutedByMaster ? (
+          <span className="rounded-full bg-ink-100 px-3 py-1 text-xs font-semibold text-ink-500">
+            Off
+          </span>
+        ) : (
+          <form action={setEmailFlag}>
+            <input type="hidden" name="key" value={flagKey} />
+            <input type="hidden" name="enabled" value={on ? "false" : "true"} />
+            <button
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                on ? "bg-emerald-50 text-emerald-700" : "bg-ink-100 text-ink-500"
+              }`}
+            >
+              {on ? "On" : "Off"}
+            </button>
+          </form>
+        )}
+      </div>
     </li>
   );
 }
@@ -304,8 +316,9 @@ export default async function AdminMetricsPage() {
           Email automations
         </p>
         <p className="mb-3 text-xs text-ink-400">
-          Toggle flows on or off. The master switch turns off all lifecycle
-          emails at once.
+          Toggle flows on or off, or click &quot;Edit copy&quot; to change what
+          each email says. The master switch turns off all lifecycle emails at
+          once.
         </p>
         <ul className="divide-y divide-ink-100 text-sm">
           <FlagRow
@@ -319,6 +332,7 @@ export default async function AdminMetricsPage() {
             on={flags["email_welcome"] !== false}
             count={emailCounts.welcome ?? 0}
             mutedByMaster={masterOff}
+            editHref="/dashboard/admin/emails/welcome"
           />
           <FlagRow
             label="Mid-trial"
@@ -326,6 +340,7 @@ export default async function AdminMetricsPage() {
             on={flags["email_mid_trial"] !== false}
             count={emailCounts.mid_trial ?? 0}
             mutedByMaster={masterOff}
+            editHref="/dashboard/admin/emails/mid_trial"
           />
           <FlagRow
             label="Trial ending"
@@ -333,6 +348,7 @@ export default async function AdminMetricsPage() {
             on={flags["email_trial_ending"] !== false}
             count={emailCounts.trial_ending ?? 0}
             mutedByMaster={masterOff}
+            editHref="/dashboard/admin/emails/trial_ending"
           />
           <FlagRow
             label="Trial ended"
@@ -340,6 +356,7 @@ export default async function AdminMetricsPage() {
             on={flags["email_trial_ended"] !== false}
             count={emailCounts.trial_ended ?? 0}
             mutedByMaster={masterOff}
+            editHref="/dashboard/admin/emails/trial_ended"
           />
           <FlagRow
             label="Card expiring"
@@ -347,12 +364,14 @@ export default async function AdminMetricsPage() {
             on={flags["email_card_expiring"] !== false}
             count={emailCounts.card_expiring ?? 0}
             mutedByMaster={masterOff}
+            editHref="/dashboard/admin/emails/card_expiring"
           />
           <FlagRow
             label="Payment failed"
             flagKey="email_payment_failed"
             on={flags["email_payment_failed"] !== false}
             mutedByMaster={masterOff}
+            editHref="/dashboard/admin/emails/payment_failed"
           />
         </ul>
       </div>

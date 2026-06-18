@@ -3,7 +3,7 @@ import type Stripe from "stripe";
 import { stripe, planFromSubscription, getCardForCustomer } from "@/lib/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail } from "@/lib/email";
-import { lifecycleEmail } from "@/lib/lifecycle";
+import { renderLifecycleEmail } from "@/lib/lifecycle";
 import { proofReadyEmail } from "@/lib/print/emails";
 import { recordDiscountRedemption } from "@/lib/promo";
 
@@ -243,7 +243,7 @@ export async function POST(request: NextRequest) {
         if (firstFailure && to) {
           const flags = await emailFlags(admin);
           if (flowOn(flags, "payment_failed")) {
-            const tmpl = lifecycleEmail("payment_failed", {
+            const tmpl = await renderLifecycleEmail(admin, "payment_failed", {
               cardLabel: cardLabel(
                 (ws?.card_brand as string) ?? null,
                 (ws?.card_last4 as string) ?? null
