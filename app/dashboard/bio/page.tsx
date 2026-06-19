@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader } from "@/components/ui";
 import { CreateBioForm } from "@/components/CreateBioForm";
+import { BioThumb } from "@/components/BioThumb";
+import { DuplicateBioForm } from "@/components/DuplicateBioForm";
 import { formatNumber } from "@/lib/utils";
 import { loadEntitlements } from "@/lib/plan";
 import { activeBioPageIds, isOverBioLimit } from "@/lib/bioLimit";
@@ -11,7 +13,12 @@ import type { BioPage } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export default async function BioListPage() {
+export default async function BioListPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ dup?: string }>;
+}) {
+  const sp = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -41,6 +48,18 @@ export default async function BioListPage() {
         </p>
       </div>
 
+      {sp.dup === "badhandle" && (
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          That handle isn&apos;t available. Pick a different one and try the
+          duplicate again.
+        </div>
+      )}
+      {sp.dup === "err" && (
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Could not duplicate that page. Please try again.
+        </div>
+      )}
+
       {overLimit && (
         <div className="mb-6 rounded-2xl border border-accent-soft bg-accent-soft/50 p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -66,11 +85,17 @@ export default async function BioListPage() {
       )}
 
       <div className="grid gap-5 lg:grid-cols-[340px_minmax(0,1fr)]">
-        <Card className="h-fit p-6">
-          <h2 className="text-base font-semibold text-ink-900">New page</h2>
-          <p className="mb-5 mt-0.5 text-sm text-ink-500">Pick a handle.</p>
+        {/* New page — visually set apart with an accent panel */}
+        <div className="h-fit rounded-2xl border-2 border-accent/25 bg-accent-soft p-6 shadow-card">
+          <p className="text-xs font-semibold uppercase tracking-wide text-accent">
+            Get started
+          </p>
+          <h2 className="mt-1 text-base font-semibold text-ink-900">New page</h2>
+          <p className="mb-5 mt-0.5 text-sm text-ink-600">
+            Pick a handle and you&apos;re live in seconds.
+          </p>
           <CreateBioForm />
-        </Card>
+        </div>
 
         <Card>
           <CardHeader
@@ -82,10 +107,10 @@ export default async function BioListPage() {
               {list.map((p) => {
                 const isLive = live.has(p.id);
                 return (
-                  <li
-                    key={p.id}
-                    className="flex items-center justify-between gap-4 px-6 py-4"
-                  >
+                  <li key={p.id} className="flex items-center gap-4 px-6 py-4">
+                    <Link href={`/dashboard/bio/${p.id}`} className="shrink-0">
+                      <BioThumb page={p} />
+                    </Link>
                     <Link
                       href={`/dashboard/bio/${p.id}`}
                       className="min-w-0 flex-1"
@@ -108,6 +133,9 @@ export default async function BioListPage() {
                       <p className="truncate text-xs text-ink-400">
                         @{p.handle}
                       </p>
+                      <p className="mt-1 text-xs text-ink-500 sm:hidden">
+                        {formatNumber(p.views)} views
+                      </p>
                     </Link>
                     <div className="flex shrink-0 items-center gap-4">
                       {overLimit && !isLive && (
@@ -118,7 +146,8 @@ export default async function BioListPage() {
                           </button>
                         </form>
                       )}
-                      <div className="text-right">
+                      <DuplicateBioForm pageId={p.id} handle={p.handle} />
+                      <div className="hidden text-right sm:block">
                         <p className="tabular text-sm font-semibold text-ink-900">
                           {formatNumber(p.views)}
                         </p>

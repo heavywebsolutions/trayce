@@ -116,6 +116,102 @@ export async function createBioPage(
   redirect(`/dashboard/bio/${page.id}`);
 }
 
+// Duplicate a bio page (theme + all blocks) under a new handle. Lets you clone a
+// proven page for a different channel (e.g. your YouTube bio) without rebuilding
+// it, then A/B which bio drives more. The custom domain is intentionally NOT
+// copied (it's unique per page).
+export async function duplicateBioPage(formData: FormData): Promise<void> {
+  const sourceId = String(formData.get("source_id") || "");
+  if (!sourceId) return;
+  const { supabase, workspaceId } = await currentWorkspace();
+
+  const { data: src } = await supabase
+    .from("bio_pages")
+    .select("*")
+    .eq("id", sourceId)
+    .eq("workspace_id", workspaceId)
+    .maybeSingle();
+  if (!src) return;
+
+  // Page-count limit (free = 1).
+  const gate = await loadEntitlements();
+  if (gate && gate.ent.bioPageLimit !== Infinity) {
+    const { count } = await supabase
+      .from("bio_pages")
+      .select("id", { count: "exact", head: true })
+      .eq("workspace_id", workspaceId);
+    if ((count ?? 0) >= gate.ent.bioPageLimit) {
+      redirect("/dashboard/settings?upgrade=bio");
+    }
+  }
+
+  // New handle: use the one provided, else auto "<handle>-copy".
+  let handle = String(formData.get("handle") || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "");
+  if (!handle) {
+    const base = (src.handle as string).slice(0, 20).replace(/-+$/, "") || "page";
+    handle = `${base}-copy`;
+  }
+  if (
+    !/^[a-z0-9](?:[a-z0-9-]{1,28}[a-z0-9])?$/.test(handle) ||
+    RESERVED_HANDLES.has(handle)
+  ) {
+    redirect("/dashboard/bio?dup=badhandle");
+  }
+
+  // Ensure uniqueness, appending -2, -3, ... if needed.
+  let candidate = handle;
+  for (let i = 2; i < 60; i++) {
+    const { data: taken } = await supabase
+      .from("bio_pages")
+      .select("id")
+      .eq("handle", candidate)
+      .maybeSingle();
+    if (!taken) break;
+    candidate = `${handle}-${i}`.slice(0, 30).replace(/-+$/, "");
+  }
+
+  const { data: np, error } = await supabase
+    .from("bio_pages")
+    .insert({
+      workspace_id: workspaceId,
+      handle: candidate,
+      display_name: `${(src.display_name as string) || (src.handle as string)} (copy)`.slice(0, 80),
+      tagline: src.tagline,
+      avatar_url: src.avatar_url,
+      bg_image_url: src.bg_image_url,
+      bg_fit: src.bg_fit,
+      framed: src.framed,
+      panel_color: src.panel_color,
+      bg_color: src.bg_color,
+      accent_color: src.accent_color,
+      button_text_color: src.button_text_color,
+      font_family: src.font_family,
+      socials: src.socials,
+      paused: false,
+    })
+    .select("id")
+    .single();
+  if (error || !np) redirect("/dashboard/bio?dup=err");
+
+  // Copy every block (preserving order, thumbnails, config, hidden state).
+  const { data: links } = await supabase
+    .from("bio_links")
+    .select("kind,title,url,position,thumbnail_url,thumbnail_auto,config,hidden")
+    .eq("page_id", sourceId)
+    .order("position", { ascending: true });
+  if (links && links.length) {
+    await supabase
+      .from("bio_links")
+      .insert(links.map((l) => ({ ...l, page_id: np!.id, workspace_id: workspaceId })));
+  }
+
+  revalidatePath("/dashboard/bio");
+  redirect(`/dashboard/bio/${np!.id}`);
+}
+
 // Free plan over its page limit: keep one page live, park the rest. Visits to a
 // parked page redirect to the kept one. Upgrading lifts the limit and the
 // paused flag is ignored, so parked pages light back up automatically.
