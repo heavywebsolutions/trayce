@@ -10,6 +10,7 @@ import { decryptSecret } from "@/lib/crypto";
 import { RESERVED_HANDLES } from "@/lib/reserved";
 import { loadEntitlements } from "@/lib/plan";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isAdmin } from "@/lib/admin";
 
 const MEDIA_TYPES: Record<string, string> = {
   "image/png": "png",
@@ -57,7 +58,7 @@ async function currentWorkspace() {
     .limit(1)
     .single();
   if (!ws) throw new Error("No workspace");
-  return { supabase, workspaceId: ws.id };
+  return { supabase, workspaceId: ws.id, user };
 }
 
 const hex = (v: unknown, fallback: string) =>
@@ -76,12 +77,15 @@ export async function createBioPage(
   if (!/^[a-z0-9](?:[a-z0-9-]{1,28}[a-z0-9])?$/.test(handle)) {
     return { error: "Handle must be 3–30 letters, numbers, or hyphens." };
   }
-  if (RESERVED_HANDLES.has(handle)) {
-    return { error: "That handle is reserved, try another." };
-  }
   const display_name = String(formData.get("display_name") || "").trim() || handle;
 
-  const { supabase, workspaceId } = await currentWorkspace();
+  const { supabase, workspaceId, user } = await currentWorkspace();
+
+  // Reserved handles (brand names, route words) are blocked for everyone EXCEPT
+  // admins, so you can claim your own brand handles like @traxxr.
+  if (RESERVED_HANDLES.has(handle) && !isAdmin(user.email)) {
+    return { error: "That handle is reserved, try another." };
+  }
 
   // Bio page count limit (free = 1).
   const gate = await loadEntitlements();
@@ -123,7 +127,7 @@ export async function createBioPage(
 export async function duplicateBioPage(formData: FormData): Promise<void> {
   const sourceId = String(formData.get("source_id") || "");
   if (!sourceId) return;
-  const { supabase, workspaceId } = await currentWorkspace();
+  const { supabase, workspaceId, user } = await currentWorkspace();
 
   const { data: src } = await supabase
     .from("bio_pages")
@@ -156,7 +160,7 @@ export async function duplicateBioPage(formData: FormData): Promise<void> {
   }
   if (
     !/^[a-z0-9](?:[a-z0-9-]{1,28}[a-z0-9])?$/.test(handle) ||
-    RESERVED_HANDLES.has(handle)
+    (RESERVED_HANDLES.has(handle) && !isAdmin(user.email))
   ) {
     redirect("/dashboard/bio?dup=badhandle");
   }
