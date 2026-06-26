@@ -23,6 +23,7 @@ const groups: { label: string; items: NavItem[] }[] = [
     items: [
       { href: "/dashboard/codes", label: "QR Codes", short: "Codes", icon: "codes" },
       { href: "/dashboard/bio", label: "Bio Pages", short: "Bio", icon: "bio" },
+      { href: "/dashboard/booking", label: "Booking", short: "Book", icon: "booking" },
       { href: "/dashboard/print", label: "Print & Ship", short: "Print", icon: "print" },
     ],
   },
@@ -77,6 +78,13 @@ const ICONS: Record<string, React.ReactNode> = {
     <>
       <path d="M10 13a4 4 0 0 0 5.66 0l2.83-2.83a4 4 0 0 0-5.66-5.66L11.5 6" />
       <path d="M14 11a4 4 0 0 0-5.66 0L5.5 13.83a4 4 0 0 0 5.66 5.66L12.5 18" />
+    </>
+  ),
+  booking: (
+    <>
+      <rect x="3" y="4" width="18" height="17" rx="2" />
+      <path d="M3 9h18M8 2v4M16 2v4" />
+      <path d="m9 15 2 2 4-4" />
     </>
   ),
   print: (

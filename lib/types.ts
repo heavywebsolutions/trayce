@@ -148,3 +148,31 @@ export interface Scan {
   city: string | null;
   user_agent: string | null;
 }
+
+export interface BookingLink {
+  id: string;
+  workspace_id: string;
+  name: string;
+  destination_url: string;
+  capture_lead: boolean;
+  capture_collect_phone: boolean;
+  avg_value_cents: number | null;
+  status: CodeStatus;
+  tap_count: number;
+  created_at: string;
+  updated_at: string;
+  archived_at: string | null;
+}
+
+export interface BookingPlacement {
+  id: string;
+  booking_link_id: string;
+  workspace_id: string;
+  label: string;
+  channel: string;
+  slug: string;
+  status: CodeStatus;
+  tap_count: number;
+  created_at: string;
+  archived_at: string | null;
+}

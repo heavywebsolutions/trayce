@@ -21,6 +21,7 @@ export type Entitlements = {
   emailSync: boolean; // integrations
   shopifyBlocks: boolean; // shoppable bio blocks
   customDomain: boolean; // custom domain on bio pages (Starter+)
+  bookingAttribution: boolean; // booking links + placements + funnel (Growth+)
   bulk: boolean; // bulk generation / multiple workspaces
 };
 
@@ -34,6 +35,7 @@ export function entitlementsFor(key: PlanKey): Entitlements {
     emailSync: r >= 2,
     shopifyBlocks: r >= 2,
     customDomain: r >= 1,
+    bookingAttribution: r >= 2,
     bulk: r >= 3,
   };
 }
