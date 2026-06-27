@@ -23,7 +23,8 @@ function LockedTeaser({ noun }: { noun: string }) {
   );
 }
 
-function StatCard({
+// Compact secondary metric — tight, dense, lets the hero carry the weight.
+function MiniStat({
   label,
   value,
   hint,
@@ -33,11 +34,89 @@ function StatCard({
   hint?: string;
 }) {
   return (
-    <Card className="p-5">
-      <p className="text-sm font-medium text-ink-500">{label}</p>
-      <p className="tabular mt-2 text-3xl font-semibold text-ink-900">{value}</p>
-      {hint && <p className="mt-1 text-xs text-ink-400">{hint}</p>}
+    <Card className="p-3.5 sm:p-4">
+      <p className="text-xs font-medium text-ink-500">{label}</p>
+      <p className="tabular mt-1 text-xl font-semibold text-ink-900 sm:text-2xl">
+        {value}
+      </p>
+      {hint && <p className="mt-0.5 truncate text-[11px] text-ink-400">{hint}</p>}
     </Card>
+  );
+}
+
+// Momentum within the selected range: recent half vs earlier half. Honest
+// directional signal without needing a separate previous-period query.
+function trendDelta(buckets: Bucket[]): number | null {
+  if (buckets.length < 4) return null;
+  const mid = Math.floor(buckets.length / 2);
+  const first = buckets.slice(0, mid).reduce((s, b) => s + b.total, 0);
+  const second = buckets.slice(mid).reduce((s, b) => s + b.total, 0);
+  if (first === 0) return second > 0 ? 100 : null;
+  return Math.round(((second - first) / first) * 100);
+}
+
+// Smooth-ish area + line chart driven by the same buckets the bars used.
+// non-scaling-stroke keeps the line crisp while the SVG stretches to full width.
+function TrendChart({
+  buckets,
+  maxTotal,
+  noun,
+}: {
+  buckets: Bucket[];
+  maxTotal: number;
+  noun: string;
+}) {
+  const n = buckets.length;
+  const W = 300;
+  const H = 84;
+  const pad = 4;
+  const xy = (i: number, val: number): [number, number] => {
+    const x = n === 1 ? W / 2 : (i / (n - 1)) * W;
+    const y = H - pad - (val / maxTotal) * (H - pad * 2);
+    return [x, y];
+  };
+  const path = (key: "total" | "unique") =>
+    buckets
+      .map((b, i) => {
+        const [x, y] = xy(i, b[key]);
+        return `${i === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`;
+      })
+      .join(" ");
+  const totalLine = path("total");
+  const area = `${totalLine} L${W} ${H} L0 ${H} Z`;
+  const [lx, ly] = xy(n - 1, buckets[n - 1].total);
+
+  return (
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      width="100%"
+      height="84"
+      preserveAspectRatio="none"
+      className="mt-4 block overflow-visible"
+      role="img"
+      aria-label={`${noun} trend over time`}
+    >
+      <path d={area} fill="rgb(37 135 222 / 0.10)" stroke="none" />
+      <path
+        d={path("unique")}
+        fill="none"
+        stroke="rgb(37 135 222 / 0.35)"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        vectorEffect="non-scaling-stroke"
+      />
+      <path
+        d={totalLine}
+        fill="none"
+        stroke="#2587DE"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        vectorEffect="non-scaling-stroke"
+      />
+      <circle cx={lx} cy={ly} r="3.5" fill="#2587DE" vectorEffect="non-scaling-stroke" />
+    </svg>
   );
 }
 
@@ -108,87 +187,81 @@ export function AnalyticsView({
   const noun = L.noun ?? "scan";
   const empty = `No ${noun}s in this range yet.`;
 
+  const hero = stats[0];
+  const secondary = stats.slice(1);
+  const delta = locked ? null : trendDelta(buckets);
+
   return (
     <>
-      <div className="mb-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {stats.map((s) => (
-          <StatCard key={s.label} {...s} />
-        ))}
-      </div>
+      {/* Hero: the headline metric + its trend, above the fold */}
+      {hero && (
+        <Card className="mb-4 p-5 sm:p-6">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-ink-500">{hero.label}</p>
+              <p className="tabular mt-1 text-3xl font-semibold text-ink-900 sm:text-4xl">
+                {hero.value}
+              </p>
+              {hero.hint && (
+                <p className="mt-0.5 text-xs text-ink-400">{hero.hint}</p>
+              )}
+            </div>
+            {delta !== null && (
+              <span
+                className={
+                  "shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold " +
+                  (delta >= 0
+                    ? "bg-emerald-50 text-emerald-600"
+                    : "bg-rose-50 text-rose-600")
+                }
+              >
+                {delta >= 0 ? "↑" : "↓"} {Math.abs(delta)}%
+              </span>
+            )}
+          </div>
+          {!locked && buckets.length > 0 && (
+            <TrendChart buckets={buckets} maxTotal={maxTotal} noun={noun} />
+          )}
+        </Card>
+      )}
+
+      {/* Secondary metrics: dense, compact, no wasted air */}
+      {secondary.length > 0 && (
+        <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-3">
+          {secondary.map((s) => (
+            <MiniStat key={s.label} {...s} />
+          ))}
+        </div>
+      )}
 
       {locked ? (
         <LockedTeaser noun={noun} />
       ) : (
         <>
-      {/* Scans over time: total vs unique */}
-      <Card className="mb-5 p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-ink-900">
-            {L.chartTitle ?? "Scans over time"}
-          </h2>
-          <div className="flex items-center gap-3 text-xs text-ink-500">
-            <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-sm bg-accent/30" /> Total
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-sm bg-accent" /> Unique
-            </span>
-          </div>
-        </div>
-        <div className="flex h-44 items-end gap-1">
-          {buckets.map((b) => (
-            <div
-              key={b.key}
-              title={`${b.label}: ${b.total} ${noun}${b.total === 1 ? "" : "s"} · ${b.unique} unique`}
-              className="relative h-full flex-1"
-            >
-              <div
-                className="absolute bottom-0 w-full rounded-t bg-accent/30"
-                style={{
-                  height: `${Math.max(b.total > 0 ? 4 : 0, Math.round((b.total / maxTotal) * 100))}%`,
-                }}
+          <div className="grid gap-5 lg:grid-cols-2">
+            <Card>
+              <CardHeader title="Operating system" subtitle={`Of all ${noun}s`} />
+              <BarList rows={os} emptyText={empty} />
+            </Card>
+
+            <Card>
+              <CardHeader
+                title="Top locations"
+                subtitle={L.locationsSubtitle ?? "Where scans happen (IP-based)"}
               />
-              <div
-                className="absolute bottom-0 w-full rounded-t bg-accent"
-                style={{
-                  height: `${Math.max(b.unique > 0 ? 4 : 0, Math.round((b.unique / maxTotal) * 100))}%`,
-                }}
-              />
-            </div>
-          ))}
-        </div>
-        {buckets.length > 0 && (
-          <div className="mt-2 flex justify-between text-[11px] text-ink-400">
-            <span>{buckets[0].label}</span>
-            <span>{buckets[buckets.length - 1].label}</span>
+              <BarList rows={locations} emptyText="No location data yet." />
+            </Card>
           </div>
-        )}
-      </Card>
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        <Card>
-          <CardHeader title="Operating system" subtitle={`Of all ${noun}s`} />
-          <BarList rows={os} emptyText={empty} />
-        </Card>
-
-        <Card>
-          <CardHeader
-            title="Top locations"
-            subtitle={L.locationsSubtitle ?? "Where scans happen (IP-based)"}
-          />
-          <BarList rows={locations} emptyText="No location data yet." />
-        </Card>
-      </div>
-
-      {topCodes && (
-        <Card className="mt-5">
-          <CardHeader
-            title={L.topTitle ?? "Top codes"}
-            subtitle={L.topSubtitle ?? "Most scanned in range"}
-          />
-          <BarList rows={topCodes} emptyText={empty} />
-        </Card>
-      )}
+          {topCodes && (
+            <Card className="mt-5">
+              <CardHeader
+                title={L.topTitle ?? "Top codes"}
+                subtitle={L.topSubtitle ?? "Most scanned in range"}
+              />
+              <BarList rows={topCodes} emptyText={empty} />
+            </Card>
+          )}
         </>
       )}
     </>

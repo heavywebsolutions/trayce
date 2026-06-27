@@ -96,8 +96,8 @@ export function AnalyticsControls() {
           </button>
         </div>
 
-        {/* Granularity, pushed to the right */}
-        <div className="ml-auto inline-flex items-center gap-2">
+        {/* Granularity, pushed to the right. Hidden on phones to cut chrome above the chart. */}
+        <div className="ml-auto hidden items-center gap-2 sm:inline-flex">
           <span className="hidden text-xs font-medium uppercase tracking-wide text-ink-400 sm:inline">
             View by
           </span>
