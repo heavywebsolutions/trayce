@@ -42,6 +42,23 @@ function BioIcon({ className }: { className?: string }) {
   );
 }
 
+function BookingIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="M8 2v4M16 2v4" />
+      <rect width="18" height="18" x="3" y="4" rx="2" />
+      <path d="M3 10h18" />
+      <path d="m9 16 2 2 4-4" />
+    </svg>
+  );
+}
+
+function SourceIcon({ type, className }: { type: SourceType; className?: string }) {
+  if (type === "qr") return <QrIcon className={className} />;
+  if (type === "booking") return <BookingIcon className={className} />;
+  return <BioIcon className={className} />;
+}
+
 // Small pill marking where a lead came from.
 function SourceBadge({
   type,
@@ -52,21 +69,20 @@ function SourceBadge({
   label: string;
   detail?: string | null;
 }) {
-  const isQr = type === "qr";
+  const tone =
+    type === "qr"
+      ? "border-blue-100 bg-accent-soft text-accent"
+      : type === "booking"
+        ? "border-emerald-100 bg-emerald-50 text-emerald-700"
+        : "border-violet-100 bg-violet-50 text-violet-700";
   return (
     <span
       className={cn(
         "inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium",
-        isQr
-          ? "border-blue-100 bg-accent-soft text-accent"
-          : "border-violet-100 bg-violet-50 text-violet-700"
+        tone
       )}
     >
-      {isQr ? (
-        <QrIcon className="h-3.5 w-3.5 shrink-0" />
-      ) : (
-        <BioIcon className="h-3.5 w-3.5 shrink-0" />
-      )}
+      <SourceIcon type={type} className="h-3.5 w-3.5 shrink-0" />
       <span className="truncate">{label}</span>
       {detail && (
         <span className="hidden truncate font-normal opacity-70 sm:inline">
@@ -116,7 +132,10 @@ export default async function LeadsPage({
 }) {
   const sp = await searchParams;
   const range = resolveLeadRange(sp.r);
-  const src = sp.src === "qr" || sp.src === "bio" ? sp.src : "all";
+  const src =
+    sp.src === "qr" || sp.src === "bio" || sp.src === "booking"
+      ? sp.src
+      : "all";
 
   const supabase = await createClient();
   const {
@@ -128,26 +147,31 @@ export default async function LeadsPage({
   const toIso = range.to.toISOString();
 
   // RLS scopes every query to the signed-in owner's workspace.
-  const [{ data: leadRows }, { data: subRows }, { data: pageRows }] =
-    await Promise.all([
-      supabase
-        .from("leads")
-        .select(
-          "email, name, phone, city, region, country, source, created_at, code_id, page_id, codes(title)"
-        )
-        .gte("created_at", fromIso)
-        .lte("created_at", toIso)
-        .order("created_at", { ascending: false })
-        .limit(5000),
-      supabase
-        .from("bio_subscribers")
-        .select("email, city, region, country, created_at, page_id")
-        .gte("created_at", fromIso)
-        .lte("created_at", toIso)
-        .order("created_at", { ascending: false })
-        .limit(5000),
-      supabase.from("bio_pages").select("id, display_name, handle"),
-    ]);
+  const [
+    { data: leadRows },
+    { data: subRows },
+    { data: pageRows },
+    { data: bookingRows },
+  ] = await Promise.all([
+    supabase
+      .from("leads")
+      .select(
+        "email, name, phone, city, region, country, source, created_at, code_id, page_id, booking_link_id, placement_id, codes(title)"
+      )
+      .gte("created_at", fromIso)
+      .lte("created_at", toIso)
+      .order("created_at", { ascending: false })
+      .limit(5000),
+    supabase
+      .from("bio_subscribers")
+      .select("email, city, region, country, created_at, page_id")
+      .gte("created_at", fromIso)
+      .lte("created_at", toIso)
+      .order("created_at", { ascending: false })
+      .limit(5000),
+    supabase.from("bio_pages").select("id, display_name, handle"),
+    supabase.from("booking_links").select("id, name"),
+  ]);
 
   const pageName = new Map<string, string>();
   for (const p of pageRows ?? []) {
@@ -156,11 +180,16 @@ export default async function LeadsPage({
       (p.display_name as string) || `@${p.handle as string}`
     );
   }
+  const bookingName = new Map<string, string>();
+  for (const b of bookingRows ?? []) {
+    bookingName.set(b.id as string, (b.name as string) || "Booking");
+  }
 
   const all = unifyLeads({
     leads: leadRows ?? [],
     subscribers: subRows ?? [],
     pageName,
+    bookingName,
   });
 
   const rows = all.filter((l) => (src === "all" ? true : l.sourceType === src));
@@ -168,6 +197,7 @@ export default async function LeadsPage({
   const total = rows.length;
   const qrCount = rows.filter((l) => l.sourceType === "qr").length;
   const bioCount = rows.filter((l) => l.sourceType === "bio").length;
+  const bookingCount = rows.filter((l) => l.sourceType === "booking").length;
   const pct = (n: number) =>
     total > 0 ? `${Math.round((n / total) * 100)}% of total` : "—";
   const sources = topSources(rows);
@@ -201,7 +231,7 @@ export default async function LeadsPage({
       <LeadsControls />
 
       {/* At-a-glance totals */}
-      <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile
           label="Total leads"
           value={formatNumber(total)}
@@ -216,6 +246,11 @@ export default async function LeadsPage({
           label="From bio pages"
           value={formatNumber(bioCount)}
           sub={pct(bioCount)}
+        />
+        <StatTile
+          label="From booking"
+          value={formatNumber(bookingCount)}
+          sub={pct(bookingCount)}
         />
       </div>
 
@@ -254,11 +289,17 @@ export default async function LeadsPage({
                 <li key={`${s.type}:${s.label}`}>
                   <div className="flex items-center justify-between gap-2">
                     <span className="flex min-w-0 items-center gap-1.5">
-                      {s.type === "qr" ? (
-                        <QrIcon className="h-3.5 w-3.5 shrink-0 text-accent" />
-                      ) : (
-                        <BioIcon className="h-3.5 w-3.5 shrink-0 text-violet-600" />
-                      )}
+                      <SourceIcon
+                        type={s.type}
+                        className={cn(
+                          "h-3.5 w-3.5 shrink-0",
+                          s.type === "qr"
+                            ? "text-accent"
+                            : s.type === "booking"
+                              ? "text-emerald-600"
+                              : "text-violet-600"
+                        )}
+                      />
                       <span className="truncate text-sm text-ink-700">
                         {s.label}
                       </span>

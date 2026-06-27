@@ -54,6 +54,41 @@ export default async function BookingPage({
         </p>
       </div>
 
+      {/* Plain-language explainer of what this tool is and where leads go. */}
+      <div className="mb-6 rounded-2xl border border-ink-200 bg-white p-5 shadow-card">
+        <h2 className="text-sm font-semibold text-ink-900">
+          How Booking attribution works
+        </h2>
+        <p className="mt-1.5 text-sm leading-relaxed text-ink-600">
+          Point it at the booking page you already use (Square, Calendly,
+          Booksy, anything), then make a tagged version for each spot you post
+          it: window decal, flash sheet, Instagram bio. Each one gets its own QR
+          and short link. When someone taps it, TRAXXR records which spot they
+          came from, can grab their name and email first, then forwards them to
+          your real booking page.
+        </p>
+        <ul className="mt-3 grid gap-2 sm:grid-cols-3">
+          <li className="rounded-xl bg-ink-50 px-3.5 py-3">
+            <p className="text-xs font-semibold text-ink-900">See what works</p>
+            <p className="mt-0.5 text-xs text-ink-500">
+              Which sign or channel actually drives bookings, side by side.
+            </p>
+          </li>
+          <li className="rounded-xl bg-ink-50 px-3.5 py-3">
+            <p className="text-xs font-semibold text-ink-900">Own the customer</p>
+            <p className="mt-0.5 text-xs text-ink-500">
+              Capture the lead before hand-off, even when your booker hides it.
+            </p>
+          </li>
+          <li className="rounded-xl bg-ink-50 px-3.5 py-3">
+            <p className="text-xs font-semibold text-ink-900">Leads land here</p>
+            <p className="mt-0.5 text-xs text-ink-500">
+              Every captured contact flows into your Leads inbox, tagged by spot.
+            </p>
+          </li>
+        </ul>
+      </div>
+
       {!entitled && (
         <div className="mb-6 rounded-2xl border border-accent-soft bg-accent-soft/50 p-5">
           <div className="flex flex-wrap items-start justify-between gap-4">

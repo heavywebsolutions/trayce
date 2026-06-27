@@ -16,6 +16,7 @@ const sources = [
   { v: "all", label: "All sources" },
   { v: "qr", label: "QR codes" },
   { v: "bio", label: "Bio pages" },
+  { v: "booking", label: "Booking" },
 ];
 
 export function LeadsControls() {

@@ -92,3 +92,48 @@ describe("unifyLeads", () => {
     expect(ranked[0]).toMatchObject({ label: "@deviantink", count: 2 });
   });
 });
+
+describe("unifyLeads booking source", () => {
+  const result = unifyLeads({
+    leads: [
+      {
+        email: "d@x.com",
+        name: "Dee",
+        created_at: "2026-06-13T10:00:00Z",
+        code_id: null,
+        page_id: null,
+        booking_link_id: "bl1",
+        placement_id: "pl1",
+        source: "Booking · Flash sheet",
+      },
+    ],
+    subscribers: [],
+    pageName: new Map(),
+    bookingName: new Map([["bl1", "Tattoo sessions"]]),
+  });
+
+  it("tags booking leads with the link name + placement detail", () => {
+    const d = result.find((r) => r.email === "d@x.com")!;
+    expect(d.sourceType).toBe("booking");
+    expect(d.sourceLabel).toBe("Tattoo sessions");
+    expect(d.sourceDetail).toBe("Flash sheet");
+  });
+
+  it("falls back to a generic label when the link name is unknown", () => {
+    const r = unifyLeads({
+      leads: [
+        {
+          email: "e@x.com",
+          created_at: "2026-06-13T10:00:00Z",
+          booking_link_id: "missing",
+          source: "Booking · Counter card",
+        },
+      ],
+      subscribers: [],
+      pageName: new Map(),
+    });
+    expect(r[0].sourceType).toBe("booking");
+    expect(r[0].sourceLabel).toBe("Booking");
+    expect(r[0].sourceDetail).toBe("Counter card");
+  });
+});

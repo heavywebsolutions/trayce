@@ -3,6 +3,8 @@
 import { headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { syncContact } from "@/lib/integrations";
+import { sendEmail } from "@/lib/email";
+import { renderEmail } from "@/lib/lifecycle";
 
 export type BookingLeadState = { ok?: boolean; error?: string } | undefined;
 
@@ -93,5 +95,40 @@ export async function submitBookingLead(
     source,
     ...geo,
   });
+
+  // Best-effort: instantly ping the owner so they can jump on a hot booking
+  // lead. Never blocks the hand-off if email is unconfigured or fails.
+  try {
+    const { data: ws } = await admin
+      .from("workspaces")
+      .select("owner_id")
+      .eq("id", placement.workspace_id)
+      .maybeSingle();
+    const ownerId = ws?.owner_id as string | undefined;
+    if (ownerId) {
+      const { data: prof } = await admin
+        .from("profiles")
+        .select("email")
+        .eq("id", ownerId)
+        .maybeSingle();
+      const to = prof?.email as string | undefined;
+      if (to) {
+        const tmpl = await renderEmail(admin, "new_booking_lead", {
+          name: name || "Someone",
+          email,
+          placement: placement.label,
+        });
+        await sendEmail({
+          to,
+          subject: tmpl.subject,
+          html: tmpl.html,
+          replyTo: email,
+        });
+      }
+    }
+  } catch {
+    // A notification failure must never affect the visitor's booking.
+  }
+
   return { ok: true };
 }

@@ -20,7 +20,12 @@ export type LifecycleKind =
   | "payment_failed";
 
 // All automated emails.
-export type EmailKind = LifecycleKind | "proof_ready" | "shipped" | "new_signup";
+export type EmailKind =
+  | LifecycleKind
+  | "proof_ready"
+  | "shipped"
+  | "new_signup"
+  | "new_booking_lead";
 
 export type EmailTemplate = {
   subject: string;
@@ -146,6 +151,18 @@ export const EMAILS: Record<EmailKind, EmailMeta> = {
       ctaText: "",
     },
   },
+  new_booking_lead: {
+    label: "New booking lead alert (to you)",
+    group: "System",
+    hasCta: true,
+    vars: ["{name}", "{email}", "{placement}"],
+    defaults: {
+      subject: "New booking lead: {name}",
+      heading: "Someone wants to book",
+      body: "A new lead just gave you their details before heading to your booker.\n\n<strong>{name}</strong> &middot; {email}\n\nFrom: {placement}\n\nReply to this email to reach them directly.",
+      ctaText: "View your leads",
+    },
+  },
 };
 
 export const EMAIL_KINDS = Object.keys(EMAILS) as EmailKind[];
@@ -172,6 +189,8 @@ export function ctaHrefFor(
     case "proof_ready":
     case "shipped":
       return `${APP_URL}/dashboard/orders/${opts?.orderId ?? "{orderId}"}`;
+    case "new_booking_lead":
+      return `${APP_URL}/dashboard/leads?src=booking`;
     case "new_signup":
       return null;
   }
@@ -184,6 +203,8 @@ type Opts = {
   productName?: string;
   orderId?: string;
   email?: string;
+  name?: string;
+  placement?: string;
   tracking?: string | null;
   trackingUrl?: string | null;
 };
@@ -204,6 +225,8 @@ function fill(s: string, opts?: Opts): string {
     .split("{expLabel}").join(opts?.expLabel || "soon")
     .split("{productName}").join(opts?.productName || "order")
     .split("{email}").join(opts?.email || "")
+    .split("{name}").join(opts?.name || "Someone")
+    .split("{placement}").join(opts?.placement || "your booking link")
     .split("{tracking}").join(trackingLine(opts));
 }
 

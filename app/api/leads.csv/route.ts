@@ -15,30 +15,38 @@ export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
   const range = resolveLeadRange(params.get("r"));
   const srcParam = params.get("src");
-  const src = srcParam === "qr" || srcParam === "bio" ? srcParam : "all";
+  const src =
+    srcParam === "qr" || srcParam === "bio" || srcParam === "booking"
+      ? srcParam
+      : "all";
   const fromIso = range.from.toISOString();
   const toIso = range.to.toISOString();
 
-  const [{ data: leadRows }, { data: subRows }, { data: pageRows }] =
-    await Promise.all([
-      supabase
-        .from("leads")
-        .select(
-          "email, name, phone, city, region, country, source, created_at, code_id, page_id, codes(title)"
-        )
-        .gte("created_at", fromIso)
-        .lte("created_at", toIso)
-        .order("created_at", { ascending: false })
-        .limit(50000),
-      supabase
-        .from("bio_subscribers")
-        .select("email, city, region, country, created_at, page_id")
-        .gte("created_at", fromIso)
-        .lte("created_at", toIso)
-        .order("created_at", { ascending: false })
-        .limit(50000),
-      supabase.from("bio_pages").select("id, display_name, handle"),
-    ]);
+  const [
+    { data: leadRows },
+    { data: subRows },
+    { data: pageRows },
+    { data: bookingRows },
+  ] = await Promise.all([
+    supabase
+      .from("leads")
+      .select(
+        "email, name, phone, city, region, country, source, created_at, code_id, page_id, booking_link_id, placement_id, codes(title)"
+      )
+      .gte("created_at", fromIso)
+      .lte("created_at", toIso)
+      .order("created_at", { ascending: false })
+      .limit(50000),
+    supabase
+      .from("bio_subscribers")
+      .select("email, city, region, country, created_at, page_id")
+      .gte("created_at", fromIso)
+      .lte("created_at", toIso)
+      .order("created_at", { ascending: false })
+      .limit(50000),
+    supabase.from("bio_pages").select("id, display_name, handle"),
+    supabase.from("booking_links").select("id, name"),
+  ]);
 
   const pageName = new Map<string, string>();
   for (const p of pageRows ?? []) {
@@ -47,11 +55,16 @@ export async function GET(request: NextRequest) {
       (p.display_name as string) || `@${p.handle as string}`
     );
   }
+  const bookingName = new Map<string, string>();
+  for (const b of bookingRows ?? []) {
+    bookingName.set(b.id as string, (b.name as string) || "Booking");
+  }
 
   const rows = unifyLeads({
     leads: leadRows ?? [],
     subscribers: subRows ?? [],
     pageName,
+    bookingName,
   }).filter((l) => (src === "all" ? true : l.sourceType === src));
 
   const esc = (v: unknown) => {
@@ -62,7 +75,11 @@ export async function GET(request: NextRequest) {
     "source_type,source,detail,email,name,phone,city,region,country,created_at";
   const body = rows.map((l) =>
     [
-      l.sourceType === "qr" ? "QR code" : "Bio page",
+      l.sourceType === "qr"
+        ? "QR code"
+        : l.sourceType === "booking"
+          ? "Booking"
+          : "Bio page",
       l.sourceLabel,
       l.sourceDetail ?? "",
       l.email,

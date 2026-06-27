@@ -5,7 +5,7 @@
 //   3. Bio page subscribe block-> bio_subscribers row with page_id
 // Keeping the range + unify logic here means the page and the CSV stay in sync.
 
-export type SourceType = "qr" | "bio";
+export type SourceType = "qr" | "bio" | "booking";
 
 export type UnifiedLead = {
   email: string;
@@ -59,6 +59,8 @@ type RawLead = {
   created_at: string;
   code_id?: string | null;
   page_id?: string | null;
+  booking_link_id?: string | null;
+  placement_id?: string | null;
   source?: string | null;
   codes?: { title?: string | null } | { title?: string | null }[] | null;
 };
@@ -84,28 +86,12 @@ export function unifyLeads(opts: {
   leads: RawLead[];
   subscribers: RawSubscriber[];
   pageName: Map<string, string>;
+  bookingName?: Map<string, string>;
 }): UnifiedLead[] {
-  const { leads, subscribers, pageName } = opts;
+  const { leads, subscribers, pageName, bookingName } = opts;
 
   const fromLeads: UnifiedLead[] = leads.map((l) => {
-    const title = codeTitle(l.codes);
-    if (l.code_id) {
-      return {
-        email: l.email,
-        name: l.name ?? null,
-        phone: l.phone ?? null,
-        city: l.city ?? null,
-        region: l.region ?? null,
-        country: l.country ?? null,
-        created_at: l.created_at,
-        sourceType: "qr",
-        sourceLabel: title || "QR code",
-        sourceDetail: null,
-      };
-    }
-    // No code_id => came from a bio page form block.
-    const label = l.page_id ? pageName.get(l.page_id) ?? "Bio page" : "Bio page";
-    return {
+    const base = {
       email: l.email,
       name: l.name ?? null,
       phone: l.phone ?? null,
@@ -113,6 +99,36 @@ export function unifyLeads(opts: {
       region: l.region ?? null,
       country: l.country ?? null,
       created_at: l.created_at,
+    };
+
+    // QR lead-capture code.
+    if (l.code_id) {
+      return {
+        ...base,
+        sourceType: "qr",
+        sourceLabel: codeTitle(l.codes) || "QR code",
+        sourceDetail: null,
+      };
+    }
+
+    // Booking attribution capture (placement -> booker hand-off).
+    if (l.booking_link_id) {
+      const label = bookingName?.get(l.booking_link_id) ?? "Booking";
+      const placement = l.source
+        ? l.source.replace(/^Booking · /, "")
+        : null;
+      return {
+        ...base,
+        sourceType: "booking",
+        sourceLabel: label,
+        sourceDetail: placement || "Booking",
+      };
+    }
+
+    // Otherwise it came from a bio page form block.
+    const label = l.page_id ? pageName.get(l.page_id) ?? "Bio page" : "Bio page";
+    return {
+      ...base,
       sourceType: "bio",
       sourceLabel: label,
       sourceDetail: l.source || "Form",
