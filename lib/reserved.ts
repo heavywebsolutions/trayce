@@ -42,4 +42,5 @@ export const RESERVED_HANDLES = new Set<string>([
   "vip-access",
   "deviant-ambassadors",
   "ambassadors",
+  "for",
 ]);
