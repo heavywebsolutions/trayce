@@ -48,6 +48,7 @@ const ADMIN_GROUP: { label: string; items: NavItem[] } = {
   items: [
     { href: "/dashboard/admin", label: "Overview", icon: "overview", desktopOnly: true },
     { href: "/dashboard/admin/users", label: "Users", icon: "users", desktopOnly: true },
+    { href: "/dashboard/admin/campaigns", label: "Campaign Pages", icon: "campaigns", desktopOnly: true },
     { href: "/dashboard/admin/promos", label: "Promo codes", icon: "promos", desktopOnly: true },
     { href: "/dashboard/admin/orders", label: "Fulfillment", icon: "fulfillment", desktopOnly: true },
   ],
@@ -141,6 +142,12 @@ const ICONS: Record<string, React.ReactNode> = {
       <circle cx="9" cy="7" r="4" />
       <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </>
+  ),
+  campaigns: (
+    <>
+      <path d="m3 11 18-5v12L3 14v-3z" />
+      <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" />
     </>
   ),
   promos: (
