@@ -78,6 +78,8 @@ export interface BioLinkConfig {
   collect_name?: boolean;
   collect_phone?: boolean;
   product?: BioProduct;
+  booking_link_id?: string; // "book" block: which booking link it points at
+  placement_id?: string; // "book" block: the auto-created bio-channel placement
 }
 
 export interface BioLink {

@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeUrl } from "@/lib/utils";
+import { generateSlug } from "@/lib/slug";
+import { bookingUrlFor } from "@/lib/booking";
 import { SOCIAL_PLATFORMS, faviconFor } from "@/lib/bio";
 import { productHandleFromInput, fetchShopifyProduct } from "@/lib/shopify";
 import { decryptSecret } from "@/lib/crypto";
@@ -330,19 +332,23 @@ export async function addBioLink(formData: FormData): Promise<void> {
     "image",
     "form",
     "product",
+    "book",
   ].includes(String(formData.get("kind")))
     ? String(formData.get("kind"))
     : "link";
   if (!pageId) return;
 
   // Gate premium block types.
-  if (kind === "product" || kind === "form") {
+  if (kind === "product" || kind === "form" || kind === "book") {
     const gate = await loadEntitlements();
     if (kind === "product" && gate && !gate.ent.shopifyBlocks) {
       redirect("/dashboard/settings?upgrade=shopify");
     }
     if (kind === "form" && gate && !gate.ent.leadCapture) {
       redirect("/dashboard/settings?upgrade=leads");
+    }
+    if (kind === "book" && gate && !gate.ent.bookingAttribution) {
+      redirect("/dashboard/settings?upgrade=booking");
     }
   }
 
@@ -357,8 +363,67 @@ export async function addBioLink(formData: FormData): Promise<void> {
     .maybeSingle();
   const position = (last?.position ?? -1) + 1;
 
+  // "Book" block: the user picked an existing booking link. Auto-create a
+  // bio-channel placement so the button is attributed like any other placement,
+  // and point the button at the /b/<slug> tap URL (capture + attribution).
+  let bookUrl = "";
+  let bookConfig: { booking_link_id: string; placement_id: string } | null =
+    null;
+  if (kind === "book") {
+    const bookingLinkId = String(formData.get("booking_link_id") || "");
+    const { data: bl } = await supabase
+      .from("booking_links")
+      .select("id")
+      .eq("id", bookingLinkId)
+      .maybeSingle();
+    if (!bl) return; // not a booking link this workspace owns (RLS-scoped)
+
+    const { data: pg } = await supabase
+      .from("bio_pages")
+      .select("handle")
+      .eq("id", pageId)
+      .maybeSingle();
+    const label = `Bio: @${(pg?.handle as string) || "page"}`;
+
+    let slug = generateSlug();
+    for (let i = 0; i < 5; i++) {
+      const { data: exists } = await supabase
+        .from("booking_placements")
+        .select("id")
+        .eq("slug", slug)
+        .maybeSingle();
+      if (!exists) break;
+      slug = generateSlug();
+    }
+    const { data: placement } = await supabase
+      .from("booking_placements")
+      .insert({
+        booking_link_id: bookingLinkId,
+        workspace_id: workspaceId,
+        label,
+        channel: "bio",
+        slug,
+      })
+      .select("id, slug")
+      .single();
+    if (!placement) return;
+    bookUrl = bookingUrlFor(placement.slug as string);
+    bookConfig = { booking_link_id: bookingLinkId, placement_id: placement.id };
+  }
+
   const rawUrl = String(formData.get("url") || "").trim();
-  const url = kind === "header" ? "" : rawUrl ? normalizeUrl(rawUrl) : "";
+  const url =
+    kind === "book"
+      ? bookUrl
+      : kind === "header"
+        ? ""
+        : rawUrl
+          ? normalizeUrl(rawUrl)
+          : "";
+  const title =
+    kind === "book"
+      ? String(formData.get("title") || "").slice(0, 120) || "Book now"
+      : String(formData.get("title") || "").slice(0, 120);
   // Auto-pull the destination favicon as the thumbnail for standard links, so
   // pages look finished with no effort. The user can override it later.
   const favicon = kind === "link" ? faviconFor(url) : null;
@@ -370,11 +435,12 @@ export async function addBioLink(formData: FormData): Promise<void> {
     page_id: pageId,
     workspace_id: workspaceId,
     kind,
-    title: String(formData.get("title") || "").slice(0, 120),
+    title,
     url,
     position,
     ...(favicon ? { thumbnail_url: favicon, thumbnail_auto: true } : {}),
     ...(imageUrl ? { thumbnail_url: imageUrl } : {}),
+    ...(bookConfig ? { config: bookConfig } : {}),
   });
   revalidatePath(`/dashboard/bio/${pageId}`);
 }

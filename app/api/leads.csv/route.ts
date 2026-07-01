@@ -19,8 +19,21 @@ export async function GET(request: NextRequest) {
     srcParam === "qr" || srcParam === "bio" || srcParam === "booking"
       ? srcParam
       : "all";
+  // Optional: export just one booking link's captured leads (from its page).
+  const bl = params.get("bl") || null;
   const fromIso = range.from.toISOString();
   const toIso = range.to.toISOString();
+
+  let leadsQuery = supabase
+    .from("leads")
+    .select(
+      "email, name, phone, city, region, country, source, created_at, code_id, page_id, booking_link_id, placement_id, codes(title)"
+    )
+    .gte("created_at", fromIso)
+    .lte("created_at", toIso)
+    .order("created_at", { ascending: false })
+    .limit(50000);
+  if (bl) leadsQuery = leadsQuery.eq("booking_link_id", bl);
 
   const [
     { data: leadRows },
@@ -28,22 +41,17 @@ export async function GET(request: NextRequest) {
     { data: pageRows },
     { data: bookingRows },
   ] = await Promise.all([
-    supabase
-      .from("leads")
-      .select(
-        "email, name, phone, city, region, country, source, created_at, code_id, page_id, booking_link_id, placement_id, codes(title)"
-      )
-      .gte("created_at", fromIso)
-      .lte("created_at", toIso)
-      .order("created_at", { ascending: false })
-      .limit(50000),
-    supabase
-      .from("bio_subscribers")
-      .select("email, city, region, country, created_at, page_id")
-      .gte("created_at", fromIso)
-      .lte("created_at", toIso)
-      .order("created_at", { ascending: false })
-      .limit(50000),
+    leadsQuery,
+    // Bio subscribers aren't relevant to a single booking link export.
+    bl
+      ? Promise.resolve({ data: [] as never[] })
+      : supabase
+          .from("bio_subscribers")
+          .select("email, city, region, country, created_at, page_id")
+          .gte("created_at", fromIso)
+          .lte("created_at", toIso)
+          .order("created_at", { ascending: false })
+          .limit(50000),
     supabase.from("bio_pages").select("id, display_name, handle"),
     supabase.from("booking_links").select("id, name"),
   ]);

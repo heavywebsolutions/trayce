@@ -44,6 +44,14 @@ export default async function BioEditorPage({
     .select("*", { count: "exact", head: true })
     .eq("page_id", id);
 
+  // Active booking links, so the composer can offer a native "Book" block.
+  const { data: bookingLinkRows } = await supabase
+    .from("booking_links")
+    .select("id, name")
+    .neq("status", "archived")
+    .order("created_at", { ascending: true });
+  const bookingLinks = (bookingLinkRows ?? []) as { id: string; name: string }[];
+
   const bioBase = (
     process.env.NEXT_PUBLIC_BIO_URL ||
     process.env.NEXT_PUBLIC_APP_URL ||
@@ -129,7 +137,7 @@ export default async function BioEditorPage({
             <BioSettingsForm page={page} />
           </Card>
 
-          <BioBlockComposer pageId={page.id} />
+          <BioBlockComposer pageId={page.id} bookingLinks={bookingLinks} />
 
           <Card>
             <CardHeader

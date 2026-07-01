@@ -12,6 +12,7 @@ export type BookingChannel =
   | "tiktok"
   | "youtube"
   | "google"
+  | "bio"
   | "web"
   | "other";
 
@@ -22,6 +23,7 @@ export const BOOKING_CHANNELS: { v: BookingChannel; label: string }[] = [
   { v: "tiktok", label: "TikTok" },
   { v: "youtube", label: "YouTube" },
   { v: "google", label: "Google profile" },
+  { v: "bio", label: "Bio page" },
   { v: "web", label: "Website" },
   { v: "other", label: "Other" },
 ];

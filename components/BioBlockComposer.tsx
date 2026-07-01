@@ -6,6 +6,7 @@ import { Button, Input } from "@/components/ui";
 
 const TYPES = [
   { value: "link", label: "Link button" },
+  { value: "book", label: "Book button" },
   { value: "header", label: "Section header" },
   { value: "video", label: "YouTube video" },
   { value: "subscribe", label: "Email subscribe" },
@@ -17,7 +18,13 @@ const TYPES = [
 
 // Add-a-block composer. Shows only the fields a block type needs, and for Image
 // blocks gives a real upload button right here (no hunting in the list below).
-export function BioBlockComposer({ pageId }: { pageId: string }) {
+export function BioBlockComposer({
+  pageId,
+  bookingLinks = [],
+}: {
+  pageId: string;
+  bookingLinks?: { id: string; name: string }[];
+}) {
   const [kind, setKind] = useState("link");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -28,6 +35,7 @@ export function BioBlockComposer({ pageId }: { pageId: string }) {
 
   const isImage = kind === "image";
   const needsUrl = kind === "link" || kind === "video" || kind === "product";
+  const isBook = kind === "book";
   const showTitle = kind !== "image" || true; // image uses it as an optional caption
 
   const titlePlaceholder =
@@ -37,7 +45,9 @@ export function BioBlockComposer({ pageId }: { pageId: string }) {
         ? "Caption (optional)"
         : kind === "subscribe"
           ? "Heading, e.g. Join our list"
-          : "Title";
+          : isBook
+            ? "Button label, e.g. Book now"
+            : "Title";
   const urlPlaceholder =
     kind === "video"
       ? "YouTube link"
@@ -117,6 +127,37 @@ export function BioBlockComposer({ pageId }: { pageId: string }) {
 
         {needsUrl && <Input name="url" placeholder={urlPlaceholder} />}
 
+        {isBook &&
+          (bookingLinks.length > 0 ? (
+            <>
+              <select
+                name="booking_link_id"
+                className="min-h-[48px] w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm text-ink-900"
+              >
+                {bookingLinks.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-ink-500">
+                Adds a Book button that captures the visitor and tracks it as a
+                bio-page booking. Manage the booker in Booking.
+              </p>
+            </>
+          ) : (
+            <p className="rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-xs text-ink-500">
+              Create a booking link first in{" "}
+              <a
+                href="/dashboard/booking"
+                className="font-semibold text-accent hover:underline"
+              >
+                Booking
+              </a>
+              , then add it here.
+            </p>
+          ))}
+
         {isImage && (
           <div className="rounded-xl border border-dashed border-ink-300 bg-white p-3">
             {preview ? (
@@ -164,7 +205,10 @@ export function BioBlockComposer({ pageId }: { pageId: string }) {
 
         {error && <p className="text-xs font-medium text-rose-600">{error}</p>}
 
-        <Button type="submit" disabled={busy}>
+        <Button
+          type="submit"
+          disabled={busy || (isBook && bookingLinks.length === 0)}
+        >
           {busy ? "Adding…" : "Add block"}
         </Button>
       </form>

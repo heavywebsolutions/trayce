@@ -330,10 +330,25 @@ export default async function BookingDetailPage({
 
       {/* Recent leads + mark booked */}
       <Card className="mt-5 p-6">
-        <h2 className="text-base font-semibold text-ink-900">Captured leads</h2>
-        <p className="mb-4 mt-0.5 text-sm text-ink-500">
-          Mark a lead booked (and its value) to attribute real revenue to a placement.
-        </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-base font-semibold text-ink-900">
+              Captured leads
+            </h2>
+            <p className="mb-4 mt-0.5 text-sm text-ink-500">
+              Mark a lead booked (and its value) to attribute real revenue to a
+              placement.
+            </p>
+          </div>
+          {allLeads.length > 0 && (
+            <a
+              href={`/api/leads.csv?src=booking&bl=${id}&r=all`}
+              className="shrink-0 rounded-xl border border-ink-200 bg-white px-3.5 py-2 text-sm font-medium text-ink-700 transition hover:bg-ink-50"
+            >
+              Download CSV
+            </a>
+          )}
+        </div>
         {allLeads.length > 0 ? (
           <ul className="divide-y divide-ink-100">
             {allLeads.slice(0, 25).map((l) => (

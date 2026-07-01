@@ -345,6 +345,40 @@ export async function BioPageView({
                 </div>
               );
             }
+            if (l.kind === "book") {
+              // Routes straight through the booking tap engine (/b/<slug>) so
+              // the visit is attributed to this bio placement and can capture
+              // the lead before handing off to the booker.
+              if (!l.url) return null;
+              return (
+                <a
+                  key={l.id}
+                  href={l.url}
+                  className="flex items-center justify-center gap-2 rounded-2xl px-4 py-4 text-sm font-bold shadow-sm transition hover:opacity-90"
+                  style={{
+                    backgroundColor: p.accent_color,
+                    color: p.button_text_color,
+                  }}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-4 w-4 shrink-0"
+                    aria-hidden="true"
+                  >
+                    <path d="M8 2v4M16 2v4" />
+                    <rect width="18" height="18" x="3" y="4" rx="2" />
+                    <path d="M3 10h18" />
+                    <path d="m9 16 2 2 4-4" />
+                  </svg>
+                  <span>{l.title || "Book now"}</span>
+                </a>
+              );
+            }
             // standard link (click-tracked via /l/[id])
             return (
               <a
