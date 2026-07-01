@@ -4,15 +4,15 @@ import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "TRAXXR for tattoo shops | See which flash books the session",
+  title: "TRAXXR for tattoo shops | See what books the session",
   description:
-    "TRAXXR wraps the booker your shop already uses so a scan from your flash sheet, window, or bio turns into a booked client you can measure and keep. Built for tattoo shops and artists.",
+    "TRAXXR wraps the booker your shop already uses so a scan from your portfolio, window, or bio turns into a booked client you can measure and keep. Built for tattoo shops and artists.",
 };
 
 const problems = [
   {
     h: "You don't know what books",
-    p: "One client says they saw it on Instagram, the next says the window. You are guessing which flash, which sign, which post actually fills the chair.",
+    p: "One client says they saw it on Instagram, the next says the window. You are guessing which piece, which sign, which post actually fills the chair.",
   },
   {
     h: "Your booker hides your clients",
@@ -20,7 +20,7 @@ const problems = [
   },
   {
     h: "DM tag eats your day",
-    p: "People screenshot a flash and slide into the DMs to book. You end up playing message tag instead of tattooing.",
+    p: "People screenshot your work and slide into the DMs to book. You end up playing message tag instead of tattooing.",
   },
 ];
 
@@ -33,7 +33,7 @@ const steps = [
   {
     n: "2",
     h: "Tag every spot",
-    p: "One code for the flash sheet, one for the window, one for your bio. Each gets its own QR, so every placement is tracked on its own.",
+    p: "One code for your portfolio, one for the window, one for your bio. Each gets its own QR, so every placement is tracked on its own.",
   },
   {
     n: "3",
@@ -44,8 +44,8 @@ const steps = [
 
 const features = [
   {
-    h: "Flash-sheet attribution",
-    p: "Know which sheet, which sign, and which channel sends people to book, side by side.",
+    h: "Portfolio attribution",
+    p: "Know which piece, which sign, and which channel sends people to book, side by side.",
   },
   {
     h: "Capture the client first",
@@ -70,7 +70,7 @@ const features = [
 ];
 
 const surfaces = [
-  "Flash sheets",
+  "Portfolio wall",
   "Shop window",
   "Business cards",
   "Chair-side card",
@@ -90,11 +90,11 @@ export default function TattooShopsPage() {
             For tattoo shops and artists
           </p>
           <h1 className="mt-4 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
-            Your flash sheets book sessions. Now you will know which ones.
+            Your portfolio books sessions. Now you will know which pieces.
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-ink-500">
             TRAXXR wraps the booker your shop already uses, Square, Acuity,
-            Booksy, Calendly, so a scan from your flash sheet, window, or bio
+            Booksy, Calendly, so a scan from your portfolio, window, or bio
             turns into a booked client you can measure and keep. No switching, no
             new calendar to learn.
           </p>
@@ -203,7 +203,7 @@ export default function TattooShopsPage() {
             Fill the chair, and keep the client.
           </h2>
           <p className="mx-auto mt-4 max-w-md text-white/60">
-            Print one code on one flash sheet and watch what it books. Free to
+            Print one code next to one piece and watch what it books. Free to
             start, and it works with the booker you already have.
           </p>
           <Link
