@@ -43,16 +43,38 @@ export default async function AdminUsersPage({
 
   const { data: wsRows } = await admin
     .from("workspaces")
-    .select("owner_id, plan, comp");
+    .select("id, owner_id, plan, comp");
   const planByOwner = new Map(
     (wsRows ?? []).map((w) => [
       w.owner_id as string,
       { plan: (w.plan as string) ?? "free", comp: Boolean(w.comp) },
     ])
   );
+  // workspace_id -> owner_id, so activity keyed by workspace rolls up to a user.
+  const ownerByWs = new Map<string, string>(
+    (wsRows ?? []).map((w) => [w.id as string, w.owner_id as string])
+  );
   const adminIds = new Set(
     allUsers.filter((u) => isAdmin(u.email)).map((u) => u.id)
   );
+
+  // At-a-glance activity: how many codes, bio pages, and leads each user has.
+  // Each row is just a workspace_id, so these payloads stay small.
+  async function countByOwner(table: string): Promise<Map<string, number>> {
+    const { data } = await admin.from(table).select("workspace_id").limit(100000);
+    const m = new Map<string, number>();
+    for (const r of data ?? []) {
+      const owner = ownerByWs.get(r.workspace_id as string);
+      if (!owner) continue;
+      m.set(owner, (m.get(owner) ?? 0) + 1);
+    }
+    return m;
+  }
+  const [codesByOwner, biosByOwner, leadsByOwner] = await Promise.all([
+    countByOwner("codes"),
+    countByOwner("bio_pages"),
+    countByOwner("leads"),
+  ]);
 
   let list = allUsers;
   if (ql) list = list.filter((u) => (u.email ?? "").toLowerCase().includes(ql));
@@ -126,6 +148,12 @@ export default async function AdminUsersPage({
             {pageUsers.map((u) => {
               const info = planByOwner.get(u.id);
               const plan = info?.comp ? "comp" : info?.plan ?? "free";
+              const codeN = codesByOwner.get(u.id) ?? 0;
+              const bioN = biosByOwner.get(u.id) ?? 0;
+              const leadN = leadsByOwner.get(u.id) ?? 0;
+              const hasActivity = codeN > 0 || bioN > 0 || leadN > 0;
+              const plural = (n: number, s: string) =>
+                `${n} ${s}${n === 1 ? "" : "s"}`;
               return (
                 <li
                   key={u.id}
@@ -143,6 +171,41 @@ export default async function AdminUsersPage({
                         day: "numeric",
                       })}
                     </p>
+                    {hasActivity ? (
+                      <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+                        <span
+                          className={
+                            codeN > 0
+                              ? "font-medium text-ink-700"
+                              : "text-ink-300"
+                          }
+                        >
+                          {plural(codeN, "code")}
+                        </span>
+                        <span className="text-ink-200">·</span>
+                        <span
+                          className={
+                            bioN > 0 ? "font-medium text-ink-700" : "text-ink-300"
+                          }
+                        >
+                          {plural(bioN, "page")}
+                        </span>
+                        <span className="text-ink-200">·</span>
+                        <span
+                          className={
+                            leadN > 0
+                              ? "font-medium text-emerald-600"
+                              : "text-ink-300"
+                          }
+                        >
+                          {plural(leadN, "lead")}
+                        </span>
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-xs italic text-ink-300">
+                        No activity yet
+                      </p>
+                    )}
                   </div>
                   <div className="flex shrink-0 items-center gap-3">
                     <Badge tone={info?.comp ? "green" : planTone[plan] ?? "gray"}>
