@@ -292,6 +292,39 @@ export default async function BookingDetailPage({
         </p>
         <AddPlacementForm linkId={id} />
 
+        {/* Where to actually put these links */}
+        <div className="mt-4 rounded-xl border border-ink-200 bg-ink-50 p-4">
+          <p className="text-sm font-semibold text-ink-900">
+            Where to put your booking links
+          </p>
+          <p className="mt-0.5 text-xs text-ink-500">
+            Make one placement per spot. Print the QR for physical spots, copy
+            the link for digital ones, then compare what books.
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border border-ink-200 bg-white p-3">
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-ink-900">
+                <span className="text-accent">Print the QR</span>
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-ink-500">
+                Shop window, truck or trailer wrap, portfolio wall, counter
+                card, business card, receipt, packaging. Download the QR next to
+                each placement, or order it from Print &amp; Ship.
+              </p>
+            </div>
+            <div className="rounded-lg border border-ink-200 bg-white p-3">
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-ink-900">
+                <span className="text-accent">Copy the link</span>
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-ink-500">
+                Instagram, Facebook, TikTok, and YouTube bios, your email
+                signature, Google Business profile, or a DM. On a bio page, use
+                the Book block so it is tagged automatically.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {placements.length > 0 && (
           <ul className="mt-5 divide-y divide-ink-100">
             {placements.map((p, i) => {
