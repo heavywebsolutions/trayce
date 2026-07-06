@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import QRCode from "qrcode";
 import { createClient } from "@/lib/supabase/server";
-import { Card, Badge, Button, Input, Label } from "@/components/ui";
+import { Card, Badge, Button, Input, Label, IconChip } from "@/components/ui";
+import { IconBooking, IconLeads, IconRevenue } from "@/components/icons";
 import { CopyUrlButton } from "@/components/CopyUrlButton";
 import { AddPlacementForm } from "@/components/AddPlacementForm";
 import { formatNumber } from "@/lib/utils";
@@ -161,15 +162,22 @@ export default async function BookingDetailPage({
 
       {/* Funnel headline */}
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {[
-          { l: "Booking taps", v: formatNumber(totals.taps) },
-          { l: "Leads captured", v: formatNumber(totals.leads) },
-          { l: "Marked booked", v: formatNumber(totals.booked) },
-          { l: "Est. booked rev", v: money(totals.revenueCents) },
-        ].map((s) => (
+        {(
+          [
+            { l: "Booking taps", v: formatNumber(totals.taps), c: "amber", i: <IconBooking /> },
+            { l: "Leads captured", v: formatNumber(totals.leads), c: "emerald", i: <IconLeads /> },
+            { l: "Marked booked", v: formatNumber(totals.booked), c: "blue", i: <IconBooking /> },
+            { l: "Est. booked rev", v: money(totals.revenueCents), c: "emerald", i: <IconRevenue /> },
+          ] as const
+        ).map((s) => (
           <Card key={s.l} className="p-4">
-            <p className="text-xs uppercase tracking-wide text-ink-500">{s.l}</p>
-            <p className="mt-1 text-2xl font-semibold text-ink-900">{s.v}</p>
+            <IconChip color={s.c} className="mb-2.5">
+              {s.i}
+            </IconChip>
+            <p className="text-2xl font-semibold text-ink-900">{s.v}</p>
+            <p className="mt-0.5 text-xs uppercase tracking-wide text-ink-500">
+              {s.l}
+            </p>
           </Card>
         ))}
       </div>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader } from "@/components/ui";
+import { IconBio } from "@/components/icons";
 import { CreateBioForm } from "@/components/CreateBioForm";
 import { BioThumb } from "@/components/BioThumb";
 import { DuplicateBioForm } from "@/components/DuplicateBioForm";
@@ -101,6 +102,8 @@ export default async function BioListPage({
           <CardHeader
             title="Your pages"
             subtitle={`${list.length} ${list.length === 1 ? "page" : "pages"}`}
+            icon={<IconBio />}
+            iconColor="violet"
           />
           {list.length > 0 ? (
             <ul className="divide-y divide-ink-100">

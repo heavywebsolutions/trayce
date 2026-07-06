@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Card } from "@/components/ui";
+import type { ReactNode } from "react";
+import { Card, IconChip, type ChipColor } from "@/components/ui";
+import { IconQr, IconBio, IconBooking, IconLeads } from "@/components/icons";
 import { LeadsControls } from "@/components/LeadsControls";
 import { formatNumber, timeAgo, cn } from "@/lib/utils";
 import {
@@ -97,17 +99,26 @@ function StatTile({
   label,
   value,
   sub,
+  icon,
+  color = "blue",
 }: {
   label: string;
   value: string;
   sub?: string;
+  icon?: ReactNode;
+  color?: ChipColor;
 }) {
   return (
-    <Card className="px-5 py-4">
+    <Card className="p-4 sm:px-5">
+      {icon && (
+        <IconChip color={color} className="mb-2.5">
+          {icon}
+        </IconChip>
+      )}
       <p className="text-xs font-medium uppercase tracking-wide text-ink-400">
         {label}
       </p>
-      <p className="mt-1.5 text-2xl font-semibold tracking-tight text-ink-900">
+      <p className="mt-1 text-2xl font-semibold tracking-tight text-ink-900">
         {value}
       </p>
       {sub && <p className="mt-0.5 text-xs text-ink-400">{sub}</p>}
@@ -236,21 +247,29 @@ export default async function LeadsPage({
           label="Total leads"
           value={formatNumber(total)}
           sub={`Captured ${rangeLabel}`}
+          icon={<IconLeads />}
+          color="emerald"
         />
         <StatTile
           label="From QR codes"
           value={formatNumber(qrCount)}
           sub={pct(qrCount)}
+          icon={<IconQr />}
+          color="blue"
         />
         <StatTile
           label="From bio pages"
           value={formatNumber(bioCount)}
           sub={pct(bioCount)}
+          icon={<IconBio />}
+          color="violet"
         />
         <StatTile
           label="From booking"
           value={formatNumber(bookingCount)}
           sub={pct(bookingCount)}
+          icon={<IconBooking />}
+          color="amber"
         />
       </div>
 

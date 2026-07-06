@@ -1,6 +1,8 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { Card, Button, Badge } from "@/components/ui";
+import { Card, Button, Badge, IconChip, type ChipColor } from "@/components/ui";
+import { IconQr, IconClicks, IconLeads } from "@/components/icons";
 import { OnboardingChecklist } from "@/components/OnboardingChecklist";
 import { formatNumber, timeAgo } from "@/lib/utils";
 import { formatLocation, deviceLabel } from "@/lib/geo";
@@ -20,17 +22,27 @@ function Kpi({
   value,
   sub,
   trend,
+  icon,
+  color = "blue",
 }: {
   label: string;
   value: string;
   sub?: string;
   trend?: { p: number; up: boolean } | null;
+  icon?: ReactNode;
+  color?: ChipColor;
 }) {
   return (
-    <Card className="p-5">
-      <p className="text-sm font-medium text-ink-500">{label}</p>
-      <div className="mt-2 flex items-end gap-2">
-        <p className="tabular text-3xl font-semibold text-ink-900">{value}</p>
+    <Card className="p-4 sm:p-5">
+      {icon && (
+        <IconChip color={color} className="mb-3">
+          {icon}
+        </IconChip>
+      )}
+      <div className="flex items-end gap-2">
+        <p className="tabular text-2xl font-semibold text-ink-900 sm:text-3xl">
+          {value}
+        </p>
         {trend && (
           <span
             className={`mb-1 rounded-full px-1.5 py-0.5 text-[11px] font-semibold ${
@@ -43,7 +55,8 @@ function Kpi({
           </span>
         )}
       </div>
-      {sub && <p className="mt-1 text-xs text-ink-400">{sub}</p>}
+      <p className="mt-0.5 text-sm font-medium text-ink-500">{label}</p>
+      {sub && <p className="mt-0.5 text-xs text-ink-400">{sub}</p>}
     </Card>
   );
 }
@@ -198,22 +211,31 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      {/* Header */}
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+      {/* Branded header strip */}
+      <div
+        className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl px-6 py-5 shadow-card"
+        style={{
+          background: "linear-gradient(105deg, #0A1A2E 0%, #0C2138 60%, #123152 100%)",
+        }}
+      >
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-ink-900">
-            Dashboard
-          </h1>
-          <p className="mt-0.5 text-sm text-ink-500">
-            {ws?.name ? `${ws.name} ` : ""}at a glance.
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#9DC5F2]">
+            {ws?.name || "Your workspace"}
           </p>
+          <h1 className="mt-1 text-xl font-semibold tracking-tight text-white sm:text-2xl">
+            Here&apos;s how your marketing is performing
+          </h1>
         </div>
         <div className="flex items-center gap-2">
           <Link href="/dashboard/bio">
-            <Button variant="secondary">New bio page</Button>
+            <span className="inline-flex min-h-[44px] items-center rounded-xl border border-white/20 px-4 text-sm font-semibold text-white transition hover:bg-white/10">
+              New bio page
+            </span>
           </Link>
           <Link href="/dashboard/codes">
-            <Button>Create a code</Button>
+            <span className="inline-flex min-h-[44px] items-center rounded-xl bg-accent px-4 text-sm font-semibold text-white transition hover:bg-accent-hover">
+              Create a code
+            </span>
           </Link>
         </div>
       </div>
@@ -233,20 +255,32 @@ export default async function DashboardPage() {
           value={formatNumber(scans7)}
           sub="last 7 days"
           trend={scansTrend}
+          icon={<IconQr />}
+          color="blue"
         />
         <Kpi
           label="Bio clicks"
           value={formatNumber(clicks7)}
           sub="last 7 days"
           trend={clicksTrend}
+          icon={<IconClicks />}
+          color="violet"
         />
         <Kpi
           label="Leads"
           value={formatNumber(leads7)}
           sub={`${formatNumber(totalLeads)} all time`}
           trend={leadsTrend}
+          icon={<IconLeads />}
+          color="emerald"
         />
-        <Kpi label="Active codes" value={formatNumber(activeCodes)} sub="live now" />
+        <Kpi
+          label="Active codes"
+          value={formatNumber(activeCodes)}
+          sub="live now"
+          icon={<IconQr />}
+          color="amber"
+        />
       </div>
 
       {/* Activity chart */}

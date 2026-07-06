@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { Card, Badge } from "@/components/ui";
+import { Card, Badge, IconChip } from "@/components/ui";
+import { IconBooking } from "@/components/icons";
 import { CreateBookingForm } from "@/components/CreateBookingForm";
 import { formatNumber } from "@/lib/utils";
 import { loadEntitlements } from "@/lib/plan";
@@ -123,13 +124,18 @@ export default async function BookingPage({
 
         <Card className="min-w-0">
           <div className="flex items-center justify-between gap-4 border-b border-ink-100 px-6 py-4">
-            <div>
-              <h2 className="text-base font-semibold text-ink-900">
-                Your booking links
-              </h2>
-              <p className="mt-0.5 text-sm text-ink-500">
-                {total} {total === 1 ? "link" : "links"}
-              </p>
+            <div className="flex items-center gap-3">
+              <IconChip color="amber" size="sm">
+                <IconBooking />
+              </IconChip>
+              <div>
+                <h2 className="text-base font-semibold text-ink-900">
+                  Your booking links
+                </h2>
+                <p className="mt-0.5 text-sm text-ink-500">
+                  {total} {total === 1 ? "link" : "links"}
+                </p>
+              </div>
             </div>
             {total > 0 && (
               <span className="shrink-0 text-xs text-ink-400">

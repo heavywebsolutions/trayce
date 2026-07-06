@@ -1,6 +1,96 @@
 import { cn } from "@/lib/utils";
 import * as React from "react";
 
+// --- Domain color chips ------------------------------------------------
+// A small, fixed palette so color means something: each product area gets a
+// consistent hue on its icons, tags, and stat cards. This is the backbone of
+// the "scannable" refresh.
+export type ChipColor = "blue" | "violet" | "emerald" | "amber" | "rose" | "gray";
+
+const chipTones: Record<ChipColor, string> = {
+  blue: "bg-accent-soft text-accent",
+  violet: "bg-violet-50 text-violet-600",
+  emerald: "bg-emerald-50 text-emerald-600",
+  amber: "bg-amber-50 text-amber-600",
+  rose: "bg-rose-50 text-rose-500",
+  gray: "bg-ink-100 text-ink-500",
+};
+
+export function IconChip({
+  color = "blue",
+  size = "md",
+  children,
+  className,
+}: {
+  color?: ChipColor;
+  size?: "sm" | "md";
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "grid shrink-0 place-items-center rounded-xl",
+        size === "sm" ? "h-7 w-7 [&>svg]:h-4 [&>svg]:w-4" : "h-9 w-9 [&>svg]:h-[18px] [&>svg]:w-[18px]",
+        chipTones[color],
+        className
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+// A small up/down delta pill for metrics.
+export function Delta({ value }: { value: number }) {
+  const up = value >= 0;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-0.5 text-xs font-semibold",
+        up ? "text-emerald-600" : "text-rose-500"
+      )}
+    >
+      {up ? "↑" : "↓"} {Math.abs(value)}%
+    </span>
+  );
+}
+
+// Stat card with a colored icon chip, a big number, and an optional delta.
+export function StatCard({
+  label,
+  value,
+  color = "blue",
+  icon,
+  delta,
+  hint,
+}: {
+  label: string;
+  value: string;
+  color?: ChipColor;
+  icon?: React.ReactNode;
+  delta?: number;
+  hint?: string;
+}) {
+  return (
+    <Card className="p-4 sm:p-5">
+      {icon && (
+        <IconChip color={color} className="mb-3">
+          {icon}
+        </IconChip>
+      )}
+      <p className="tabular text-2xl font-semibold text-ink-900 sm:text-3xl">
+        {value}
+      </p>
+      <div className="mt-0.5 flex flex-wrap items-center gap-x-2">
+        <span className="text-sm text-ink-500">{label}</span>
+        {typeof delta === "number" && <Delta value={delta} />}
+      </div>
+      {hint && <p className="mt-0.5 text-xs text-ink-400">{hint}</p>}
+    </Card>
+  );
+}
+
 // --- Card -------------------------------------------------------------
 export function Card({
   className,
@@ -25,16 +115,27 @@ export function CardHeader({
   title,
   subtitle,
   action,
+  icon,
+  iconColor = "blue",
 }: {
   title: string;
   subtitle?: string;
   action?: React.ReactNode;
+  icon?: React.ReactNode;
+  iconColor?: ChipColor;
 }) {
   return (
     <div className="flex items-start justify-between gap-4 border-b border-ink-100 px-6 py-5">
-      <div>
-        <h2 className="text-base font-semibold text-ink-900">{title}</h2>
-        {subtitle && <p className="mt-0.5 text-sm text-ink-500">{subtitle}</p>}
+      <div className="flex items-start gap-3">
+        {icon && (
+          <IconChip color={iconColor} size="sm" className="mt-0.5">
+            {icon}
+          </IconChip>
+        )}
+        <div>
+          <h2 className="text-base font-semibold text-ink-900">{title}</h2>
+          {subtitle && <p className="mt-0.5 text-sm text-ink-500">{subtitle}</p>}
+        </div>
       </div>
       {action}
     </div>
