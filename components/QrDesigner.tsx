@@ -406,6 +406,40 @@ export function QrDesigner({
         const root = new DOMParser().parseFromString(text, "image/svg+xml")
           .documentElement;
         if (root && root.nodeName.toLowerCase() === "svg") {
+          // qr-code-styling draws the QR as solid rects CLIPPED by the dot
+          // shapes, and Illustrator can't round-trip clip paths ("Clipping will
+          // be lost on roundtrip to Tiny"). Flatten it: fill the dot shapes
+          // directly with the color the clipped rect used, then drop every
+          // clipPath. Result is plain, warning-free vector.
+          const clips = new Map<string, Element[]>();
+          root.querySelectorAll("clipPath").forEach((cp) => {
+            const id = cp.getAttribute("id");
+            if (id) clips.set(id, Array.from(cp.children));
+          });
+          root.querySelectorAll("[clip-path]").forEach((el) => {
+            const ref = (el.getAttribute("clip-path") || "").match(
+              /#([^)'"]+)/
+            );
+            const shapes = ref ? clips.get(ref[1]) : null;
+            const parent = el.parentNode;
+            if (!shapes || !shapes.length || !parent) return;
+            const fill = el.getAttribute("fill") || "#000000";
+            shapes.forEach((shape) => {
+              const c = shape.cloneNode(true) as Element;
+              c.setAttribute("fill", fill);
+              const cr = c.getAttribute("clip-rule");
+              if (cr) c.setAttribute("fill-rule", cr); // keep the finder holes
+              parent.insertBefore(c, el);
+            });
+            parent.removeChild(el);
+          });
+          root
+            .querySelectorAll("clipPath")
+            .forEach((cp) => cp.parentNode?.removeChild(cp));
+          root.querySelectorAll("defs").forEach((d) => {
+            if (!d.children.length) d.parentNode?.removeChild(d);
+          });
+
           const vb = root.getAttribute("viewBox");
           let qw = parseFloat(root.getAttribute("width") || "");
           if ((!qw || Number.isNaN(qw)) && vb) {
