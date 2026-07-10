@@ -381,14 +381,6 @@ export function QrDesigner({
   // and prints the exact design.
   async function buildSvg(): Promise<string | null> {
     if (!qr.current) return null;
-    let blob: Blob | null = null;
-    try {
-      blob = await qr.current.getRawData("png");
-    } catch {
-      return null;
-    }
-    if (!blob) return null;
-    const qrUrl = await blobToDataURL(blob);
 
     const L = layoutFor(frame);
     const safeText = frameText.replace(/[<&>]/g, "");
@@ -402,7 +394,56 @@ export function QrDesigner({
     const textEl = L.bar
       ? `<text x="${L.bar.x + L.bar.w / 2}" y="${L.bar.y + L.bar.h / 2}" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="40" font-weight="600" text-anchor="middle" dominant-baseline="central">${safeText}</text>`
       : "";
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${L.W}" height="${L.H}" viewBox="0 0 ${L.W} ${L.H}">${bgRect}<image x="${L.qrX}" y="${L.qrY}" width="${L.Q}" height="${L.Q}" href="${qrUrl}"/>${barEl}${textEl}</svg>`;
+
+    // Prefer TRUE VECTOR: pull the styled QR as an SVG and nest it in the frame.
+    // A print shop can scale and recolor it freely, instead of a raster PNG
+    // stuffed inside an SVG wrapper (which also broke opening in Illustrator).
+    let qrEl = "";
+    try {
+      const svgBlob = await qr.current.getRawData("svg");
+      const text = svgBlob ? await (svgBlob as Blob).text() : "";
+      if (text) {
+        const root = new DOMParser().parseFromString(text, "image/svg+xml")
+          .documentElement;
+        if (root && root.nodeName.toLowerCase() === "svg") {
+          const vb = root.getAttribute("viewBox");
+          let qw = parseFloat(root.getAttribute("width") || "");
+          if ((!qw || Number.isNaN(qw)) && vb) {
+            qw = parseFloat(vb.split(/[\s,]+/)[2] || "");
+          }
+          if (qw > 0) {
+            const scale = L.Q / qw;
+            qrEl = `<g transform="translate(${L.qrX} ${L.qrY}) scale(${scale})">${root.innerHTML}</g>`;
+          }
+        }
+      }
+    } catch {
+      /* fall back to the raster embed below */
+    }
+
+    // Fallback: embed the PNG, but with an xlink namespace so it still opens in
+    // Adobe Illustrator (older versions require xlink:href on <image>).
+    if (!qrEl) {
+      let blob: Blob | null = null;
+      try {
+        blob = await qr.current.getRawData("png");
+      } catch {
+        return null;
+      }
+      if (!blob) return null;
+      const qrUrl = await blobToDataURL(blob);
+      qrEl = `<image x="${L.qrX}" y="${L.qrY}" width="${L.Q}" height="${L.Q}" href="${qrUrl}" xlink:href="${qrUrl}"/>`;
+    }
+
+    let out = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${L.W}" height="${L.H}" viewBox="0 0 ${L.W} ${L.H}">${bgRect}${qrEl}${barEl}${textEl}</svg>`;
+    // Any embedded <image> (e.g. a logo inside the QR) needs xlink:href too, or
+    // Illustrator opens the file blank.
+    out = out.replace(
+      /<image\b((?:(?!xlink:href)[^>])*?)\shref="([^"]*)"((?:(?!xlink:href)[^>])*?)(\/?)>/g,
+      (m, a, href, b, close) =>
+        `<image${a} href="${href}" xlink:href="${href}"${b}${close}>`
+    );
+    return `<?xml version="1.0" encoding="UTF-8"?>\n${out}`;
   }
 
   async function download(ext: "png" | "svg") {
